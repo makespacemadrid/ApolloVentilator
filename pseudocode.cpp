@@ -34,8 +34,6 @@ unsigned long espiration = 0; // (s)
 
 void openEntryEV(){}
 float getMetricVolumeEntry(){}
-float getMetricO2Insp(){}
-void checkO2Saturation(int current, int limit){}
 int getMetricPpeak(){}
 int getMetricPplat(){}
 int calculateResistance (int ppeak, int pplat) {
@@ -46,25 +44,13 @@ void closeEntryEV(){}
 void openExitEV(){}
 float getMetricVolumeExit(){}
 void checkLeak(float volEntry, float volExit){}
-float getMetricCO2Esp(){}
-void checkCO2Saturation(int current, int limit){}
-void checkCompliance(int pplat, int peep) {
-	int result = getCompliance(pplat, peep);
-	if (result >= 12) {
-		Serial.println("OK");
-	} else if (result <= 15) {
-		Serial.println("OK");
-	} else {
-		Serial.println("COMPLIANCE ALERT");
-	}
+int calculateCompliance (int pplat, int peep) {
+	return pplat - peep;
 }
 void closeExitEV(){}
 
 float getMetricVolMax(){}
 float getMetricPresMax(){}
-int calculateCompliance (int pplat, int peep) {
-	return pplat - peep;
-}
 
 void setup() {
 	Serial.begin(115200);
@@ -78,8 +64,6 @@ void loop() {
 		Serial.println("Insp");
 	}	
 	getMetricVolumeEntry();
-	float currentO2 = getMetricO2Insp();
-	checkO2Saturation(currentO2, limitO2);
 	ppeak = getMetricPpeak();
 	pplat = getMetricPplat();
 	calculateResistance(ppeak, pplat);
@@ -95,8 +79,6 @@ void loop() {
 	}
 	getMetricVolumeExit();
 	checkLeak();
-	float currentCO2 = getMetricCO2Esp();
-	checkC02Saturacion(currentCO2, limitCO2);
 	calculateCompliance(pplat, peep);
 	closeExitEV();
 } 	

@@ -52,6 +52,7 @@ def updateBoth(interval):
     updateVolume()
     updatePressure()
 
+
 ani = animation.FuncAnimation(fig, updateBoth, interval=1000)
 plt.tight_layout()
 plt.show()

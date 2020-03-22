@@ -17,7 +17,7 @@ int peep = 5;
 
 // Parameters
 int weight = 70; // kg
-int volc = 300; // weight * 6u8 (mL)
+float volc = 300.0; // weight * 6u8 (mL)
 int rpm = 15; // breaths per minute
 int voli = volc * rpm;
 int timep; // good to have, pause
@@ -33,7 +33,6 @@ unsigned long espiration = 0; // (s)
 // Leak alert
 
 void openEntryEV(){}
-float getMetricVolumeEntry(){}
 int getMetricPpeak(){}
 int getMetricPplat(){}
 int calculateResistance (int ppeak, int pplat) {
@@ -43,7 +42,7 @@ int getMetricPeep(){}
 void closeEntryEV(){}
 void openExitEV(){}
 float getMetricVolumeExit(){}
-void checkLeak(float volEntry, float volExit){}
+void checkLeak(float volc, float volExit){}
 int calculateCompliance (int pplat, int peep) {
 	return pplat - peep;
 }
@@ -63,7 +62,6 @@ void loop() {
 		inspiration +=INSPIRATION_TIME;
 		Serial.println("Insp");
 	}	
-	getMetricVolumeEntry();
 	ppeak = getMetricPpeak();
 	pplat = getMetricPplat();
 	calculateResistance(ppeak, pplat);
@@ -77,8 +75,8 @@ void loop() {
 		inspiration +=ESPIRATION_TIME;
 		Serial.println("Esp");
 	}
-	getMetricVolumeExit();
-	checkLeak();
+	float volExit = getMetricVolumeExit();
+	checkLeak(volc, volExit);
 	calculateCompliance(pplat, peep);
 	closeExitEV();
 } 	

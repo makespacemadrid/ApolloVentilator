@@ -21,10 +21,10 @@ def updatePressure(data):
     xp.append(dt.datetime.now().strftime('%H:%M:%S'))
     yp.append(float(data))
     # print(xp)
-    if len(xp) > 10:
+    if len(xp) > args.show_seconds:
         xp.pop(0)
         yp.pop(0)
-        # ax1.clear()
+        ax1.clear()
     plt.subplots_adjust(bottom=0.2)
     plt.xticks(rotation=45, ha='right')
     ax1.plot(xp, yp)
@@ -36,10 +36,10 @@ def updateVolume(data):
     xv.append(dt.datetime.now().strftime('%H:%M:%S'))
     yv.append(float(data))
     # print(xv)
-    if len(xv) > 10:
+    if len(xv) > args.show_seconds:
         xv.pop(0)
         yv.pop(0)
-        # ax2.clear()
+        ax2.clear()
     ax2.plot(xv, yv)
     plt.xticks(rotation=45, ha='right')
     plt.xlabel('Time')
@@ -56,8 +56,10 @@ def updateBothRand(interval):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--testdata', action='store_true', help='Random values to test graphics')
-    parser.add_argument('--serialport', nargs='?', const='/dev/ttyUSB0', help='Serial port name')
+    parser.add_argument('--serialport', nargs='?', default='/dev/ttyUSB0', type='str', help='Serial port name')
+    parser.add_argument('--show_seconds', nargs='?', default='10', type=int, help='Seconds shown in graphic')
     args = parser.parse_args()
+    print(args.show_seconds)
     if not args.testdata:
         serial = serial.Serial(args.serialport)
 

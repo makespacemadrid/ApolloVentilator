@@ -8,7 +8,7 @@ import numpy as np
 import serial
 import argparse
 
-plt.style.use('fivethirtyeight')
+plt.style.use('seaborn')
 fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True)
 index = count()
 
@@ -56,7 +56,7 @@ def updateBothRand(interval):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--testdata', action='store_true', help='Random values to test graphics')
-    parser.add_argument('--serialport', nargs='?', default='/dev/ttyUSB0', type='str', help='Serial port name')
+    parser.add_argument('--serialport', nargs='?', default='/dev/ttyUSB0', type=str, help='Serial port name')
     parser.add_argument('--show_seconds', nargs='?', default='10', type=int, help='Seconds shown in graphic')
     args = parser.parse_args()
     print(args.show_seconds)

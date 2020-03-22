@@ -22,10 +22,15 @@
 #include <Adafruit_BME280.h>
 
 #define ENTRY_EV_PIN    10
-#define EXIT_EV_PIN    11
+#define EXIT_EV_PIN     11
 
+#define ENTRY_FLOW_PIN  4
+#define EXIT_FLOW_PIN   5
 
-#define BME280_ADDR         0x76
+#define LOG_INTERVAL    1000    //milliseconds
+
+//#define PRESSURE_SENSOR_PIN      ??
+#define BME280_ADDR                0x76
 
 #define SEALEVELPRESSURE_HPA (1013.25)
 
@@ -60,6 +65,8 @@ unsigned long espiration = 0; // (s)
 
 
 uint8_t power;
+char    logBuffer[50];
+int     lastLog=0;
 
 // BEGIN Sensors and actuators
 
@@ -101,9 +108,9 @@ float getMetricVolumeEntry(){
     200 5.00
 */
  
- // TODO Check real sensor output values, som parts of datasheets says it is linear
- // while a table of SLM/Volt shown the oposite
- float v=analogRead(ENTRY_EV_PIN)*0.0049F;
+ // TODO Check real sensor output values, some parts of datasheets says it is linear
+ // while a table of SLM/Volt shows the oposite
+ float v=analogRead(ENTRY_FLOW_PIN)*0.0049F;
 
  return v;
 
@@ -122,18 +129,17 @@ float getMetricVolumeExit(){
     200 5.00
 */
  
- // TODO Check real sensor output values, som parts of datasheets says it is linear
- // while a table of SLM/Volt shown the oposite
- float v=analogRead(EXIT_EV_PIN)*0.0049F;
+ // TODO Check real sensor output values, some parts of datasheets says it is linear
+ // while a table of SLM/Volt shows the oposite
+ float v=analogRead(EXIT_FLOW_PIN)*0.0049F;
 
  return v;
 
 }
 
-// Get metric from pressure sensor
+// Get metric from pressure sensor in mBar
 float getMetricPressureEntry()
-{    
-    // Using bme sensor until we have the correct one
+{        
     return float(bme.readPressure()) / 100.0F;
 }
 
@@ -160,14 +166,22 @@ int calculateCompliance (int pplat, int peep) {
 }
 
 
-
+void logData()
+{
+    if(millis()-lastLog<0)
+    {
+        //TODO use real EV states based on pin status
+        sprintf(logBuffer, "%d,%d,%f,%f,%f", 1, 1, getMetricPressureEntry(), getMetricVolumeEntry(), getMetricVolumeExit() );
+        Serial.print(logBuffer);
+        lastLog=millis();
+    }
+}
 
 
 void setup() {
     Serial.begin(115200);
     while(!Serial);    // time to get serial running
     
-
     pinMode(ENTRY_EV_PIN, OUTPUT);
     pinMode(EXIT_EV_PIN, OUTPUT);
 
@@ -191,6 +205,7 @@ void setup() {
     delayTime = 0;
     Serial.println();
 }
+
 
 
 void loop() {
@@ -228,4 +243,5 @@ void loop() {
 	
     closeExitEV();
     
+    logData();
 }

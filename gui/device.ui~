@@ -8,9 +8,11 @@
     <property name="row_homogeneous">True</property>
     <property name="column_homogeneous">True</property>
     <child>
-      <object class="GtkScrolledWindow">
+      <object class="GtkScrolledWindow" id="draw_surface">
         <property name="visible">True</property>
+        <property name="app_paintable">True</property>
         <property name="can_focus">True</property>
+        <property name="double_buffered">False</property>
         <property name="shadow_type">in</property>
         <property name="propagate_natural_width">True</property>
         <property name="propagate_natural_height">True</property>

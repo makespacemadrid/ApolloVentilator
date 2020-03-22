@@ -10,7 +10,9 @@
     <child>
       <object class="GtkScrolledWindow" id="draw_surface">
         <property name="visible">True</property>
+        <property name="app_paintable">True</property>
         <property name="can_focus">True</property>
+        <property name="double_buffered">False</property>
         <property name="shadow_type">in</property>
         <property name="propagate_natural_width">True</property>
         <property name="propagate_natural_height">True</property>
@@ -26,8 +28,9 @@
       </packing>
     </child>
     <child>
-      <object class="GtkToggleButton">
+      <object class="GtkToggleButton" id="btn_toggle_standby">
         <property name="label" translatable="yes">ON/OFF</property>
+        <property name="name">btn_toggle_standby</property>
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
@@ -38,7 +41,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkEntry">
+      <object class="GtkEntry" id="entry_fio2">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
       </object>
@@ -48,7 +51,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkEntry">
+      <object class="GtkEntry" id="entry_breath_per_minute">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
       </object>
@@ -58,7 +61,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkEntry">
+      <object class="GtkEntry" id="entry_current_volume">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
       </object>
@@ -68,7 +71,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkEntry">
+      <object class="GtkEntry" id="entry_peep">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
       </object>
@@ -78,7 +81,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkLabel">
+      <object class="GtkLabel" id="lbl_standby">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">Standby</property>
@@ -89,7 +92,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkLabel">
+      <object class="GtkLabel" id="lbl_fio2">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">% de O2 (FIO2)</property>
@@ -100,7 +103,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkLabel">
+      <object class="GtkLabel" id="lbl_breath_per_minute">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">Breath per minute</property>
@@ -111,7 +114,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkLabel">
+      <object class="GtkLabel" id="lbl_current_volume">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">Current Volume</property>
@@ -122,7 +125,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkLabel">
+      <object class="GtkLabel" id="lbl_peep">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">PEEP</property>

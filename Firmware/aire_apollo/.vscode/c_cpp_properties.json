@@ -6,16 +6,18 @@
         {
             "name": "Win32",
             "includePath": [
-                "d:/OneDrive/AIRE_APOLLO/aire_apollo/include",
-                "d:/OneDrive/AIRE_APOLLO/aire_apollo/src",
-                "d:/OneDrive/AIRE_APOLLO/aire_apollo/lib/BME280_ID901/src",
+                "d:/OneDrive/AIRE_APOLLO/ApolloVentilator/Firmware/aire_apollo/include",
+                "d:/OneDrive/AIRE_APOLLO/ApolloVentilator/Firmware/aire_apollo/src",
+                "d:/OneDrive/AIRE_APOLLO/ApolloVentilator/Firmware/aire_apollo/.pio/libdeps/def/Adafruit BME280 Library_ID166",
+                "C:/Users/mromani/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
+                "d:/OneDrive/AIRE_APOLLO/ApolloVentilator/Firmware/aire_apollo/.pio/libdeps/def/Adafruit ADXL343_ID6117",
+                "d:/OneDrive/AIRE_APOLLO/ApolloVentilator/Firmware/aire_apollo/.pio/libdeps/def/Adafruit Unified Sensor_ID31",
                 "C:/Users/mromani/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
                 "C:/Users/mromani/.platformio/packages/framework-arduino-avr/cores/arduino",
                 "C:/Users/mromani/.platformio/packages/framework-arduino-avr/variants/mega",
                 "C:/Users/mromani/.platformio/lib/PubSubClient_ID89/src",
                 "C:/Users/mromani/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
                 "C:/Users/mromani/.platformio/packages/framework-arduino-avr/libraries/HID/src",
-                "C:/Users/mromani/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
                 "C:/Users/mromani/.platformio/packages/framework-arduino-avr/libraries/SoftwareSerial/src",
                 "C:/Users/mromani/.platformio/packages/tool-unity",
                 ""
@@ -23,23 +25,25 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
-                    "d:/OneDrive/AIRE_APOLLO/aire_apollo/include",
-                    "d:/OneDrive/AIRE_APOLLO/aire_apollo/src",
-                    "d:/OneDrive/AIRE_APOLLO/aire_apollo/lib/BME280_ID901/src",
+                    "d:/OneDrive/AIRE_APOLLO/ApolloVentilator/Firmware/aire_apollo/include",
+                    "d:/OneDrive/AIRE_APOLLO/ApolloVentilator/Firmware/aire_apollo/src",
+                    "d:/OneDrive/AIRE_APOLLO/ApolloVentilator/Firmware/aire_apollo/.pio/libdeps/def/Adafruit BME280 Library_ID166",
+                    "C:/Users/mromani/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
+                    "d:/OneDrive/AIRE_APOLLO/ApolloVentilator/Firmware/aire_apollo/.pio/libdeps/def/Adafruit ADXL343_ID6117",
+                    "d:/OneDrive/AIRE_APOLLO/ApolloVentilator/Firmware/aire_apollo/.pio/libdeps/def/Adafruit Unified Sensor_ID31",
                     "C:/Users/mromani/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
                     "C:/Users/mromani/.platformio/packages/framework-arduino-avr/cores/arduino",
                     "C:/Users/mromani/.platformio/packages/framework-arduino-avr/variants/mega",
                     "C:/Users/mromani/.platformio/lib/PubSubClient_ID89/src",
                     "C:/Users/mromani/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
                     "C:/Users/mromani/.platformio/packages/framework-arduino-avr/libraries/HID/src",
-                    "C:/Users/mromani/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
                     "C:/Users/mromani/.platformio/packages/framework-arduino-avr/libraries/SoftwareSerial/src",
                     "C:/Users/mromani/.platformio/packages/tool-unity",
                     ""
                 ]
             },
             "defines": [
-                "PLATFORMIO=40201",
+                "PLATFORMIO=40301",
                 "ARDUINO_AVR_MEGA2560",
                 "F_CPU=16000000L",
                 "ARDUINO_ARCH_AVR",

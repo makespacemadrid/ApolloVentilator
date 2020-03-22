@@ -21,89 +21,193 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 
-#define BME_SCK 13
-#define BME_MISO 12
-#define BME_MOSI 11
-#define BME_CS 10
+#define ENTRY_EV_PIN    10
+#define EXIT_EV_PIN    11
+
+
+#define BME280_ADDR         0x76
 
 #define SEALEVELPRESSURE_HPA (1013.25)
 
+# define INSPIRATION_TIME 1000
+# define ESPIRATION_TIME 4000
+
+
 Adafruit_BME280 bme; // I2C
-//Adafruit_BME280 bme(BME_CS); // hardware SPI
-//Adafruit_BME280 bme(BME_CS, BME_MOSI, BME_MISO, BME_SCK); // software SPI
 
 unsigned long delayTime;
 
-const uint8_t intakeValvePin = 10;
+float volmax;
+float presmax;
+float o2insp;
+float limitO2;
+float co2esp;
+float limitCO2;
+float volumeentry;
+float volumeexit;
+int ppeak = 23;
+int pplat = 18;
+int peep = 5;
+
+// Parameters
+int weight = 70; // kg
+int volc = 300; // weight * 6u8 (mL)
+int rpm = 15; // breaths per minute
+int voli = volc * rpm;
+int timep; // good to have, pause
+unsigned long inspiration = 0; // (s)
+unsigned long espiration = 0; // (s)
+
+
 uint8_t power;
 
-void printValues() {
-    Serial.print("Temperature = ");
-    Serial.print(bme.readTemperature());
-    Serial.println(" *C");
+// BEGIN Sensors and actuators
 
-    Serial.print("Pressure = ");
-
-    Serial.print(bme.readPressure() / 100.0F * 0.00750062);
-    Serial.println(" mmHG");
-
-    Serial.print("Approx. Altitude = ");
-    Serial.print(bme.readAltitude(SEALEVELPRESSURE_HPA));
-    Serial.println(" m");
-
-    Serial.print("Humidity = ");
-    Serial.print(bme.readHumidity());
-    Serial.println(" %");
-
-    Serial.println();
+// Open Entry valve
+void openEntryEV()
+{
+     digitalWrite(ENTRY_EV_PIN, 1);
 }
+
+// Close Entry valve
+void closeEntryEV()
+{
+    digitalWrite(ENTRY_EV_PIN, 0);
+}
+
+// Open exit EV
+void openExitEV()
+{
+    digitalWrite(EXIT_EV_PIN, 1);
+}
+
+// Close exit EV
+void closeExitEV()
+{
+    digitalWrite(EXIT_EV_PIN, 0);
+}
+
+
+// Get metric from entry flow mass sensor
+float getMetricVolumeEntry(){
+/*
+    L/m V
+     0  1.00
+    25  2.99
+    50  3.82
+    75  4.30
+    100 4.58
+    150 4.86
+    200 5.00
+*/
+ 
+ // TODO Check real sensor output values, som parts of datasheets says it is linear
+ // while a table of SLM/Volt shown the oposite
+ float v=analogRead(ENTRY_EV_PIN)*0.0049F;
+
+ return v;
+
+}
+
+// Get metric from exit flow mass sensor
+float getMetricVolumeExit(){}
+
+// Get metric from pressure sensor
+float getMetricPressureEntry()
+{    
+    // Using bme sensor until we have the correct one
+    return float(bme.readPressure()) / 100.0F;
+}
+
+// END sensors and actuator
+
+
+int getMetricPpeak(){}
+int getMetricPplat(){}
+
+int calculateResistance (int ppeak, int pplat) {
+	return ppeak - pplat;
+}
+
+int getMetricPeep(){}
+
+
+
+void checkLeak(float volEntry, float volExit){}
+float getMetricVolMax(){}
+float getMetricPresMax(){}
+
+int calculateCompliance (int pplat, int peep) {
+	return pplat - peep;
+}
+
+
+
 
 
 void setup() {
     Serial.begin(115200);
     while(!Serial);    // time to get serial running
-    pinMode(intakeValvePin,OUTPUT);
-    Serial.println(F("BME280 test"));
+    
 
-    unsigned status;
+    pinMode(ENTRY_EV_PIN, OUTPUT);
+    pinMode(EXIT_EV_PIN, OUTPUT);
 
-    // default settings
-    status = bme.begin(0x76);
-    // You can also pass in a Wire library object like &Wire2
-    // status = bme.begin(0x76, &Wire2)
-    if (!status) {
-        Serial.println("Could not find a valid BME280 sensor, check wiring, address, sensor ID!");
-        Serial.print("SensorID was: 0x"); Serial.println(bme.sensorID(),16);
-        Serial.print("        ID of 0xFF probably means a bad address, a BMP 180 or BMP 085\n");
-        Serial.print("   ID of 0x56-0x58 represents a BMP 280,\n");
-        Serial.print("        ID of 0x60 represents a BME 280.\n");
-        Serial.print("        ID of 0x61 represents a BME 680.\n");
-        while (1) delay(10);
+    // BME280
+    
+    if (!bme.begin(BME280_ADDR)) {
+        Serial.println(F("BME280 sensor not found!!!"));
+        Serial.println("HALT!");
+        while (1);
     }
 
-    Serial.println("-- Default Test --");
-    delayTime = 0;
+    // set max sampling for pressure sensor
+    bme.setSampling(Adafruit_BME280::MODE_NORMAL,
+                   Adafruit_BME280::SAMPLING_X1,
+                   Adafruit_BME280::SAMPLING_X16,
+                   Adafruit_BME280::SAMPLING_X1,
+                   Adafruit_BME280::FILTER_OFF,
+                   Adafruit_BME280::STANDBY_MS_0_5);
+    //
 
+    delayTime = 0;
     Serial.println();
 }
 
 
 void loop() {
-    //printValues();
-    float value = bme.readPressure() / 100.0F;
-    Serial.println(value);
-    if(value<947)
-    {
-      digitalWrite(intakeValvePin, 1);
-    }
+    
+    openEntryEV();
+	
+    if(millis() >= inspiration + INSPIRATION_TIME){
+		inspiration +=INSPIRATION_TIME;
+		Serial.println("Insp");
+	}	
 
-    while(value < 947)
-    {
-        value = float(bme.readPressure()) / 100.0F;
-        Serial.println(value);
-    }
-    digitalWrite(intakeValvePin, 0);
-//    Serial.print(bme.readPressure() / 100.0F * 0.00750062);
-//    Serial.println(" mmHG");
-    delay(delayTime);
+	ppeak = getMetricPpeak();
+	pplat = getMetricPplat();
+	
+    calculateResistance(ppeak, pplat);
+	
+    if (ppeak > 40){
+		Serial.println("PRESSURE ALERT");
+	}
+	
+    int peep = getMetricPeep();
+	
+    closeEntryEV();
+	
+    openExitEV();
+	
+    if(millis() >= inspiration + ESPIRATION_TIME){
+		inspiration +=ESPIRATION_TIME;
+		Serial.println("Esp");
+	}
+	
+    float volExit = getMetricVolumeExit();
+	checkLeak(volc, volExit);
+	calculateCompliance(pplat, peep);
+	
+    closeExitEV();
+    
 }

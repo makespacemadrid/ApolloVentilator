@@ -12,7 +12,7 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug",
-            "executable": "d:/OneDrive/AIRE_APOLLO/aire_apollo/.pio/build/megaatmega2560/firmware.elf",
+            "executable": "d:/OneDrive/AIRE_APOLLO/ApolloVentilator/Firmware/aire_apollo/.pio/build/def/firmware.elf",
             "toolchainBinDir": "C:/Users/mromani/.platformio/packages/toolchain-atmelavr/bin",
             "preLaunchTask": {
                 "type": "PlatformIO",
@@ -24,7 +24,7 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (skip Pre-Debug)",
-            "executable": "d:/OneDrive/AIRE_APOLLO/aire_apollo/.pio/build/megaatmega2560/firmware.elf",
+            "executable": "d:/OneDrive/AIRE_APOLLO/ApolloVentilator/Firmware/aire_apollo/.pio/build/def/firmware.elf",
             "toolchainBinDir": "C:/Users/mromani/.platformio/packages/toolchain-atmelavr/bin",
             "internalConsoleOptions": "openOnSessionStart"
         }

@@ -110,7 +110,25 @@ float getMetricVolumeEntry(){
 }
 
 // Get metric from exit flow mass sensor
-float getMetricVolumeExit(){}
+float getMetricVolumeExit(){
+    /*
+    L/m V
+     0  1.00
+    25  2.99
+    50  3.82
+    75  4.30
+    100 4.58
+    150 4.86
+    200 5.00
+*/
+ 
+ // TODO Check real sensor output values, som parts of datasheets says it is linear
+ // while a table of SLM/Volt shown the oposite
+ float v=analogRead(EXIT_EV_PIN)*0.0049F;
+
+ return v;
+
+}
 
 // Get metric from pressure sensor
 float getMetricPressureEntry()

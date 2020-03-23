@@ -1,4 +1,4 @@
-Firmware/aire_apollo/.vscode/c_cpp_properties.json
-Firmware/aire_apollo/.vscode/launch.json
-.vscode
+Firmware/aire_apollo/.vscode/*
+.vscode/*
 metrics/__pycache__/*
+

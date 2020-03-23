@@ -45,13 +45,16 @@ def updateVolume(data):
     plt.xlabel('Time')
     ax2.title.set_text('Volume (mL)')
 
+
 def updateViaSerialPort(interval):
     data = serial.readline()
     updatePressure(data.decode('utf-8'))
 
+
 def updateBothRand(interval):
     updateVolume(np.random.rand(1)[0])
     updatePressure(np.random.rand(1)[0])
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

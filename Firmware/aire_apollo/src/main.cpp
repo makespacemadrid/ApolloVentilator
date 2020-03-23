@@ -21,6 +21,14 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 
+#define DEBUG
+
+#ifdef DEBUG
+  #define TRACE(cadena) Serial.println("DEBUG: "  cadena)
+#else
+  #define TRACE(cadena) {}
+#endif
+
 #define ENTRY_EV_PIN    10   //ElectroValvula - Entrada
 #define EXIT_EV_PIN     9   //ElectroValvula - Salida
 
@@ -73,6 +81,17 @@ uint16_t espTime = 0;
 char          logBuffer[50];
 unsigned long lastLogTime=0;
 
+enum respiratorStatus
+{
+  RESPIRATOR_PAUSED,
+  WAIT_FOR_INSPIRATION,
+  INSPIRATION_CICLE,
+  ESPIRATION_CICLE,
+};
+
+respiratorStatus status = WAIT_FOR_INSPIRATION;
+
+
 // BEGIN Sensors and actuators
 
 // Open Entry valve
@@ -87,11 +106,18 @@ void closeEntryEV()
     digitalWrite(ENTRY_EV_PIN, 0);
 }
 
+// Get Entry EV state
+int getEntryEVState()
+{
+  return digitalRead(ENTRY_EV_PIN);
+}
+
 // Open exit EV
 void openExitEV()
 {
     digitalWrite(EXIT_EV_PIN, 1);
 }
+
 
 // Close exit EV
 void closeExitEV()
@@ -99,47 +125,36 @@ void closeExitEV()
     digitalWrite(EXIT_EV_PIN, 0);
 }
 
+// Get the status of the Exit EV (Open/Close)
+// To be change  depending on the EV type Full open, Servo, Solenoid...
+int getExitEVState()
+{
+  return digitalRead(EXIT_EV_PIN) ;
+}
+
 
 // Get metric from entry flow mass sensor
 float getMetricVolumeEntry(){
-/*
-    L/m V
-     0  1.00
-    25  2.99
-    50  3.82
-    75  4.30
-    100 4.58
-    150 4.86
-    200 5.00
-*/
+  float v;
+  //v=analogRead(ENTRY_FLOW_PIN)*0.0049F;
 
- // TODO Check real sensor output values, some parts of datasheets says it is linear
- // while a table of SLM/Volt shows the oposite
- float v=analogRead(ENTRY_FLOW_PIN)*0.0049F;
-
+  // Simulate sensor, if valve is open just return 52 l/m
+  // to see if it helps displaying graphs
+  
+  if(status==INSPIRATION_CICLE)
+    v = 52.00F;
+  else
+    v = 5.00F;
+  
  return v;
 
 }
 
 // Get metric from exit flow mass sensor
 float getMetricVolumeExit(){
-    /*
-    L/m V
-     0  1.00
-    25  2.99
-    50  3.82
-    75  4.30
-    100 4.58
-    150 4.86
-    200 5.00
-*/
-
- // TODO Check real sensor output values, some parts of datasheets says it is linear
- // while a table of SLM/Volt shows the oposite
- float v=analogRead(EXIT_FLOW_PIN)*0.0049F;
-
+  
+ float v = analogRead(EXIT_FLOW_PIN)*0.0049F;
  return v;
-
 }
 
 // Get metric from pressure sensor in mBar
@@ -176,11 +191,8 @@ void logData()
 {
     unsigned long now = millis();
     if( (now - lastLogTime) >= LOG_INTERVAL)
-    {
-        //TODO use real EV states based on pin status
-        //sprintf(logBuffer, "%d,%d,%f,%f,%f", 1, 1, getMetricPressureEntry(), getMetricVolumeEntry(), getMetricVolumeExit() );
-        //Serial.println(logBuffer);
-        String result = String(getMetricPressureEntry()) + "," + String(getMetricVolumeEntry()) + "," + String(getMetricVolumeExit());
+    {        
+        String result = "DATA:"+String(getMetricPressureEntry()) + "," + String(getMetricVolumeEntry()) + "," + String(getMetricVolumeExit());
         Serial.println(result);
         lastLogTime = now;
     }
@@ -191,7 +203,7 @@ void setBPM(uint8_t CiclesPerMinute)
   inspTime            = 60000.0/float(bpm)*0.25;
   espTime             = 60000.0/float(bpm)*0.60;
   inspirationTimeout  = 60000.0/float(bpm)*0.15;
-  Serial.println("BPM set: iTime:"+String(inspTime)+", eTime:"+String(espTime)+"iTimeout:"+String(inspirationTimeout));
+  TRACE("BPM set: iTime:"+String(inspTime)+", eTime:"+String(espTime)+"iTimeout:"+String(inspirationTimeout));
 }
 
 void setup() {
@@ -204,9 +216,9 @@ void setup() {
     // BME280
 
     if (!bme.begin(BME280_ADDR)) {
-        Serial.println(F("BME280 sensor not found!!!"));
-        Serial.println("HALT!");
-        while (1);
+        TRACE("BME280 sensor not found!!!");
+        TRACE("HALT!");
+        //while (1);
     }
 
     // set max sampling for pressure sensor
@@ -224,15 +236,6 @@ void setup() {
 }
 
 
-enum respiratorStatus
-{
-  RESPIRATOR_PAUSED,
-  WAIT_FOR_INSPIRATION,
-  INSPIRATION_CICLE,
-  ESPIRATION_CICLE,
-};
-
-respiratorStatus status = WAIT_FOR_INSPIRATION;
 
 void beginInspiration()
 {
@@ -263,18 +266,18 @@ void loop() {
 // Control del ciclo de respiracion
   if(status == RESPIRATOR_PAUSED)
   {
-    Serial.println("PAUSED...");
+    TRACE("PAUSED...");
   }
   else if(status == WAIT_FOR_INSPIRATION)
   {
     if(checkForPatientInspiration())
     {
-      Serial.println("Insp DETECTED!");
+      TRACE("Insp DETECTED!");
       beginInspiration();
     }
     else if(millis() - (lastInspirationStart + inspTime + espTime) >= inspirationTimeout)
     {
-      Serial.println("FORCING Insp");
+      TRACE("FORCING Insp");
       beginInspiration();
     }
   }
@@ -282,7 +285,7 @@ void loop() {
   {
     if(millis() - lastInspirationStart >= inspTime)
     {
-      Serial.println("BeginEspiration");
+      TRACE("BeginEspiration");
       beginEspiration();
     }
   }
@@ -291,7 +294,7 @@ void loop() {
     if(millis() - lastEspirationStart >= espTime)
     {
       status = WAIT_FOR_INSPIRATION;
-      Serial.println("Cicle Done! :), Wait for inspiration");
+      TRACE("Cicle Done! :), Wait for inspiration");
     }
   }
 
@@ -304,14 +307,13 @@ void loop() {
 
   if (ppeak > 40)
   {
-    Serial.println("PRESSURE ALERT");
+    TRACE("PRESSURE ALERT");
 	}
 
   int peep = getMetricPeep();
   float volExit = getMetricVolumeExit();
 	checkLeak(volc, volExit);
 	calculateCompliance(pplat, peep);
-
 
 // envio de datos
   logData();

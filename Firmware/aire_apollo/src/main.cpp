@@ -262,6 +262,17 @@ bool checkForPatientInspiration()
     return false;
 }
 
+
+// Send alarm to GUI by Serial
+void alarm(const char* value)
+{
+  // Raise alarm localy may be with sound?
+  // local sound alarm?
+  Serial.println("ALARM: " + String(value));
+}
+
+
+
 void loop() {
 // Control del ciclo de respiracion
   if(status == RESPIRATOR_PAUSED)
@@ -307,7 +318,7 @@ void loop() {
 
   if (ppeak > 40)
   {
-    TRACE("PRESSURE ALERT");
+    alarm("PRESSURE ALERT");
 	}
 
   int peep = getMetricPeep();

@@ -9,6 +9,7 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GLib, Pango
 
+
 from matplotlib.backends.backend_gtk3agg import (
     FigureCanvasGTK3Agg as FigureCanvas
 )
@@ -63,6 +64,7 @@ class Device(Gtk.Grid):
         self.serial_port = dev_args['serial_object']
 
         self.connection_datetime = dt.datetime.now()
+
         self.axis_y_pressure = []
         self.axis_y_volume = []
         self.axis_x_time = []
@@ -90,7 +92,6 @@ class Device(Gtk.Grid):
         )
 
         self.draw_surface.add_with_viewport(canvas)
-
         self.parent_window.show_all()
         canvas.show()
 

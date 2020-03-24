@@ -132,11 +132,8 @@ class Device(Gtk.Grid):
             return fake_data
 
         while True:
-            # Leer de puerto serie
-            # Usar funciones de Parser
-            # Actualizar lista de valores
-            serial_line = "Whatever"
-            serial_data = parse_serial_line(serial_line)
+            serial_line = "Whatever"  # TODO: Leer de puerto serie
+            serial_data = parse_serial_line(serial_line)  # TODO: Usar funciones de Parser
             serial_command = serial_data[0]
             if serial_command == "DATA":
                 timestamp = dt.datetime.now().strftime('%H:%M:%S')

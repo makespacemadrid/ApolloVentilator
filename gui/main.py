@@ -7,7 +7,7 @@ import threading
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, GLib, Pango
 
 from matplotlib.backends.backend_gtk3agg import (
     FigureCanvasGTK3Agg as FigureCanvas
@@ -42,16 +42,24 @@ class Device(Gtk.Grid):
     entry_current_volume: Gtk.Entry = Gtk.Template.Child()
     entry_peep: Gtk.Entry = Gtk.Template.Child()
 
-    def __init__(self, dev_args, *args, **kwargs):
+    def __init__(self, parent_window, dev_args, *args, **kwargs):
         super(Device, self).__init__(*args, **kwargs)
 
         self.btn_toggle_standby.connect('toggled', self.event_toggle_standby)
         self.btn_send_configuration.connect('clicked', self.event_send_configuration)
 
+        font_config = Pango.FontDescription('Dejavu Sans Mono 40')
+
+        self.entry_fio2.modify_font(font_config)
+        self.entry_breath_per_minute.modify_font(font_config)
+        self.entry_current_volume.modify_font(font_config)
+        self.entry_peep.modify_font(font_config)
+
         dev_args = kwargs.get('dev_args', {
             'serial_object': None
         })
 
+        self.parent_window = parent_window
         self.serial_port = dev_args['serial_object']
 
         self.connection_datetime = dt.datetime.now()
@@ -82,7 +90,9 @@ class Device(Gtk.Grid):
         )
 
         self.draw_surface.add_with_viewport(canvas)
-        self.draw_surface.queue_draw()
+
+        self.parent_window.show_all()
+        canvas.show()
 
         self.thread_serial_port = threading.Thread(target=self.loop_serial_read)
         self.thread_serial_port.daemon = True
@@ -152,17 +162,20 @@ class App:
         entry_label = self.builder.get_object('entry_device_label')
         entry_port = self.builder.get_object('entry_device_label')
         self.add_device_widget_to_notebook(device_args={
-            'label': entry_label.get_text() or 'New Device',
+            'label': entry_label.get_text() or 'Paciente {}'.format(len(self.devices) + 1),
             'port': entry_port.get_text()
         })
 
     def add_device_widget_to_notebook(self, device_args: dict):
-        obj_notebook = self.builder.get_object("tab_panel")
+        obj_notebook: Gtk.Notebook = self.builder.get_object("tab_panel")
 
-        page_label = Gtk.Label(label=device_args.get('label', 'New Device'))
-        page_object = Device(dev_args=device_args)
+        page_label = Gtk.Label(label=device_args.get('label', 'Device'))
+        page_object = Device(parent_window=self.window, dev_args=device_args)
 
         obj_notebook.append_page(page_object, tab_label=page_label)
+        self.devices.append(Device)
+
+        obj_notebook.set_current_page(len(self.devices))
         self.window.show_all()
 
 

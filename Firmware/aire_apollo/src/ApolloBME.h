@@ -11,6 +11,7 @@ class ApolloBME : public ApolloFlowSensor
         ~ApolloBME();
 
         float readPressure();
+        bool begin(uint8_t addr);    
     private:
         Adafruit_BME280 bme; // I2C
         

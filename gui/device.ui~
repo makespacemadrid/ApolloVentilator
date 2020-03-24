@@ -24,23 +24,11 @@
         <property name="left_attach">0</property>
         <property name="top_attach">0</property>
         <property name="width">4</property>
-        <property name="height">5</property>
+        <property name="height">6</property>
       </packing>
     </child>
     <child>
-      <object class="GtkToggleButton">
-        <property name="label" translatable="yes">ON/OFF</property>
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="receives_default">True</property>
-      </object>
-      <packing>
-        <property name="left_attach">5</property>
-        <property name="top_attach">0</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkEntry">
+      <object class="GtkEntry" id="entry_fio2">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
       </object>
@@ -50,7 +38,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkEntry">
+      <object class="GtkEntry" id="entry_breath_per_minute">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
       </object>
@@ -60,7 +48,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkEntry">
+      <object class="GtkEntry" id="entry_current_volume">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
       </object>
@@ -70,7 +58,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkEntry">
+      <object class="GtkEntry" id="entry_peep">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
       </object>
@@ -80,18 +68,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkLabel">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Standby</property>
-      </object>
-      <packing>
-        <property name="left_attach">4</property>
-        <property name="top_attach">0</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel">
+      <object class="GtkLabel" id="lbl_fio2">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">% de O2 (FIO2)</property>
@@ -102,7 +79,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkLabel">
+      <object class="GtkLabel" id="lbl_breath_per_minute">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">Breath per minute</property>
@@ -113,7 +90,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkLabel">
+      <object class="GtkLabel" id="lbl_current_volume">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">Current Volume</property>
@@ -124,7 +101,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkLabel">
+      <object class="GtkLabel" id="lbl_peep">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">PEEP</property>
@@ -132,6 +109,34 @@
       <packing>
         <property name="left_attach">4</property>
         <property name="top_attach">4</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkButton" id="btn_send_configuration">
+        <property name="label" translatable="yes">Enviar Configuracion</property>
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+        <signal name="clicked" handler="btn_click_send_config" swapped="no"/>
+      </object>
+      <packing>
+        <property name="left_attach">4</property>
+        <property name="top_attach">5</property>
+        <property name="width">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkToggleButton" id="btn_toggle_standby">
+        <property name="label" translatable="yes">Standby ON/OFF</property>
+        <property name="name">btn_toggle_standby</property>
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+      </object>
+      <packing>
+        <property name="left_attach">4</property>
+        <property name="top_attach">0</property>
+        <property name="width">2</property>
       </packing>
     </child>
   </template>

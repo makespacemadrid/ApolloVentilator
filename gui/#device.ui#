@@ -112,31 +112,29 @@
       </packing>
     </child>
     <child>
-      <object class="GtkButton" id="btn_send_configuration">
-        <property name="label" translatable="yes">Enviar Configuracion</property>
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="receives_default">True</property>
-        <signal name="clicked" handler="btn_click_send_config" swapped="no"/>
-      </object>
-      <packing>
-        <property name="left_attach">4</property>
-        <property name="top_attach">5</property>
-        <property name="width">2</property>
-      </packing>
-    </child>
-    <child>
       <object class="GtkToggleButton" id="btn_toggle_standby">
         <property name="label" translatable="yes">Standby ON/OFF</property>
         <property name="name">btn_toggle_standby</property>
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <signal name="toggled" handler="btn_toggle_standby" swapped="no"/>
       </object>
       <packing>
         <property name="left_attach">4</property>
         <property name="top_attach">0</property>
+        <property name="width">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkButton" id="btn_send_configuration">
+        <property name="label" translatable="yes">Enviar Configuracion</property>
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+      </object>
+      <packing>
+        <property name="left_attach">4</property>
+        <property name="top_attach">5</property>
         <property name="width">2</property>
       </packing>
     </child>

@@ -1,5 +1,7 @@
 # ApolloVentilator
 
+Information: Checkout our [wiki](https://github.com/makespacemadrid/ApolloVentilator/wiki)
+
 ## Getting started
 
 ### App (Python 3)

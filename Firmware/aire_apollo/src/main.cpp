@@ -20,14 +20,14 @@
 #include <SPI.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
+#include "trace.h"
+#include "ApolloHal.h"
+#include "ApolloBME.h"
+#include "MksmValve.h"
 
 #define DEBUG
 
-#ifdef DEBUG
-  #define TRACE(cadena) Serial.println("DEBUG: "  cadena)
-#else
-  #define TRACE(cadena) {}
-#endif
+
 
 #define ENTRY_EV_PIN    10   //ElectroValvula - Entrada
 #define EXIT_EV_PIN     9   //ElectroValvula - Salida
@@ -47,6 +47,7 @@
 #define INSPIRATION_THRESHOLD 10  //Descenso en la presion que marca el inicio de la respiracion
 
 Adafruit_BME280 bme; // I2C
+ApolloHal       *hal;
 
 unsigned long delayTime;
 
@@ -210,9 +211,9 @@ void setup() {
     Serial.begin(115200);
     while(!Serial);    // time to get serial running
 
-    pinMode(ENTRY_EV_PIN, OUTPUT);
-    pinMode(EXIT_EV_PIN, OUTPUT);
+    hal=new ApolloHal(new ApolloBME(), new ApolloFlowSensor(), new MksmValve(ENTRY_EV_PIN), new MksmValve(EXIT_EV_PIN));
 
+    
     // BME280
 
     if (!bme.begin(BME280_ADDR)) {

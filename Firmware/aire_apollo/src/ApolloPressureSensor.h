@@ -8,9 +8,11 @@ class ApolloPressureSensor
     public:
         ApolloPressureSensor() {};
         virtual ~ApolloPressureSensor() {};
-        virtual int begin();                // to be able to report error if the sensor is not detected
-        virtual float readPressure();
-    private:
+        virtual bool begin();                // to be able to report error if the sensor is not detected
+        virtual float read();
+        virtual float readHpa();        
+        virtual float readMMHg();
+    protected:
         
 };
 

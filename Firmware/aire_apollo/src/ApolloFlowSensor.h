@@ -6,8 +6,8 @@ class ApolloFlowSensor
     public:
         ApolloFlowSensor();
         ~ApolloFlowSensor();
-
-        float readFlow();
+        virtual bool begin();
+        virtual float read();
     private:
         
 };

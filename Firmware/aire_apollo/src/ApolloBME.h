@@ -1,20 +1,26 @@
 #ifndef APOLLO_BME_H
 #define APOLLO_BME_H
 
-#include "ApolloFlowSensor.h"
+#include "ApolloPressureSensor.h"
 #include <Adafruit_BME280.h>
 
-class ApolloBME : public ApolloFlowSensor
+/**
+ * @brief BME280 I2C sensor
+ * 
+ */
+class ApolloBME : public ApolloPressureSensor
 {
     public:
-        ApolloBME();
+        ApolloBME(uint8_t addr = 0x77);
         ~ApolloBME();
 
-        float readPressure();
-        bool begin(uint8_t addr);    
+        float read();
+        bool begin();  
+       
+          
     private:
-        Adafruit_BME280 bme; // I2C
-        
+        uint8_t     addr;
+        Adafruit_BME280 *bme = NULL; // I2C        
 };
 
 

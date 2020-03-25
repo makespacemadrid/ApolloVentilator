@@ -7,8 +7,7 @@ import threading
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GLib, Pango
-
+from gi.repository import Gtk, GLib, Pango, Notify
 
 from matplotlib.backends.backend_gtk3agg import (
     FigureCanvasGTK3Agg as FigureCanvas
@@ -19,6 +18,7 @@ import matplotlib.animation as animation
 import datetime as dt
 import numpy as np
 import time
+import os
 
 __path__ = "/".join(__file__.split('/')[0:-1])
 
@@ -128,9 +128,11 @@ class Device(Gtk.Grid):
 
     def loop_serial_read(self):
         def parse_serial_line(parse_str):
-            # TODO: MAES
-            fake_data = ["DATA"] + [str(d) for d in np.random.rand(2).tolist()]  # should point to data object in class
-            return fake_data
+            header = parse_str.split(':')[0]
+            pressure_val = parse_str.split(':')[1].split(',')[0]
+            volume_val = parse_str.split(':')[1].split(',')[1]
+            real_data = header + pressure_val + volume_val
+            return real_data
 
         while True:
             serial_line = "Whatever"  # TODO: Leer de puerto serie
@@ -141,8 +143,15 @@ class Device(Gtk.Grid):
                 data = serial_data[1:3]
                 args = [timestamp, data[0], data[1]]
                 GLib.idle_add(self.loop_update_values, *args)
-            elif serial_command == "ALARM":
-                # TODO: Mostrar alarma con notificación
+            elif serial_command == "ALERT":
+                Notify.init("Apollo Notificator") # TODO: No veo inicializarlo aquí
+                Notify.Notification.new("Alert").show() # TODO: pendientes definir capas de alertas y acciones relacionadas
+                os.system('play -nq -t alsa synth 1 sine 400')
+            elif serial_command == "DEBUG":
+                pass
+            elif serial_command == "CONFIG":
+                pass
+            else:
                 pass
             time.sleep(1)
 

@@ -12,6 +12,6 @@ Install system dependencies (Debian-based):
 
 ```
 $ apt-get install libcairo2-dev libgirepository1.0-dev
-$ pip install pygobject
+$ pip install -r requirements.txt
 $ ./main.py
 ```

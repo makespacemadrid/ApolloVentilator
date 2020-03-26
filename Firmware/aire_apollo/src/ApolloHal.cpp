@@ -29,6 +29,14 @@ bool ApolloHal::begin()
 
 ApolloHal::~ApolloHal()
 {
+    pinMode(0, INPUT_PULLUP);
+    pinMode(1, INPUT_PULLUP);
+
+    pinMode(4, OUTPUT);
+    pinMode(5, OUTPUT);
+    pinMode(6, OUTPUT);
+    pinMode(7, OUTPUT);
+
     pinMode(8, OUTPUT);
     pinMode(9, OUTPUT);
     pinMode(10, OUTPUT);
@@ -46,10 +54,24 @@ float ApolloHal::getMetricPressureEntry()
     float val = preSensor->read();
     return val;
 }
-void ApolloHal::valveOpen()
+int ApolloHal::getPresureIns()
 {
-    Serial.println("Open valve");
-    digitalWrite(9, HIGH);
+    if (digitalRead(0) == LOW)
+    {
+        Serial.println("Respira");
+        return -1;
+    }
+    else
+    {
+        return 1;
+    }
+}
+
+void ApolloHal::valveInsOpen()
+{
+    Serial.println("Open Ins valve");
+    digitalWrite(7, HIGH);
+    digitalWrite(6, LOW);
     delayMicroseconds(500);
     for (int i = 0; i < 100; i++)
     {
@@ -59,10 +81,11 @@ void ApolloHal::valveOpen()
         delayMicroseconds(500);
     }
 }
-void ApolloHal::valveClose()
+void ApolloHal::valveInsClose()
 {
-    Serial.println("Close valve");
-    digitalWrite(9, LOW);
+    Serial.println("Close Ins valve");
+    digitalWrite(7, LOW);
+    digitalWrite(6, HIGH);
     delayMicroseconds(500);
     for (int i = 0; i < 100; i++)
     {
@@ -71,4 +94,16 @@ void ApolloHal::valveClose()
         digitalWrite(8, LOW);
         delayMicroseconds(500);
     }
+}
+void ApolloHal::valveExsOpen()
+{
+    Serial.println("Open Exs valve");
+    digitalWrite(4, HIGH);
+    digitalWrite(3, LOW);
+}
+void ApolloHal::valveExsClose()
+{
+    Serial.println("Close Exs valve");
+    digitalWrite(4, LOW);
+    digitalWrite(3, HIGH);
 }

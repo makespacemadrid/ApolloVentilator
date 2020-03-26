@@ -199,29 +199,34 @@ void MechVentilation::stateNext()
 
 void MechVentilation::wait()
 {
+    digitalWrite(5, HIGH);
+
     //Detecta aspiración del paciente
-    if (false)
+    if (this->hal->getPresureIns() <= 0)
     {
         /** @todo Pendiente desarrollo */
+        stateNext();
+        digitalWrite(5, LOW);
     }
 
     //Se lanza por tiempo
     unsigned long now = millis();
-    // Serial.println("Last Execution " + String(this->lastExecution, DEC));
-    // Serial.println("Now: " + String(now, DEC));
     if ((this->lastExecution + 5000) < now)
     {
-        this->lastExecution = now;
         stateNext();
+        digitalWrite(5, LOW);
     }
 }
 void MechVentilation::insuflationBefore()
 {
+    unsigned long now = millis();
+    this->lastExecution = now;
     /**
      *  @todo Decir a la válvula que se abra
      * 
     */
-    this->hal->valveOpen();
+    this->hal->valveExsClose();
+    this->hal->valveInsOpen();
     this->stateNext();
 }
 void MechVentilation::insufaltionProcess()
@@ -241,13 +246,14 @@ void MechVentilation::insuflationAfter()
     unsigned long now = millis();
     if ((now - this->lastExecution) >= (this->_cfgSecTimeoutInsufflation * 1000))
     {
-        this->hal->valveClose();
+        this->hal->valveInsClose();
         this->stateNext();
     }
 }
 void MechVentilation::exsufflationBefore()
 {
     /** @todo Abrimos válvulas de salida */
+    this->hal->valveExsOpen();
     stateNext();
 }
 void MechVentilation::exsufflationProcess()
@@ -261,5 +267,6 @@ void MechVentilation::exsufflationProcess()
 void MechVentilation::exsufflationAfter()
 {
     /** @todo Cerramos valvula de salida? */
+    //this->hal->valveExsClose();
     stateNext();
 }

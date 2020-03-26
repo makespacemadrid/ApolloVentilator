@@ -25,8 +25,12 @@ public:
     float getMetricPressureEntry();
 
     //Test only
-    void valveOpen();
-    void valveClose();
+    void valveInsOpen();
+    void valveInsClose();
+    void valveExsOpen();
+    void valveExsClose();
+
+    int getPresureIns();
 };
 
 #endif

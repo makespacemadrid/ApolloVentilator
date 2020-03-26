@@ -9,7 +9,8 @@ class ApolloHal
 {
     private:        
         ApolloPressureSensor    *preSensor;
-        ApolloFlowSensor        *flowSensor;
+        ApolloFlowSensor        *entryFlowSensor;
+        ApolloFlowSensor        *exitFlowSensor;
         ApolloValve             *entryEV;
         ApolloValve             *exitEV;
 
@@ -18,12 +19,17 @@ class ApolloHal
         
 
     public:
-        ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *flowSensor, ApolloValve *enrtyEV, ApolloValve *exitEV);
+        ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, 
+                ApolloFlowSensor *exitFlowSensor, ApolloValve *enrtyEV, ApolloValve *exitEV);
         ~ApolloHal();
 
         bool begin();
         void setFlow(float flow, float pressure);
-        float getMetricPressureEntry();
+        float getMetricPressureEntry();        
+        float getMetricVolumeEntry();
+        float getMetricVolumeExit();
+        void beginInspiration();
+        void beginEspiration();
     
 };
 

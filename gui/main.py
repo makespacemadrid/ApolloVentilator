@@ -215,7 +215,6 @@ class App:
         self.devices.append(Device)
 
         obj_notebook.set_current_page(len(self.devices))
-        self.window.set_size_request(320,640)
 
         self.window.show_all()
 
@@ -251,7 +250,7 @@ if __name__ == '__main__':
 
     app.window.set_title('Ventilator Metrics (pressure and volume)')
     app.window.show_all()
-    # app.window.maximize()
+    app.window.maximize()
 
     Gtk.main()
 

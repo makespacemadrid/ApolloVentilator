@@ -27,6 +27,19 @@ gl_app = None
 gl_app_builder = None
 gl_app_window = None
 
+codes = {
+    "01": "Gas failure",
+    "02": "Electricity failure",
+    "03": "Machine switched off",
+    "04": "Inspiration pressure exceeded",
+    "05": "Inspiration pressure not achieved",
+    "06": "PEEP pressure not achieved",
+    "07": "Tidal volume not achieved",
+    "08": "Tidal volume exceeded",
+    "09": "Resistance: peak pressure - plateau pressure > 2cmH2O",
+    "10": "Compliance",
+    "11": "Volume Leakage"
+}
 
 @Gtk.Template(filename='device.ui')
 class Device(Gtk.Grid):
@@ -65,14 +78,11 @@ class Device(Gtk.Grid):
         self.entry_pressure.modify_font(font_config)
         self.entry_pressure_alert.modify_font(font_config)
         self.entry_peep.modify_font(font_config)
-    
 
-        dev_args = kwargs.get('dev_args', {
-            'serial_object': None
-        })
 
         self.parent_window = parent_window
-        self.serial_port = dev_args['serial_object']
+        print('----- ',dev_args)
+        self.serial_port = dev_args['port']
 
         self.connection_datetime = dt.datetime.now()
 
@@ -94,7 +104,6 @@ class Device(Gtk.Grid):
         self.draw_surface.set_border_width(10)
 
         canvas = FigureCanvas(plot_figure)  # a Gtk.DrawingArea
-        canvas.set_size_request(800, 600)
 
         self.plot_animation = animation.FuncAnimation(
             self.plot_figure,
@@ -139,26 +148,35 @@ class Device(Gtk.Grid):
 
     def loop_serial_read(self):
         def parse_serial_line(parse_str):
-            header = parse_str.split(':')[0]
-            pressure_val = parse_str.split(':')[1].split(',')[0]
-            volume_val = parse_str.split(':')[1].split(',')[1]
-            real_data = header + pressure_val + volume_val
-            return real_data
+            # real_data = header + pressure_val + volume_val
+            # return real_data
+            command_and_data = parse_str.decode('utf-8').split(':')
+            return command_and_data
             # fake_data = ["DATA"] + [str(d) for d in np.random.rand(2).tolist()]  # should point to data object in class
             # return fake_data
 
         while True:
-            serial_line = "Whatever"  # TODO: Leer de puerto serie
+            import serial
+            print(self.serial_port)
+            s = serial.Serial(self.serial_port, baudrate=115200, timeout=0)
+            time.sleep(1)
+            serial_line =  s.readline()
             serial_data = parse_serial_line(serial_line)  # TODO: Usar funciones de Parser
             serial_command = serial_data[0]
             if serial_command == "DATA":
+                print('>>>>> ',serial_line)
+                serial_code = serial_data[1].strip()
+                values = serial_data[1].split(',')
                 timestamp = dt.datetime.now().strftime('%H:%M:%S')
-                data = serial_data[1:3]
+                data = values[0:2]
                 args = [timestamp, data[0], data[1]]
                 GLib.idle_add(self.loop_update_values, *args)
             elif serial_command == "ALERT":
+                print('>>>>> ',serial_line)
+                serial_code = serial_data[1].strip()
+                print('>>>>> ',serial_data[1])
                 Notify.init("Apollo Notificator") # TODO: No veo inicializarlo aquí
-                Notify.Notification.new("Alert").show() # TODO: pendientes definir capas de alertas y acciones relacionadas
+                Notify.Notification.new("Alert caused by:", codes[serial_code]).show()
                 os.system('play -nq -t alsa synth 1 sine 400')
             elif serial_command == "DEBUG":
                 pass
@@ -183,7 +201,7 @@ class App:
         entry_port = self.builder.get_object('entry_device_label')
         self.add_device_widget_to_notebook(device_args={
             'label': entry_label.get_text() or 'Paciente {}'.format(len(self.devices) + 1),
-            'port': entry_port.get_text()
+            'port': entry_port.get_text() or '/dev/ttyUSB0'
         })
 
     def add_device_widget_to_notebook(self, device_args: dict):
@@ -231,9 +249,8 @@ if __name__ == '__main__':
     app = build_gtk_app()
 
     app.window.set_title('Ventilator Metrics (pressure and volume)')
-    app.window.set_size_request(320,640)
     app.window.show_all()
-    app.window.maximize()
+    # app.window.maximize()
 
     Gtk.main()
 

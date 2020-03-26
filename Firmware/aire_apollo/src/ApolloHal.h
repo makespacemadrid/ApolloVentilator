@@ -7,25 +7,25 @@
 
 class ApolloHal
 {
-    private:        
-        ApolloPressureSensor    *preSensor;
-        ApolloFlowSensor        *flowSensor;
-        ApolloValve             *entryEV;
-        ApolloValve             *exitEV;
+private:
+    ApolloPressureSensor *preSensor;
+    ApolloFlowSensor *flowSensor;
+    ApolloValve *entryEV;
+    ApolloValve *exitEV;
 
-        void openEntryEV();
-        void openExitEV();
-        
+    void openEntryEV();
+    void openExitEV();
 
-    public:
-        ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *flowSensor, ApolloValve *enrtyEV, ApolloValve *exitEV);
-        ~ApolloHal();
+    void ValveOpen();
+    void ValveClose();
 
-        bool begin();
-        void setFlow(float flow, float pressure);
-        float getMetricPressureEntry();
-    
+public:
+    ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *flowSensor, ApolloValve *enrtyEV, ApolloValve *exitEV);
+    ~ApolloHal();
+
+    bool begin();
+    void setFlow(float flow, float pressure);
+    float getMetricPressureEntry();
 };
-
 
 #endif

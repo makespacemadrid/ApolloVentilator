@@ -5,6 +5,7 @@
   <object class="GtkApplicationWindow" id="App">
     <property name="can_focus">False</property>
     <property name="window_position">center</property>
+    <property name="gravity">center</property>
     <child>
       <object class="GtkNotebook" id="tab_panel">
         <property name="visible">True</property>

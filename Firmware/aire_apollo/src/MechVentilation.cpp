@@ -24,88 +24,24 @@ extern byte debugMsgCounter;
 MechVentilation::MechVentilation(
     ApolloHal *hal,
     int mlTidalVolume,
-    float secTimeoutInsufflation,
-    float secTimeoutExsufflation,
-    int ventilationCyle_WaitTime)
-{
-
-    _init(
-        hal,
-        mlTidalVolume,
-        secTimeoutInsufflation,
-        secTimeoutExsufflation,
-        ventilationCyle_WaitTime,
-        LPM_FLUX_TRIGGER_VALUE_NONE);
-}
-
-MechVentilation::MechVentilation(
-    ApolloHal *hal,
-    int mlTidalVolume,
-    float secTimeoutInsufflation,
-    float secTimeoutExsufflation,
-    int ventilationCyle_WaitTime,
-    float lpmFluxTriggerValue)
+    int rpm,
+    int porcentajeInspiratorio)
 {
     _init(
         hal,
         mlTidalVolume,
-        secTimeoutInsufflation,
-        secTimeoutExsufflation,
-        ventilationCyle_WaitTime,
-        lpmFluxTriggerValue);
-}
-
-//TODO: use this method to play a beep in main loop, 1 second long for example.
-boolean MechVentilation::getStartWasTriggeredByPatient()
-{ //returns true if last respiration cycle was started by patient trigger. It is cleared when read.
-    if (_startWasTriggeredByPatient)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+        rpm,
+        porcentajeInspiratorio);
 }
 
 void MechVentilation::setTidalVolume(float mlTidalVolume)
 {
-    _cfgmlTidalVolume = mlTidalVolume;
+    this->_cfgmlTidalVolume = mlTidalVolume;
 }
 
-void MechVentilation::setTimeoutInsufflation(float secTimeoutInsufflation)
+void MechVentilation::setPressionPeep(float pressionPeep)
 {
-    _cfgSecTimeoutInsufflation = secTimeoutInsufflation;
-}
-
-void MechVentilation::setTimeoutExsufflation(float secTimeoutExsufflation)
-{
-    _cfgSecTimeoutExsufflation = secTimeoutExsufflation;
-}
-
-void MechVentilation::setSpeedInsufflation(float speedInsufflation)
-{
-    _speedInsufflation = _cfgSpeedInsufflation;
-}
-
-void MechVentilation::setSpeedExsufflation(float speedExsufflation)
-{
-    _speedExsufflation = _cfgSpeedExsufflation;
-}
-
-void MechVentilation::setVentilationCyle_WaitTime(float speedExsufflation)
-{
-    //TODO _speedExsufflation = _cfgSpeedExsufflation;
-}
-
-void MechVentilation::start(void)
-{
-    _running = true;
-}
-
-void MechVentilation::stop(void)
-{
-    _running = false;
+    this->_cfgPresionPeep = pressionPeep;
 }
 
 /**
@@ -142,23 +78,24 @@ void MechVentilation::update(void)
 void MechVentilation::_init(
     ApolloHal *hal,
     int mlTidalVolume,
-    float secTimeoutInsufflation,
-    float secTimeoutExsufflation,
-    int ventilationCyle_WaitTime,
-    float lpmFluxTriggerValue)
+    int rpm,
+    int porcentajeInspiratorio)
 {
     /* Set configuration parameters */
     this->hal = hal;
     this->_cfgmlTidalVolume = mlTidalVolume;
-    this->_cfgSecTimeoutInsufflation = secTimeoutInsufflation;
-    this->_cfgSecTimeoutExsufflation = secTimeoutExsufflation;
-    this->_cfgLpmFluxTriggerValue = lpmFluxTriggerValue;
+    this->_cfgRpm = rpm,
+    this->_cfgPorcentajeInspiratorio = porcentajeInspiratorio;
+    this->calcularCiclo(this->_cfgPorcentajeInspiratorio, this->_cfgRpm);
+    // this->_cfgSecTimeoutInsufflation = secTimeoutInsufflation;
+    // this->_cfgSecTimeoutExsufflation = secTimeoutExsufflation;
+    // this->_cfgLpmFluxTriggerValue = lpmFluxTriggerValue;
 
     /* Initialize internal state */
     this->_currentState = State::Wait;
-    this->_secTimerCnt = 0;
-    this->_secTimeoutInsufflation = 0;
-    this->_secTimeoutExsufflation = 0;
+    // this->_secTimerCnt = 0;
+    // this->_secTimeoutInsufflation = 0;
+    // this->_secTimeoutExsufflation = 0;
 }
 
 void MechVentilation::_setState(State state)
@@ -202,7 +139,7 @@ void MechVentilation::wait()
     digitalWrite(5, HIGH);
 
     //Detecta aspiración del paciente
-    if (this->hal->getPresureIns() <= 0)
+    if (this->hal->getPresureIns() <= _cfgLpmFluxTriggerValue)
     {
         /** @todo Pendiente desarrollo */
         stateNext();
@@ -211,7 +148,7 @@ void MechVentilation::wait()
 
     //Se lanza por tiempo
     unsigned long now = millis();
-    if ((this->lastExecution + 5000) < now)
+    if ((this->lastExecution + this->_cfgSecCiclo) < now)
     {
         stateNext();
         digitalWrite(5, LOW);
@@ -235,7 +172,7 @@ void MechVentilation::insufaltionProcess()
     /** @todo conectar sesor ml/min */
     float volumensensor = 0;
     unsigned long now = millis();
-    if (volumensensor >= this->_cfgmlTidalVolume || (now - this->lastExecution) >= (this->_cfgSecTimeoutInsufflation * 1000))
+    if (volumensensor >= this->_cfgmlTidalVolume || (now - this->lastExecution) >= (this->_cfgSecTimeInsufflation * 1000))
     {
         /** @todo Paramos la insuflación */
         this->stateNext();
@@ -244,7 +181,7 @@ void MechVentilation::insufaltionProcess()
 void MechVentilation::insuflationAfter()
 {
     unsigned long now = millis();
-    if ((now - this->lastExecution) >= (this->_cfgSecTimeoutInsufflation * 1000))
+    if ((now - this->lastExecution) >= (this->_cfgSecTimeInsufflation * 1000))
     {
         this->hal->valveInsClose();
         this->stateNext();
@@ -259,9 +196,23 @@ void MechVentilation::exsufflationBefore()
 void MechVentilation::exsufflationProcess()
 {
     unsigned long now = millis();
-    if ((now - lastExecution + (_cfgSecTimeoutInsufflation * 1000)) >= (_cfgSecTimeoutExsufflation * 1000))
+    if ((now - lastExecution - (this->_cfgSecTimeInsufflation * 1000)) >= (this->_cfgSecTimeExsufflation * 1000))
     {
         stateNext();
+    }
+    /**
+     * Control de la presión de salida para prevenir baja presión PEEP
+     */
+    if (this->hal->getPresureExp() <= this->_cfgPresionPeep)
+    {
+        this->hal->valveExsClose();
+    }
+
+    //Detecta aspiración del paciente
+    if (this->hal->getPresureIns() <= _cfgLpmFluxTriggerValue)
+    {
+        /** @todo Pendiente desarrollo */
+        _setState(State::InsuflationBefore);
     }
 }
 void MechVentilation::exsufflationAfter()
@@ -269,4 +220,16 @@ void MechVentilation::exsufflationAfter()
     /** @todo Cerramos valvula de salida? */
     //this->hal->valveExsClose();
     stateNext();
+}
+
+void MechVentilation::calcularCiclo(
+    int porcentajeInspiratorio,
+    int rpm)
+{
+    this->_cfgSecCiclo = 60 / rpm; // Tiempo de ciclo en segundos
+    this->_cfgSecTimeInsufflation = this->_cfgSecCiclo * porcentajeInspiratorio / 100;
+    this->_cfgSecTimeExsufflation = this->_cfgSecCiclo - this->_cfgSecTimeInsufflation;
+    Serial.println("tCiclo " + String(this->_cfgSecCiclo, DEC));
+    Serial.println("T Ins " + String(this->_cfgSecTimeInsufflation, DEC));
+    Serial.println("T Exs " + String(this->_cfgSecTimeExsufflation, DEC));
 }

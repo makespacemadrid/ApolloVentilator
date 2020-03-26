@@ -27,6 +27,12 @@ enum State
     ExsufflationAfter = 6,
 
 };
+/** Trigger of the proccess mechanical ventilation. */
+enum Trigger
+{
+    Timer = 0,              //Lanzado por tiempo definido
+    PattientInpiration = 1, //Lanzado por el paciente al inspirar
+};
 
 /**
  * This is the mechanical ventilation class.
@@ -35,60 +41,37 @@ class MechVentilation
 {
 public:
     /**
-	 * Constructor (no trigger).
+	 * Constructor
 	 *
-     * @param[in]   mlTidalVolume             Tidal volume in millilitres.
-	 * @param[in]   secTimeoutInsufflation    Insufflation timeout in seconds.
-	 * @param[in]   secTimeoutExsufflation    Exsufflation timeout in seconds.
-     * @param[in]   speedInsufflation         Insufflation speed. @todo Denote units.
-     * @param[in]   speedExsufflation         Exsufflation speed. @todo Denote units.
+     * @param[ApolloHal]    hal                       Hal object.
+     * @param[int]          mlTidalVolume             Tidal volume in millilitres.
+	 * @param[float]        secTimeoutInsufflation    Insufflation timeout in seconds.
+	 * @param[float]        secTimeoutExsufflation    Exsufflation timeout in seconds.
      *
 	 */
     MechVentilation(
         ApolloHal *hal,
         int mlTidalVolume,
+        int rpm,
+        int porcentajeInspiratorio);
+    /**,        
         float secTimeoutInsufflation,
         float secTimeoutExsufflation,
-        int ventilationCyle_WaitTime);
-
-    /**
-	 * Constructor (triggered mechanical ventilation).
-	 *
-     * @param[in]   mlTidalVolume             Tidal volume in millilitres.
-	 * @param[in]   secTimeoutInsufflation    Insufflation timeout in seconds.
-	 * @param[in]   secTimeoutExsufflation    Exsufflation timeout in seconds.
-     * @param[in]   speedInsufflation         Insufflation speed. @todo Denote units.
-     * @param[in]   speedExsufflation         Exsufflation speed. @todo Denote units.
-     * @param[in]   lpmFluxTriggerValue       Flux trigger value in Litres Per Minute.
-     *
-	 */
-    MechVentilation(
-        ApolloHal *hal,
-        int mlTidalVolume,
-        float secTimeoutInsufflation,
-        float secTimeoutExsufflation,
-        int ventilationCyle_WaitTime,
-        float lpmFluxTriggerValue);
+        int ventilationCyle_WaitTime);*/
 
     /* Setters/getters */
 
-    /** Set tidal volume */
+    // Set tidal volume
     void setTidalVolume(float mlTidalVolume);
-    /** Set insufflation timeout. */
-    void setTimeoutInsufflation(float secTimeoutInsufflation);
-    /** Set exsufflation timeout. */
-    void setTimeoutExsufflation(float secTimeoutExsufflation);
-    /** Set insufflation speed. */
-    void setSpeedInsufflation(float speedInsufflation);
-    /** Set exsufflation speed. */
-    void setSpeedExsufflation(float speedExsufflation);
-    boolean getStartWasTriggeredByPatient();
-    void setVentilationCyle_WaitTime(float speedExsufflation);
-    /** Start mechanical ventilation. */
-    void start(void);
-    /** Stop mechanical ventilation. */
-    void stop(void);
-    /** Update mechanical ventilation.
+    //Set RPM
+    void setRpm(int rpm);
+    //Set Porcentaje inspiratorio
+    void setporcentajeInspiratorio(int porcentajeInspiratorio);
+    // Set presion peep
+    void setPressionPeep(float presionPeep);
+
+    /**
+     * Update mechanical ventilation.
      *
      * If any control variable were to change, new value
      * would be applied at the beginning of the next ventilation
@@ -104,7 +87,7 @@ public:
      * @param sexo 0: varón, 1: mujer, sexo del paciente
      * @return *volumenTidal volumen tidal estimado, en mililitros
      */
-    int static MechVentilation::calcularVolumenTidal(int estatura, int sexo)
+    int static MechVentilation::calcularVolumenTidal(int estatura, int sexo, float mlByKgWeight = DEFAULT_ML_POR_KG_DE_PESO_IDEAL)
     {
         float peso0, pesoIdeal, volumenEstimado;
         if (sexo == 0)
@@ -117,31 +100,7 @@ public:
         }
         pesoIdeal = peso0 + 0.91 * (estatura - 152.4); // en kg
 
-        return ((int)(round(pesoIdeal * DEFAULT_ML_POR_KG_DE_PESO_IDEAL)));
-    }
-    /**
-     * @brief calcula los tiempos de ciclo, inspiratorio y espiratorio, en seg.
-     *
-     * Calcula a partir de las respiraciones por minuto, los tiempos de ciclo,
-     * inspiratorio y espiratorio, y las velocidades uno y dos.x
-     * @param tIns tiempo de inspiracion, en segundos
-     * @param tEsp tiempo de espiracion, en segundos
-     * @param tCiclo tiempo de ciclo, en segundos
-     * @param pasosPorRevolucion pasos en una revolución completa del stepper
-     * @param microStepper TODO: explicación?
-     * @param porcentajeInspiratorio fraccion del ciclo en la que se inspira, tIns/tCiclo*100
-     * @param rpm respiraciones por minuto
-     */
-    void static MechVentilation::calcularCicloInspiratorio(
-        float *tIns,
-        float *tEsp,
-        float *tCiclo,
-        int porcentajeInspiratorio,
-        int rpm)
-    {
-        *tCiclo = 60 / rpm; // Tiempo de ciclo en segundos
-        *tIns = *tCiclo * porcentajeInspiratorio / 100;
-        *tEsp = *tCiclo - *tIns;
+        return ((int)(round(pesoIdeal * mlByKgWeight)));
     }
 
 private:
@@ -149,10 +108,8 @@ private:
     void _init(
         ApolloHal *hal,
         int mlTidalVolume,
-        float secTimeoutInsufflation,
-        float secTimeoutExsufflation,
-        int ventilationCyle_WaitTime,
-        float lpmFluxTriggerValue);
+        int rpm,
+        int porcentajeInspiratorio);
 
     /** Set state. */
     void _setState(State state);
@@ -162,24 +119,25 @@ private:
 
     /** Tidal volume in millilitres. */
     float _cfgmlTidalVolume;
+    /** Respiraciones por minuto */
+    int _cfgRpm;
+    /** Porcentaje tiempo inspiración */
+    int _cfgPorcentajeInspiratorio;
+
     /** Flux trigger value in litres per minute. */
     float _cfgLpmFluxTriggerValue;
-    /**  Insufflation timeout in seconds. */
-    float _cfgSecTimeoutInsufflation;
-    /* Exsufflation timeout in seconds. */
-    float _cfgSecTimeoutExsufflation;
-    /** Insufflation speed. @todo Denote units. */
-    float _cfgSpeedInsufflation;
-    /** Exsufflation speed. @todo Denote units. */
-    float _cfgSpeedExsufflation;
+    /**  Ciclo time in seconds. */
+    float _cfgSecCiclo;
+    /**  Insufflation time in seconds. */
+    float _cfgSecTimeInsufflation;
+    /* Exsufflation time in seconds. */
+    float _cfgSecTimeExsufflation;
+    /* Presion peep (presión mínima en pulmones a la salida). */
+    float _cfgPresionPeep;
 
     /* Internal state */
-    /** Previous state. @todo Consider removing. */
-    //State _previousState;
     /** Current state. */
     State _currentState;
-    /** Next state. @todo Consider removing. */
-    //State _nextState;
     /** Timer counter in seconds. */
     uint64_t _secTimerCnt;
     /**  Insufflation timeout in seconds. */
@@ -215,6 +173,8 @@ private:
     void exsufflationAfter();
 
     void stateNext();
+
+    void calcularCiclo(int porcentajeInspiratorio, int rpm);
 };
 
 #endif /* INC_MECHANICAL_VENTILATION_H */

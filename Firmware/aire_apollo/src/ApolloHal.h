@@ -31,6 +31,7 @@ public:
     void valveExsClose();
 
     int getPresureIns();
+    int getPresureExp();
 };
 
 #endif

@@ -66,6 +66,18 @@ int ApolloHal::getPresureIns()
         return 1;
     }
 }
+int ApolloHal::getPresureExp()
+{
+    if (digitalRead(1) == LOW)
+    {
+        Serial.println("Inspira");
+        return -1;
+    }
+    else
+    {
+        return 1;
+    }
+}
 
 void ApolloHal::valveInsOpen()
 {

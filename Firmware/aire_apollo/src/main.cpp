@@ -225,22 +225,22 @@ void setup()
   delayTime = 0;
   setBPM(8);
   Serial.println();
-  float speedIns, speedEsp, tCiclo, tIns, tEsp;
+  //float speedIns, speedEsp, tCiclo, tIns, tEsp;
   int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
   int rpm = DEFAULT_RPM;
   // CÁLCULO: CONSTANTES DE TIEMPO INSPIRACION/ESPIRACION
   // =========================================================================
   //display.writeLine(0, "Tins  | Tesp");
-  MechVentilation::calcularCicloInspiratorio(&tIns, &tEsp, &tCiclo, porcentajeInspiratorio, rpm);
+  /**MechVentilation::calcularCicloInspiratorio(&tIns, &tEsp, &tCiclo, porcentajeInspiratorio, rpm);
   //display.writeLine(1, String(tIns) + " s | " + String(tEsp) + " s");
   Serial.println("Tiempo del ciclo (seg):" + String(tCiclo));
   Serial.println("Tiempo inspiratorio (seg):" + String(tIns));
   Serial.println("Tiempo espiratorio (seg):" + String(tEsp));
-
+*/
   int vTidal = MechVentilation::calcularVolumenTidal(170, 1);
-  int ventilationCycle_WaitBeforeInsuflationTime = 800;
-  ventilation = new MechVentilation(hal, vTidal, tIns, tEsp, ventilationCycle_WaitBeforeInsuflationTime);
-  ventilation->start();
+  //int ventilationCycle_WaitBeforeInsuflationTime = 800;
+  ventilation = new MechVentilation(hal, vTidal, rpm, porcentajeInspiratorio);
+  /** ventilation->start();*/
 }
 
 void beginInspiration()

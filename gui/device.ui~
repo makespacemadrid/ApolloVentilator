@@ -58,138 +58,20 @@
       <packing>
         <property name="left_attach">0</property>
         <property name="top_attach">0</property>
-        <property name="width">3</property>
         <property name="height">10</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="lbl_mode">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Mode</property>
-      </object>
-      <packing>
-        <property name="left_attach">3</property>
-        <property name="top_attach">1</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkToggleButton" id="btn_toggle_standby">
-        <property name="label" translatable="yes">Standby ON/OFF</property>
-        <property name="name">btn_toggle_standby</property>
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="receives_default">True</property>
-        <signal name="toggled" handler="btn_toggle_standby" swapped="no"/>
-      </object>
-      <packing>
-        <property name="left_attach">3</property>
-        <property name="top_attach">0</property>
-        <property name="width">2</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="lbl_ie_ratio">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Insp. Esp. Ratio</property>
-      </object>
-      <packing>
-        <property name="left_attach">3</property>
-        <property name="top_attach">2</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="lbl_fio2">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">FIO2 (%)</property>
-      </object>
-      <packing>
-        <property name="left_attach">3</property>
-        <property name="top_attach">3</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="lbl_breath_per_minute">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Respiratory Rate (bpm)</property>
-      </object>
-      <packing>
-        <property name="left_attach">3</property>
-        <property name="top_attach">4</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="lbl_current_volume">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Tidal Volume (mL)</property>
-      </object>
-      <packing>
-        <property name="left_attach">3</property>
-        <property name="top_attach">5</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="lbl_pressure">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Pressure (cmH20)</property>
-      </object>
-      <packing>
-        <property name="left_attach">3</property>
-        <property name="top_attach">6</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="lbl_peep">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">PEEP (mbars)</property>
-      </object>
-      <packing>
-        <property name="left_attach">3</property>
-        <property name="top_attach">7</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="lbl_pressure_alert">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Pressure Alert (cmH2O)</property>
-      </object>
-      <packing>
-        <property name="left_attach">3</property>
-        <property name="top_attach">8</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkButton" id="btn_send_configuration">
-        <property name="label" translatable="yes">Enviar Configuracion</property>
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="receives_default">True</property>
-        <signal name="clicked" handler="btn_click_send_config" swapped="no"/>
-      </object>
-      <packing>
-        <property name="left_attach">3</property>
-        <property name="top_attach">9</property>
-        <property name="width">2</property>
       </packing>
     </child>
     <child>
       <object class="GtkComboBoxText" id="entry_mode">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="can_focus">True</property>
         <items>
           <item id="prvc" translatable="yes">Pressure Regulated (PRVC)</item>
           <item id="vrpc" translatable="yes">Volume Regulated (VRPC)</item>
         </items>
       </object>
       <packing>
-        <property name="left_attach">4</property>
+        <property name="left_attach">2</property>
         <property name="top_attach">1</property>
       </packing>
     </child>
@@ -204,30 +86,30 @@
         </items>
       </object>
       <packing>
-        <property name="left_attach">4</property>
+        <property name="left_attach">2</property>
         <property name="top_attach">2</property>
       </packing>
     </child>
     <child>
       <object class="GtkSpinButton" id="entry_fio2">
         <property name="visible">True</property>
-        <property name="can_focus">True</property>
+        <property name="can_focus">False</property>
         <property name="valign">end</property>
       </object>
       <packing>
-        <property name="left_attach">4</property>
+        <property name="left_attach">2</property>
         <property name="top_attach">3</property>
       </packing>
     </child>
     <child>
       <object class="GtkSpinButton" id="entry_breath_per_minute">
         <property name="visible">True</property>
-        <property name="can_focus">True</property>
+        <property name="can_focus">False</property>
         <property name="max_length">2</property>
         <property name="adjustment">bpm_adjust</property>
       </object>
       <packing>
-        <property name="left_attach">4</property>
+        <property name="left_attach">2</property>
         <property name="top_attach">4</property>
       </packing>
     </child>
@@ -238,7 +120,7 @@
         <property name="adjustment">vc_adjust</property>
       </object>
       <packing>
-        <property name="left_attach">4</property>
+        <property name="left_attach">2</property>
         <property name="top_attach">5</property>
       </packing>
     </child>
@@ -249,7 +131,7 @@
         <property name="adjustment">pressure_adjust</property>
       </object>
       <packing>
-        <property name="left_attach">4</property>
+        <property name="left_attach">2</property>
         <property name="top_attach">6</property>
       </packing>
     </child>
@@ -260,8 +142,116 @@
         <property name="adjustment">peep_adjust</property>
       </object>
       <packing>
-        <property name="left_attach">4</property>
+        <property name="left_attach">2</property>
         <property name="top_attach">7</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="lbl_mode">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="halign">center</property>
+        <property name="valign">center</property>
+        <property name="label" translatable="yes">Mode</property>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkToggleButton" id="btn_toggle_standby">
+        <property name="label" translatable="yes">Standby ON/OFF</property>
+        <property name="name">btn_toggle_standby</property>
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+        <signal name="toggled" handler="btn_toggle_standby" swapped="no"/>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">0</property>
+        <property name="width">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="lbl_ie_ratio">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="label" translatable="yes">Insp. Esp. Ratio</property>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="lbl_fio2">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="label" translatable="yes">FIO2 (%)</property>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">3</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="lbl_breath_per_minute">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="label" translatable="yes">Respiratory Rate (bpm)</property>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">4</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="lbl_current_volume">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="label" translatable="yes">Tidal Volume (mL)</property>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">5</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="lbl_pressure">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="label" translatable="yes">Pressure (cmH20)</property>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">6</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="lbl_peep">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="label" translatable="yes">PEEP (mbars)</property>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">7</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkButton" id="btn_send_configuration">
+        <property name="label" translatable="yes">Enviar Configuracion</property>
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+        <signal name="clicked" handler="btn_click_send_config" swapped="no"/>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">9</property>
+        <property name="width">2</property>
       </packing>
     </child>
     <child>
@@ -271,7 +261,18 @@
         <property name="adjustment">pressure_alert_adjust</property>
       </object>
       <packing>
-        <property name="left_attach">4</property>
+        <property name="left_attach">2</property>
+        <property name="top_attach">8</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="lbl_pressure_alert">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Pressure Alert (cmH2O)</property>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
         <property name="top_attach">8</property>
       </packing>
     </child>

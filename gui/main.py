@@ -7,8 +7,8 @@ import threading
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GLib, Pango
-
+gi.require_version('Notify', '0.7')
+from gi.repository import Gtk, GLib, Pango, Notify
 
 from matplotlib.backends.backend_gtk3agg import (
     FigureCanvasGTK3Agg as FigureCanvas
@@ -19,6 +19,7 @@ import matplotlib.animation as animation
 import datetime as dt
 import numpy as np
 import time
+import os
 
 __path__ = "/".join(__file__.split('/')[0:-1])
 
@@ -37,11 +38,16 @@ class Device(Gtk.Grid):
 
     btn_toggle_standby: Gtk.ToggleButton = Gtk.Template.Child()
     btn_send_configuration: Gtk.Button = Gtk.Template.Child()
-
+    
+    entry_mode: Gtk.Entry = Gtk.Template.Child()
+    entry_ie_ratio: Gtk.Entry = Gtk.Template.Child()
     entry_fio2: Gtk.Entry = Gtk.Template.Child()
     entry_breath_per_minute = Gtk.Template.Child()
     entry_current_volume: Gtk.Entry = Gtk.Template.Child()
+    entry_pressure: Gtk.Entry = Gtk.Template.Child()
+    entry_pressure_alert: Gtk.Entry = Gtk.Template.Child()
     entry_peep: Gtk.Entry = Gtk.Template.Child()
+
 
     def __init__(self, parent_window, dev_args, *args, **kwargs):
         super(Device, self).__init__(*args, **kwargs)
@@ -51,10 +57,15 @@ class Device(Gtk.Grid):
 
         font_config = Pango.FontDescription('Dejavu Sans Mono 40')
 
+        self.entry_mode.modify_font(font_config)
+        self.entry_ie_ratio.modify_font(font_config)
         self.entry_fio2.modify_font(font_config)
         self.entry_breath_per_minute.modify_font(font_config)
         self.entry_current_volume.modify_font(font_config)
+        self.entry_pressure.modify_font(font_config)
+        self.entry_pressure_alert.modify_font(font_config)
         self.entry_peep.modify_font(font_config)
+    
 
         dev_args = kwargs.get('dev_args', {
             'serial_object': None
@@ -128,9 +139,13 @@ class Device(Gtk.Grid):
 
     def loop_serial_read(self):
         def parse_serial_line(parse_str):
-            # TODO: MAES
-            fake_data = ["DATA"] + [str(d) for d in np.random.rand(2).tolist()]  # should point to data object in class
-            return fake_data
+            header = parse_str.split(':')[0]
+            pressure_val = parse_str.split(':')[1].split(',')[0]
+            volume_val = parse_str.split(':')[1].split(',')[1]
+            real_data = header + pressure_val + volume_val
+            return real_data
+            # fake_data = ["DATA"] + [str(d) for d in np.random.rand(2).tolist()]  # should point to data object in class
+            # return fake_data
 
         while True:
             serial_line = "Whatever"  # TODO: Leer de puerto serie
@@ -141,8 +156,15 @@ class Device(Gtk.Grid):
                 data = serial_data[1:3]
                 args = [timestamp, data[0], data[1]]
                 GLib.idle_add(self.loop_update_values, *args)
-            elif serial_command == "ALARM":
-                # TODO: Mostrar alarma con notificación
+            elif serial_command == "ALERT":
+                Notify.init("Apollo Notificator") # TODO: No veo inicializarlo aquí
+                Notify.Notification.new("Alert").show() # TODO: pendientes definir capas de alertas y acciones relacionadas
+                os.system('play -nq -t alsa synth 1 sine 400')
+            elif serial_command == "DEBUG":
+                pass
+            elif serial_command == "CONFIG":
+                pass
+            else:
                 pass
             time.sleep(1)
 
@@ -174,6 +196,8 @@ class App:
         self.devices.append(Device)
 
         obj_notebook.set_current_page(len(self.devices))
+        self.window.set_size_request(320,640)
+
         self.window.show_all()
 
 
@@ -207,6 +231,7 @@ if __name__ == '__main__':
     app = build_gtk_app()
 
     app.window.set_title('Ventilator Metrics (pressure and volume)')
+    app.window.set_size_request(320,640)
     app.window.show_all()
     app.window.maximize()
 

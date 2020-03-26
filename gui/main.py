@@ -28,17 +28,17 @@ gl_app_builder = None
 gl_app_window = None
 
 codes = {
-"01": "Gas failure",
-"02": "Electricity failure",
-"03": "Machine switched off",
-"04": "Inspiration pressure exceeded",
-"05": "Inspiration pressure not achieved",
-"06": "PEEP pressure not achieved",
-"07": "Tidal volume not achieved",
-"08": "Tidal volume exceeded",
-"09": "Resistance: peak pressure - plateau pressure > 2cmH2O",
-"10": "Compliance",
-"11": "Volume Leakage"
+    "01": "Gas failure",
+    "02": "Electricity failure",
+    "03": "Machine switched off",
+    "04": "Inspiration pressure exceeded",
+    "05": "Inspiration pressure not achieved",
+    "06": "PEEP pressure not achieved",
+    "07": "Tidal volume not achieved",
+    "08": "Tidal volume exceeded",
+    "09": "Resistance: peak pressure - plateau pressure > 2cmH2O",
+    "10": "Compliance",
+    "11": "Volume Leakage"
 }
 
 @Gtk.Template(filename='device.ui')
@@ -148,9 +148,6 @@ class Device(Gtk.Grid):
 
     def loop_serial_read(self):
         def parse_serial_line(parse_str):
-            # header = parse_str.split(':')[0]
-            # pressure_val = parse_str.split(':')[1].split(',')[0]
-            # volume_val = parse_str.split(':')[1].split(',')[1]
             # real_data = header + pressure_val + volume_val
             # return real_data
             command_and_data = parse_str.decode('utf-8').split(':')
@@ -167,8 +164,11 @@ class Device(Gtk.Grid):
             serial_data = parse_serial_line(serial_line)  # TODO: Usar funciones de Parser
             serial_command = serial_data[0]
             if serial_command == "DATA":
+                print('>>>>> ',serial_line)
+                serial_code = serial_data[1].strip()
+                values = serial_data[1].split(',')
                 timestamp = dt.datetime.now().strftime('%H:%M:%S')
-                data = serial_data[1:3]
+                data = values[0:2]
                 args = [timestamp, data[0], data[1]]
                 GLib.idle_add(self.loop_update_values, *args)
             elif serial_command == "ALERT":

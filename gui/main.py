@@ -179,11 +179,12 @@ class Device(Gtk.Grid):
                 Notify.Notification.new("Alert caused by:", codes[serial_code]).show()
                 os.system('play -nq -t alsa synth 1 sine 400')
             elif serial_command == "DEBUG":
-                pass
+                pass # DO SOMETHING
             elif serial_command == "CONFIG":
                 pass
             else:
                 pass
+
             time.sleep(1)
 
 

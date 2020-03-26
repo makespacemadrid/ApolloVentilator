@@ -16,9 +16,6 @@ private:
     void openEntryEV();
     void openExitEV();
 
-    void ValveOpen();
-    void ValveClose();
-
 public:
     ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *flowSensor, ApolloValve *enrtyEV, ApolloValve *exitEV);
     ~ApolloHal();
@@ -26,6 +23,10 @@ public:
     bool begin();
     void setFlow(float flow, float pressure);
     float getMetricPressureEntry();
+
+    //Test only
+    void valveOpen();
+    void valveClose();
 };
 
 #endif

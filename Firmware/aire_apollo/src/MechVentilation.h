@@ -49,8 +49,6 @@ public:
         int mlTidalVolume,
         float secTimeoutInsufflation,
         float secTimeoutExsufflation,
-        float speedInsufflation,
-        float speedExsufflation,
         int ventilationCyle_WaitTime);
 
     /**
@@ -69,8 +67,6 @@ public:
         int mlTidalVolume,
         float secTimeoutInsufflation,
         float secTimeoutExsufflation,
-        float speedInsufflation,
-        float speedExsufflation,
         int ventilationCyle_WaitTime,
         float lpmFluxTriggerValue);
 
@@ -101,6 +97,52 @@ public:
      * @note This method must be called on the main loop.
      */
     void update(void);
+    /**
+     * @brief estima el volumen tidal en función de estatura y sexo, en ml.
+     *
+     * @param estatura en cm, del paciente
+     * @param sexo 0: varón, 1: mujer, sexo del paciente
+     * @return *volumenTidal volumen tidal estimado, en mililitros
+     */
+    int static MechVentilation::calcularVolumenTidal(int estatura, int sexo)
+    {
+        float peso0, pesoIdeal, volumenEstimado;
+        if (sexo == 0)
+        { // Varón
+            peso0 = 50.0;
+        }
+        else if (sexo == 1)
+        { // Mujer
+            peso0 = 45.5;
+        }
+        pesoIdeal = peso0 + 0.91 * (estatura - 152.4); // en kg
+
+        return ((int)(round(pesoIdeal * DEFAULT_ML_POR_KG_DE_PESO_IDEAL)));
+    }
+    /**
+     * @brief calcula los tiempos de ciclo, inspiratorio y espiratorio, en seg.
+     *
+     * Calcula a partir de las respiraciones por minuto, los tiempos de ciclo,
+     * inspiratorio y espiratorio, y las velocidades uno y dos.x
+     * @param tIns tiempo de inspiracion, en segundos
+     * @param tEsp tiempo de espiracion, en segundos
+     * @param tCiclo tiempo de ciclo, en segundos
+     * @param pasosPorRevolucion pasos en una revolución completa del stepper
+     * @param microStepper TODO: explicación?
+     * @param porcentajeInspiratorio fraccion del ciclo en la que se inspira, tIns/tCiclo*100
+     * @param rpm respiraciones por minuto
+     */
+    void static MechVentilation::calcularCicloInspiratorio(
+        float *tIns,
+        float *tEsp,
+        float *tCiclo,
+        int porcentajeInspiratorio,
+        int rpm)
+    {
+        *tCiclo = 60 / rpm; // Tiempo de ciclo en segundos
+        *tIns = *tCiclo * porcentajeInspiratorio / 100;
+        *tEsp = *tCiclo - *tIns;
+    }
 
 private:
     /** Initialization. */
@@ -109,8 +151,6 @@ private:
         int mlTidalVolume,
         float secTimeoutInsufflation,
         float secTimeoutExsufflation,
-        float speedInsufflation,
-        float speedExsufflation,
         int ventilationCyle_WaitTime,
         float lpmFluxTriggerValue);
 

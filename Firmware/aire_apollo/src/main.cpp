@@ -25,7 +25,7 @@
 #include "ApolloBME.h"
 #include "MksmValve.h"
 #include "Comunications.h"
-
+#include "MechVentilation.h";
 #define DEBUG
 
 #define ENTRY_EV_PIN 10 //ElectroValvula - Entrada
@@ -194,6 +194,7 @@ void setBPM(uint8_t CiclesPerMinute)
   inspirationTimeout = 60000.0 / float(bpm) * 0.15;
   TRACE("BPM set: iTime:" + String(inspTime) + ", eTime:" + String(espTime) + "iTimeout:" + String(inspirationTimeout));
 }
+MechVentilation *ventilation;
 
 void setup()
 {
@@ -224,6 +225,22 @@ void setup()
   delayTime = 0;
   setBPM(8);
   Serial.println();
+  float speedIns, speedEsp, tCiclo, tIns, tEsp;
+  int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
+  int rpm = DEFAULT_RPM;
+  // CÁLCULO: CONSTANTES DE TIEMPO INSPIRACION/ESPIRACION
+  // =========================================================================
+  //display.writeLine(0, "Tins  | Tesp");
+  MechVentilation::calcularCicloInspiratorio(&tIns, &tEsp, &tCiclo, porcentajeInspiratorio, rpm);
+  //display.writeLine(1, String(tIns) + " s | " + String(tEsp) + " s");
+  Serial.println("Tiempo del ciclo (seg):" + String(tCiclo));
+  Serial.println("Tiempo inspiratorio (seg):" + String(tIns));
+  Serial.println("Tiempo espiratorio (seg):" + String(tEsp));
+
+  int vTidal = MechVentilation::calcularVolumenTidal(170, 1);
+  int ventilationCycle_WaitBeforeInsuflationTime = 800;
+  ventilation = new MechVentilation(hal, vTidal, tIns, tEsp, ventilationCycle_WaitBeforeInsuflationTime);
+  ventilation->start();
 }
 
 void beginInspiration()
@@ -315,4 +332,5 @@ void loop()
 
   // envio de datos
   logData();
+  ventilation->update();
 }

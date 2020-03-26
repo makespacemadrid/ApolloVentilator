@@ -26,8 +26,6 @@ MechVentilation::MechVentilation(
     int mlTidalVolume,
     float secTimeoutInsufflation,
     float secTimeoutExsufflation,
-    float speedInsufflation,
-    float speedExsufflation,
     int ventilationCyle_WaitTime)
 {
 
@@ -36,8 +34,6 @@ MechVentilation::MechVentilation(
         mlTidalVolume,
         secTimeoutInsufflation,
         secTimeoutExsufflation,
-        speedInsufflation,
-        speedExsufflation,
         ventilationCyle_WaitTime,
         LPM_FLUX_TRIGGER_VALUE_NONE);
 }
@@ -47,8 +43,6 @@ MechVentilation::MechVentilation(
     int mlTidalVolume,
     float secTimeoutInsufflation,
     float secTimeoutExsufflation,
-    float speedInsufflation,
-    float speedExsufflation,
     int ventilationCyle_WaitTime,
     float lpmFluxTriggerValue)
 {
@@ -57,8 +51,6 @@ MechVentilation::MechVentilation(
         mlTidalVolume,
         secTimeoutInsufflation,
         secTimeoutExsufflation,
-        speedInsufflation,
-        speedExsufflation,
         ventilationCyle_WaitTime,
         lpmFluxTriggerValue);
 }
@@ -127,7 +119,7 @@ void MechVentilation::update(void)
         wait();
         break;
     case State::InsuflationBefore:
-        insuflationBefore();
+        this->insuflationBefore();
         break;
     case State::InsufaltionProcess:
         insufaltionProcess();
@@ -152,59 +144,53 @@ void MechVentilation::_init(
     int mlTidalVolume,
     float secTimeoutInsufflation,
     float secTimeoutExsufflation,
-    float speedInsufflation,
-    float speedExsufflation,
     int ventilationCyle_WaitTime,
     float lpmFluxTriggerValue)
 {
     /* Set configuration parameters */
-    hal = hal;
-    _cfgmlTidalVolume = mlTidalVolume;
-    _cfgSecTimeoutInsufflation = secTimeoutInsufflation;
-    _cfgSecTimeoutExsufflation = secTimeoutExsufflation;
-    _cfgSpeedInsufflation = speedInsufflation;
-    _cfgSpeedExsufflation = speedExsufflation;
-    _cfgLpmFluxTriggerValue = lpmFluxTriggerValue;
+    this->hal = hal;
+    this->_cfgmlTidalVolume = mlTidalVolume;
+    this->_cfgSecTimeoutInsufflation = secTimeoutInsufflation;
+    this->_cfgSecTimeoutExsufflation = secTimeoutExsufflation;
+    this->_cfgLpmFluxTriggerValue = lpmFluxTriggerValue;
 
     /* Initialize internal state */
-    _currentState = State::Wait;
-    _secTimerCnt = 0;
-    _secTimeoutInsufflation = 0;
-    _secTimeoutExsufflation = 0;
-    _speedInsufflation = 0;
-    _speedExsufflation = 0;
+    this->_currentState = State::Wait;
+    this->_secTimerCnt = 0;
+    this->_secTimeoutInsufflation = 0;
+    this->_secTimeoutExsufflation = 0;
 }
 
 void MechVentilation::_setState(State state)
 {
     //_previousState = _currentState;
-    _currentState = state;
+    this->_currentState = state;
 }
 
 void MechVentilation::stateNext()
 {
-    switch (_currentState)
+    switch (this->_currentState)
     {
     case State::Wait:
-        _currentState = State::InsuflationBefore;
+        this->_currentState = State::InsuflationBefore;
         break;
     case State::InsuflationBefore:
-        _currentState = State::InsufaltionProcess;
+        this->_currentState = State::InsufaltionProcess;
         break;
     case State::InsufaltionProcess:
-        _currentState = State::InsuflationAfter;
+        this->_currentState = State::InsuflationAfter;
         break;
     case State::InsuflationAfter:
-        _currentState = State::ExsufflationBefore;
+        this->_currentState = State::ExsufflationBefore;
         break;
     case State::ExsufflationBefore:
-        _currentState = State::ExsufflationProcess;
+        this->_currentState = State::ExsufflationProcess;
         break;
     case State::ExsufflationProcess:
-        _currentState = State::ExsufflationAfter;
+        this->_currentState = State::ExsufflationAfter;
         break;
     case State::ExsufflationAfter:
-        _currentState = State::Wait;
+        this->_currentState = State::Wait;
         break;
     default:
         break;
@@ -221,9 +207,11 @@ void MechVentilation::wait()
 
     //Se lanza por tiempo
     unsigned long now = millis();
-    if ((lastExecution + currentWaitTriggerTime) > now)
+    // Serial.println("Last Execution " + String(this->lastExecution, DEC));
+    // Serial.println("Now: " + String(now, DEC));
+    if ((this->lastExecution + 5000) < now)
     {
-        lastExecution = now;
+        this->lastExecution = now;
         stateNext();
     }
 }
@@ -233,6 +221,8 @@ void MechVentilation::insuflationBefore()
      *  @todo Decir a la válvula que se abra
      * 
     */
+    this->hal->valveOpen();
+    this->stateNext();
 }
 void MechVentilation::insufaltionProcess()
 {
@@ -240,18 +230,19 @@ void MechVentilation::insufaltionProcess()
     /** @todo conectar sesor ml/min */
     float volumensensor = 0;
     unsigned long now = millis();
-    if (volumensensor >= _cfgmlTidalVolume || (now - lastExecution) >= _cfgSecTimeoutInsufflation)
+    if (volumensensor >= this->_cfgmlTidalVolume || (now - this->lastExecution) >= (this->_cfgSecTimeoutInsufflation * 1000))
     {
         /** @todo Paramos la insuflación */
-        stateNext();
+        this->stateNext();
     }
 }
 void MechVentilation::insuflationAfter()
 {
     unsigned long now = millis();
-    if ((now - lastExecution) >= _cfgSecTimeoutInsufflation)
+    if ((now - this->lastExecution) >= (this->_cfgSecTimeoutInsufflation * 1000))
     {
-        stateNext();
+        this->hal->valveClose();
+        this->stateNext();
     }
 }
 void MechVentilation::exsufflationBefore()
@@ -262,7 +253,7 @@ void MechVentilation::exsufflationBefore()
 void MechVentilation::exsufflationProcess()
 {
     unsigned long now = millis();
-    if ((now - lastExecution + _cfgSecTimeoutInsufflation) >= _cfgSecTimeoutExsufflation)
+    if ((now - lastExecution + (_cfgSecTimeoutInsufflation * 1000)) >= (_cfgSecTimeoutExsufflation * 1000))
     {
         stateNext();
     }

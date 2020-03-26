@@ -139,13 +139,13 @@ class Device(Gtk.Grid):
 
     def loop_serial_read(self):
         def parse_serial_line(parse_str):
-            # header = parse_str.split(':')[0]
-            # pressure_val = parse_str.split(':')[1].split(',')[0]
-            # volume_val = parse_str.split(':')[1].split(',')[1]
-            # real_data = header + pressure_val + volume_val
-            # return real_data
-            fake_data = ["DATA"] + [str(d) for d in np.random.rand(2).tolist()]  # should point to data object in class
-            return fake_data
+            header = parse_str.split(':')[0]
+            pressure_val = parse_str.split(':')[1].split(',')[0]
+            volume_val = parse_str.split(':')[1].split(',')[1]
+            real_data = header + pressure_val + volume_val
+            return real_data
+            # fake_data = ["DATA"] + [str(d) for d in np.random.rand(2).tolist()]  # should point to data object in class
+            # return fake_data
 
         while True:
             serial_line = "Whatever"  # TODO: Leer de puerto serie

@@ -115,9 +115,9 @@ void setBPM(uint8_t CiclesPerMinute)
   TRACE("BPM set: iTime:" + String(inspTime) + ", eTime:" + String(espTime) + "iTimeout:" + String(inspirationTimeout));
 }
 MechVentilation *ventilation;
-ApolloEncoder encoderRPM(12, 13, 0);
-ApolloEncoder encoderTidal(10, 11, 0);
-ApolloEncoder encoderPorcInspira(8, 9, 0);
+ApolloEncoder encoderRPM(PIN_ENC_RPM_DT, PIN_ENC_RPM_CLK, PIN_ENC_RPM_SW);
+ApolloEncoder encoderTidal(PIN_ENC_TIDAL_DT, PIN_ENC_TIDAL_CLK, PIN_ENC_TIDAL_SW);
+ApolloEncoder encoderPorcInspira(PIN_ENC_PCTINS_DT, PIN_ENC_PCTINS_CLK, PIN_ENC_PCTINS_SW);
 Display display = Display();
 
 int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;

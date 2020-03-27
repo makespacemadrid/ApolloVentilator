@@ -7,7 +7,7 @@ Information: Checkout our [wiki](https://github.com/makespacemadrid/ApolloVentil
 ### Linux
 
 ```
-$ apt-get install libcairo2-dev libgirepository1.0-dev
+$ apt-get install libcairo2-dev libgirepository1.0-dev python3-cairo-dev
 ```
 
 ### Mac

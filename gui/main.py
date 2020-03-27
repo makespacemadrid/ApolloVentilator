@@ -54,7 +54,7 @@ class Device(Gtk.Grid):
 
     btn_toggle_standby: Gtk.ToggleButton = Gtk.Template.Child()
     btn_send_configuration: Gtk.Button = Gtk.Template.Child()
-    
+
     entry_mode: Gtk.Entry = Gtk.Template.Child()
     entry_ie_ratio: Gtk.Entry = Gtk.Template.Child()
     entry_fio2: Gtk.Entry = Gtk.Template.Child()
@@ -70,18 +70,6 @@ class Device(Gtk.Grid):
 
         self.btn_toggle_standby.connect('toggled', self.event_toggle_standby)
         self.btn_send_configuration.connect('clicked', self.event_send_configuration)
-
-        font_config = Pango.FontDescription('Dejavu Sans Mono 40')
-
-        self.entry_mode.modify_font(font_config)
-        self.entry_ie_ratio.modify_font(font_config)
-        self.entry_fio2.modify_font(font_config)
-        self.entry_breath_per_minute.modify_font(font_config)
-        self.entry_current_volume.modify_font(font_config)
-        self.entry_pressure.modify_font(font_config)
-        self.entry_pressure_alert.modify_font(font_config)
-        self.entry_peep.modify_font(font_config)
-
 
         self.parent_window = parent_window
         self.serial_port = dev_args['port']

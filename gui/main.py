@@ -153,7 +153,8 @@ class Device(Gtk.Grid):
                 values = serial_data[1].split(',')
                 timestamp = dt.datetime.now().strftime('%H:%M:%S')
                 data = values[0:2]
-                args = [timestamp, data[0], data[1]]
+                args = [timestamp, data[0], data[1].strip()]
+                print(args)
                 GLib.idle_add(self.loop_update_values, *args)
             elif serial_command == "ALERT":
                 print('>>>>> ',serial_line)
@@ -168,7 +169,7 @@ class Device(Gtk.Grid):
                 self.serial.write(schema)
             else:
                 logging.error(f"Serial command not found: {serial_command}")
-            Notify.Notification.new("Alert caused by:", codes[serial_code]).show()
+                Notify.Notification.new("Serial command not found").show()
 
             time.sleep(1)
 
@@ -188,13 +189,13 @@ class App:
         entry_label = self.builder.get_object('entry_device_label')
         entry_port = self.builder.get_object('entry_device_path')
         # if entry_port.get_text() is '':
-        try:
-            self.add_device_widget_to_notebook(device_args={
-                'label': entry_label.get_text() or 'Paciente {}'.format(len(self.devices) + 1),
-                'port': entry_port.get_text()
-            })
-        except:
-            Notify.Notification.new("Serial port Not Found")
+        # try:
+        self.add_device_widget_to_notebook(device_args={
+            'label': entry_label.get_text() or 'Paciente {}'.format(len(self.devices) + 1),
+            'port': entry_port.get_text() or '/dev/ttyUSB0'
+        })
+        # except:
+            # Notify.Notification.new("Serial port Not Found")
 
 
     def add_device_widget_to_notebook(self, device_args: dict):
@@ -243,7 +244,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.WARNING, filename='/tmp/apollo.log', filemode='w', format='%(asctime)s - %(process)d - %(levelname)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
     app.window.set_title('Ventilator Metrics (pressure and volume)')
     app.window.show_all()
-    app.window.maximize()
+    # app.window.maximize()
 
     Gtk.main()
 

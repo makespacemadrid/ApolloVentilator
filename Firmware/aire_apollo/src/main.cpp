@@ -46,7 +46,6 @@
 #define ESPIRATION_TIME 4000
 #define INSPIRATION_THRESHOLD 10 //Descenso en la presion que marca el inicio de la respiracion
 
-Adafruit_BME280 bme; // I2C
 ApolloHal *hal;
 
 unsigned long delayTime;
@@ -83,62 +82,6 @@ char logBuffer[50];
 
 Comunications com = Comunications();
 
-// BEGIN Sensors and actuators
-
-// Open Entry valve
-void openEntryEV()
-{
-  digitalWrite(ENTRY_EV_PIN, 1);
-}
-
-// Close Entry valve
-void closeEntryEV()
-{
-  digitalWrite(ENTRY_EV_PIN, 0);
-}
-
-// Get Entry EV state
-int getEntryEVState()
-{
-  return digitalRead(ENTRY_EV_PIN);
-}
-
-// Open exit EV
-void openExitEV()
-{
-  digitalWrite(EXIT_EV_PIN, 1);
-}
-
-// Close exit EV
-void closeExitEV()
-{
-  digitalWrite(EXIT_EV_PIN, 0);
-}
-
-// Get the status of the Exit EV (Open/Close)
-// To be change  depending on the EV type Full open, Servo, Solenoid...
-int getExitEVState()
-{
-  return digitalRead(EXIT_EV_PIN);
-}
-
-// Get metric from exit flow mass sensor
-float getMetricVolumeExit()
-{
-
-  float v = analogRead(EXIT_FLOW_PIN) * 0.0049F;
-  return v;
-}
-
-// Get metric from pressure sensor in mBar
-float getMetricPressureEntry()
-{
-  float val = bme.readPressure();
-  return val / 100.0F; // hpa
-}
-
-// END sensors and actuator
-
 int getMetricPpeak() { return 22; }
 int getMetricPplat() { return 22; }
 
@@ -160,7 +103,7 @@ int calculateCompliance(int pplat, int peep)
 
 void logData()
 {
-  String data[] = {String(getMetricPressureEntry()), String(), String(getMetricVolumeExit())};
+  String data[] = {String(hal->getMetricPressureEntry()), String(hal->getMetricVolumeEntry()), String(hal->getMetricVolumeExit())};
   com.data(data);
 }
 
@@ -191,25 +134,15 @@ void setup()
   Serial.begin(115200);
   // while (!Serial); // time to get serial running
 
-  hal = new ApolloHal(new ApolloBME(), new ApolloFlowSensor(), new MksmValve(ENTRY_EV_PIN), new MksmValve(EXIT_EV_PIN));
+  // Create hal layer with
+  hal = new ApolloHal(new ApolloBME(), new ApolloFlowSensor(), new ApolloFlowSensor(), new MksmValve(ENTRY_EV_PIN), new MksmValve(EXIT_EV_PIN));
 
-  // BME280
-
-  if (!bme.begin(BME280_ADDR))
+  if (!hal->begin())
   {
-    TRACE("BME280 sensor not found!!!");
-    TRACE("HALT!");
-    //while (1);
+    TRACE("ERROR intializing sensors!!");
+    while (true)
+      ;
   }
-
-  // set max sampling for pressure sensor
-  bme.setSampling(Adafruit_BME280::MODE_NORMAL,
-                  Adafruit_BME280::SAMPLING_X1,
-                  Adafruit_BME280::SAMPLING_X16,
-                  Adafruit_BME280::SAMPLING_X1,
-                  Adafruit_BME280::FILTER_OFF,
-                  Adafruit_BME280::STANDBY_MS_0_5);
-  //
 
   delayTime = 0;
   setBPM(8);
@@ -218,16 +151,14 @@ void setup()
   // int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
   // int rpm = DEFAULT_RPM;
   // int vTidal = 0;
-  // CÁLCULO: CONSTANTES DE TIEMPO INSPIRACION/ESPIRACION
-  // =========================================================================
+  hal->beginInspiration();
   //display.writeLine(0, "Tins  | Tesp");
   /**MechVentilation::calcularCicloInspiratorio(&tIns, &tEsp, &tCiclo, porcentajeInspiratorio, rpm);
   //display.writeLine(1, String(tIns) + " s | " + String(tEsp) + " s");
   Serial.println("Tiempo del ciclo (seg):" + String(tCiclo));
   Serial.println("Tiempo inspiratorio (seg):" + String(tIns));
   Serial.println("Tiempo espiratorio (seg):" + String(tEsp));
-*/
-  vTidal = MechVentilation::calcularVolumenTidal(170, 1);
+  hal->beginEspiration(); // hack para pruebas!!!
   //int ventilationCycle_WaitBeforeInsuflationTime = 800;
   ventilation = new MechVentilation(hal, vTidal, rpm, porcentajeInspiratorio);
   /** ventilation->start();*/
@@ -235,9 +166,8 @@ void setup()
   display.writeLine(0, "RPM: " + String(ventilation->getRpm()));
   display.writeLine(1, "Vol Tidal: " + String(ventilation->getTidalVolume()));
   display.writeLine(2, "Press PEEP: " + String(ventilation->getPressionPeep()));
-  display.writeLine(3, "% Insp: " + String(ventilation->getporcentajeInspiratorio()));
+  //if ((pressureReference - hal->getMetricPressureEntry()) > INSPIRATION_THRESHOLD)
 }
-
 void loop()
 {
 
@@ -250,12 +180,15 @@ void loop()
 
   if (ppeak > 40)
   {
-    //alarm("PRESSURE ALERT");
+    com.alert("PRESSURE ALERT");
   }
 
   int peep = getMetricPeep();
-  float volExit = getMetricVolumeExit();
+
+  // ¿se debe meter la detección de perdidas en el hal?
+  float volExit = hal->getMetricVolumeExit();
   checkLeak(volc, volExit);
+
   calculateCompliance(pplat, peep);
 
   // envio de datos

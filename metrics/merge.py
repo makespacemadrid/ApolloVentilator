@@ -35,6 +35,7 @@ def updateData(interval):
     ax_volume.title.set_text('Volume (mL)')
     ax_pressure.title.set_text('Pressure (mbars)')
 
+
 if __name__ == "__main__":    
     plt.style.use('seaborn')
     time = []

@@ -10,9 +10,6 @@
 #include "defaults.h"
 #include <../lib/TimerOne-1.1.0/TimerOne.h>
 
-/** No trigger. */
-#define LPM_FLUX_TRIGGER_VALUE_NONE FLT_MAX
-
 int currentWaitTriggerTime = 0;
 int currentStopInsufflationTime = 0;
 float currentFlow = 0;
@@ -33,15 +30,58 @@ MechVentilation::MechVentilation(
         rpm,
         porcentajeInspiratorio);
 }
+void MechVentilation::setRpm(int rpm)
+{
+    if (rpm >= 10 && rpm <= 30)
+    {
+        this->_cfgRpm = rpm;
+        this->_cfgUpdate = true;
+    }
+}
 
 void MechVentilation::setTidalVolume(float mlTidalVolume)
 {
-    this->_cfgmlTidalVolume = mlTidalVolume;
+    if (mlTidalVolume >= 300 && mlTidalVolume <= 600)
+    {
+        this->_cfgmlTidalVolume = mlTidalVolume;
+        this->_cfgUpdate = true;
+    }
 }
 
 void MechVentilation::setPressionPeep(float pressionPeep)
 {
     this->_cfgPresionPeep = pressionPeep;
+    this->_cfgUpdate = true;
+}
+
+void MechVentilation::setPorcentajeInspiratorio(int porcentajeInspiratorio)
+{
+    if (porcentajeInspiratorio >= 25 && porcentajeInspiratorio <= 50)
+    {
+        this->_cfgPorcentajeInspiratorio = porcentajeInspiratorio;
+        this->_cfgUpdate = true;
+    }
+}
+
+// Get tidal volume
+float MechVentilation::getTidalVolume()
+{
+    return this->_cfgmlTidalVolume;
+}
+//Set RPM
+int MechVentilation::getRpm()
+{
+    return this->_cfgRpm;
+}
+//Set Porcentaje inspiratorio
+int MechVentilation::getporcentajeInspiratorio()
+{
+    return this->_cfgPorcentajeInspiratorio;
+}
+// Set presion peep
+float MechVentilation::getPressionPeep()
+{
+    return this->_cfgPresionPeep;
 }
 
 /**
@@ -89,7 +129,7 @@ void MechVentilation::_init(
     this->calcularCiclo(this->_cfgPorcentajeInspiratorio, this->_cfgRpm);
     // this->_cfgSecTimeoutInsufflation = secTimeoutInsufflation;
     // this->_cfgSecTimeoutExsufflation = secTimeoutExsufflation;
-    // this->_cfgLpmFluxTriggerValue = lpmFluxTriggerValue;
+    this->_cfgLpmFluxTriggerValue = DEFAULT_LPM_FLUX_TRIGGER_VALUE;
 
     /* Initialize internal state */
     this->_currentState = State::Wait;
@@ -136,6 +176,11 @@ void MechVentilation::stateNext()
 
 void MechVentilation::wait()
 {
+    if (this->_cfgUpdate)
+    {
+        this->calcularCiclo(this->_cfgPorcentajeInspiratorio, this->_cfgRpm);
+    }
+
     digitalWrite(5, HIGH);
 
     //Detecta aspiración del paciente
@@ -232,4 +277,5 @@ void MechVentilation::calcularCiclo(
     Serial.println("tCiclo " + String(this->_cfgSecCiclo, DEC));
     Serial.println("T Ins " + String(this->_cfgSecTimeInsufflation, DEC));
     Serial.println("T Exs " + String(this->_cfgSecTimeExsufflation, DEC));
+    this->_cfgUpdate = false;
 }

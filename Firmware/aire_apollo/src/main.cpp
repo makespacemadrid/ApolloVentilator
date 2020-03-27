@@ -25,7 +25,10 @@
 #include "ApolloBME.h"
 #include "MksmValve.h"
 #include "Comunications.h"
-#include "MechVentilation.h";
+#include "MechVentilation.h"
+#include "ApolloEncoder.h"
+#include "Display.h"
+
 #define DEBUG
 
 #define ENTRY_EV_PIN 10 //ElectroValvula - Entrada
@@ -78,15 +81,6 @@ uint16_t espTime = 0;
 //uint8_t power;
 char logBuffer[50];
 
-enum respiratorStatus
-{
-  RESPIRATOR_PAUSED,
-  WAIT_FOR_INSPIRATION,
-  INSPIRATION_CICLE,
-  ESPIRATION_CICLE,
-};
-
-respiratorStatus status = WAIT_FOR_INSPIRATION;
 Comunications com = Comunications();
 
 // BEGIN Sensors and actuators
@@ -128,23 +122,6 @@ int getExitEVState()
   return digitalRead(EXIT_EV_PIN);
 }
 
-// Get metric from entry flow mass sensor
-float getMetricVolumeEntry()
-{
-  float v;
-  //v=analogRead(ENTRY_FLOW_PIN)*0.0049F;
-
-  // Simulate sensor, if valve is open just return 52 l/m
-  // to see if it helps displaying graphs
-
-  if (status == INSPIRATION_CICLE)
-    v = 52.00F;
-  else
-    v = 5.00F;
-
-  return v;
-}
-
 // Get metric from exit flow mass sensor
 float getMetricVolumeExit()
 {
@@ -183,7 +160,7 @@ int calculateCompliance(int pplat, int peep)
 
 void logData()
 {
-  String data[] = {String(getMetricPressureEntry()), String(getMetricVolumeEntry()), String(getMetricVolumeExit())};
+  String data[] = {String(getMetricPressureEntry()), String(), String(getMetricVolumeExit())};
   com.data(data);
 }
 
@@ -195,12 +172,24 @@ void setBPM(uint8_t CiclesPerMinute)
   TRACE("BPM set: iTime:" + String(inspTime) + ", eTime:" + String(espTime) + "iTimeout:" + String(inspirationTimeout));
 }
 MechVentilation *ventilation;
+ApolloEncoder encoderRPM(12, 13, 0);
+ApolloEncoder encoderTidal(10, 11, 0);
+ApolloEncoder encoderPorcInspira(8, 9, 0);
+Display display = Display();
+
+int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
+int rpm = DEFAULT_RPM;
+int vTidal = 0;
 
 void setup()
 {
+
+  // Display de inicio
+  display.init();
+  display.writeLine(2, "     Apollo AIRE");
+  delay(2000);
   Serial.begin(115200);
-  while (!Serial)
-    ; // time to get serial running
+  // while (!Serial); // time to get serial running
 
   hal = new ApolloHal(new ApolloBME(), new ApolloFlowSensor(), new MksmValve(ENTRY_EV_PIN), new MksmValve(EXIT_EV_PIN));
 
@@ -226,8 +215,9 @@ void setup()
   setBPM(8);
   Serial.println();
   //float speedIns, speedEsp, tCiclo, tIns, tEsp;
-  int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
-  int rpm = DEFAULT_RPM;
+  // int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
+  // int rpm = DEFAULT_RPM;
+  // int vTidal = 0;
   // CÁLCULO: CONSTANTES DE TIEMPO INSPIRACION/ESPIRACION
   // =========================================================================
   //display.writeLine(0, "Tins  | Tesp");
@@ -237,81 +227,19 @@ void setup()
   Serial.println("Tiempo inspiratorio (seg):" + String(tIns));
   Serial.println("Tiempo espiratorio (seg):" + String(tEsp));
 */
-  int vTidal = MechVentilation::calcularVolumenTidal(170, 1);
+  vTidal = MechVentilation::calcularVolumenTidal(170, 1);
   //int ventilationCycle_WaitBeforeInsuflationTime = 800;
   ventilation = new MechVentilation(hal, vTidal, rpm, porcentajeInspiratorio);
   /** ventilation->start();*/
-}
-
-void beginInspiration()
-{
-  openEntryEV();
-  closeExitEV();
-  lastInspirationStart = millis();
-  status = INSPIRATION_CICLE;
-}
-
-void beginEspiration()
-{
-  closeEntryEV();
-  openExitEV(); // hack para pruebas!!!
-  lastEspirationStart = millis();
-  status = ESPIRATION_CICLE;
-}
-
-bool checkForPatientInspiration()
-{
-  float pressureReference = 950;
-  if ((pressureReference - getMetricPressureEntry()) > INSPIRATION_THRESHOLD)
-    return true;
-  else
-    return false;
-}
-
-// Send alarm to GUI by Serial
-void alarm(const char *value)
-{
-  // Raise alarm localy may be with sound?
-  // local sound alarm?
-  Serial.println("ALARM: " + String(value));
+  display.clear();
+  display.writeLine(0, "RPM: " + String(ventilation->getRpm()));
+  display.writeLine(1, "Vol Tidal: " + String(ventilation->getTidalVolume()));
+  display.writeLine(2, "Press PEEP: " + String(ventilation->getPressionPeep()));
+  display.writeLine(3, "% Insp: " + String(ventilation->getporcentajeInspiratorio()));
 }
 
 void loop()
 {
-  // Control del ciclo de respiracion
-  if (status == RESPIRATOR_PAUSED)
-  {
-    TRACE("PAUSED...");
-  }
-  else if (status == WAIT_FOR_INSPIRATION)
-  {
-    if (checkForPatientInspiration())
-    {
-      TRACE("Insp DETECTED!");
-      beginInspiration();
-    }
-    else if (millis() - (lastInspirationStart + inspTime + espTime) >= inspirationTimeout)
-    {
-      TRACE("FORCING Insp");
-      beginInspiration();
-    }
-  }
-  else if (status == INSPIRATION_CICLE)
-  {
-    if (millis() - lastInspirationStart >= inspTime)
-    {
-      TRACE("BeginEspiration");
-      beginEspiration();
-    }
-  }
-  else if (status == ESPIRATION_CICLE)
-  {
-    if (millis() - lastEspirationStart >= espTime)
-    {
-      status = WAIT_FOR_INSPIRATION;
-      TRACE("Cicle Done! :), Wait for inspiration");
-    }
-  }
 
   //Comprobacion de alarmas
 
@@ -322,7 +250,7 @@ void loop()
 
   if (ppeak > 40)
   {
-    alarm("PRESSURE ALERT");
+    //alarm("PRESSURE ALERT");
   }
 
   int peep = getMetricPeep();
@@ -333,4 +261,19 @@ void loop()
   // envio de datos
   logData();
   ventilation->update();
+  if (encoderRPM.updateValue(&rpm))
+  {
+    ventilation->setRpm(rpm);
+    display.writeLine(0, "RPM: " + String(ventilation->getRpm()));
+  }
+  if (encoderTidal.updateValue(&vTidal, 10))
+  {
+    ventilation->setTidalVolume(vTidal);
+    display.writeLine(1, "Vol Tidal: " + String(ventilation->getTidalVolume()));
+  }
+  if (encoderPorcInspira.updateValue(&porcentajeInspiratorio, 1))
+  {
+    ventilation->setPorcentajeInspiratorio(porcentajeInspiratorio);
+    display.writeLine(3, "% Insp: " + String(ventilation->getporcentajeInspiratorio()));
+  }
 }

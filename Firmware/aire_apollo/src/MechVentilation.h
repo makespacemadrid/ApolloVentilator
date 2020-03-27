@@ -66,9 +66,17 @@ public:
     //Set RPM
     void setRpm(int rpm);
     //Set Porcentaje inspiratorio
-    void setporcentajeInspiratorio(int porcentajeInspiratorio);
+    void setPorcentajeInspiratorio(int porcentajeInspiratorio);
     // Set presion peep
     void setPressionPeep(float presionPeep);
+    // Get tidal volume
+    float getTidalVolume();
+    //Set RPM
+    int getRpm();
+    //Set Porcentaje inspiratorio
+    int getporcentajeInspiratorio();
+    // Set presion peep
+    float getPressionPeep();
 
     /**
      * Update mechanical ventilation.
@@ -89,7 +97,7 @@ public:
      */
     int static MechVentilation::calcularVolumenTidal(int estatura, int sexo, float mlByKgWeight = DEFAULT_ML_POR_KG_DE_PESO_IDEAL)
     {
-        float peso0, pesoIdeal, volumenEstimado;
+        float peso0, pesoIdeal;
         if (sexo == 0)
         { // Varón
             peso0 = 50.0;
@@ -116,7 +124,7 @@ private:
 
     /* Configuration parameters */
     ApolloHal *hal;
-
+    bool _cfgUpdate = false;
     /** Tidal volume in millilitres. */
     float _cfgmlTidalVolume;
     /** Respiraciones por minuto */

@@ -20,6 +20,9 @@ import datetime as dt
 import numpy as np
 import time
 import os
+import logging
+import serial
+
 
 __path__ = "/".join(__file__.split('/')[0:-1])
 
@@ -81,8 +84,8 @@ class Device(Gtk.Grid):
 
 
         self.parent_window = parent_window
-        print('----- ',dev_args)
         self.serial_port = dev_args['port']
+        self.serial = serial.Serial(self.serial_port, baudrate=115200, timeout=0)
 
         self.connection_datetime = dt.datetime.now()
 
@@ -148,19 +151,12 @@ class Device(Gtk.Grid):
 
     def loop_serial_read(self):
         def parse_serial_line(parse_str):
-            # real_data = header + pressure_val + volume_val
-            # return real_data
             command_and_data = parse_str.decode('utf-8').split(':')
             return command_and_data
-            # fake_data = ["DATA"] + [str(d) for d in np.random.rand(2).tolist()]  # should point to data object in class
-            # return fake_data
 
         while True:
-            import serial
-            print(self.serial_port)
-            s = serial.Serial(self.serial_port, baudrate=115200, timeout=0)
-            time.sleep(1)
-            serial_line =  s.readline()
+            time.sleep(0.5)
+            serial_line =  self.serial.readline()
             serial_data = parse_serial_line(serial_line)  # TODO: Usar funciones de Parser
             serial_command = serial_data[0]
             if serial_command == "DATA":
@@ -175,15 +171,17 @@ class Device(Gtk.Grid):
                 print('>>>>> ',serial_line)
                 serial_code = serial_data[1].strip()
                 print('>>>>> ',serial_data[1])
-                Notify.init("Apollo Notificator") # TODO: No veo inicializarlo aquí
                 Notify.Notification.new("Alert caused by:", codes[serial_code]).show()
                 os.system('play -nq -t alsa synth 1 sine 400')
             elif serial_command == "DEBUG":
-                pass
+                logging.warning(serial_data[1])
             elif serial_command == "CONFIG":
-                pass
+                schema = "CONFIG,PR,12,60,15,40,40,5" #TODO: review schema proposal
+                self.serial.write(schema)
             else:
-                pass
+                logging.error(f"Serial command not found: {serial_command}")
+            Notify.Notification.new("Alert caused by:", codes[serial_code]).show()
+
             time.sleep(1)
 
 
@@ -192,17 +190,24 @@ class App:
         self.builder = app_builder
         self.window = app_window
         self.devices = []
+        Notify.init("Apollo Notificator")
+
 
     def on_click_btn_device_connect(self, button):
         # TODO: Coger valor de puerto serie y etiqueta
         # TODO: Se llama a la lib pyserial y se intenta conectar
         # TODO: Si es correcto se llama a add_device_wid... con el objeto de puerto serie y demas (device_args)
         entry_label = self.builder.get_object('entry_device_label')
-        entry_port = self.builder.get_object('entry_device_label')
-        self.add_device_widget_to_notebook(device_args={
-            'label': entry_label.get_text() or 'Paciente {}'.format(len(self.devices) + 1),
-            'port': entry_port.get_text() or '/dev/ttyUSB0'
-        })
+        entry_port = self.builder.get_object('entry_device_path')
+        # if entry_port.get_text() is '':
+        try:
+            self.add_device_widget_to_notebook(device_args={
+                'label': entry_label.get_text() or 'Paciente {}'.format(len(self.devices) + 1),
+                'port': entry_port.get_text()
+            })
+        except:
+            Notify.Notification.new("Serial port Not Found")
+
 
     def add_device_widget_to_notebook(self, device_args: dict):
         obj_notebook: Gtk.Notebook = self.builder.get_object("tab_panel")
@@ -214,7 +219,6 @@ class App:
         self.devices.append(Device)
 
         obj_notebook.set_current_page(len(self.devices))
-        self.window.set_size_request(320,640)
 
         self.window.show_all()
 
@@ -247,10 +251,11 @@ def build_gtk_app():
 
 if __name__ == '__main__':
     app = build_gtk_app()
-
+    # TODO: set logging level and path file using config file
+    logging.basicConfig(level=logging.WARNING, filename='/tmp/apollo.log', filemode='w', format='%(asctime)s - %(process)d - %(levelname)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
     app.window.set_title('Ventilator Metrics (pressure and volume)')
     app.window.show_all()
-    # app.window.maximize()
+    app.window.maximize()
 
     Gtk.main()
 

@@ -26,6 +26,6 @@ void Comunications::data(String msg[])
             msgs = msgs + "," + msg[i];
         }
         lastLogTime = now;
-        Comunications::send("DATA:" + msgs);
+        //Comunications::send("DATA:" + msgs);
     }
 }

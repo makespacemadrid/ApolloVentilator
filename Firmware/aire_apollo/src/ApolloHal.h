@@ -7,31 +7,36 @@
 
 class ApolloHal
 {
-    private:        
-        ApolloPressureSensor    *preSensor;
-        ApolloFlowSensor        *entryFlowSensor;
-        ApolloFlowSensor        *exitFlowSensor;
-        ApolloValve             *entryEV;
-        ApolloValve             *exitEV;
+private:
+    ApolloPressureSensor *preSensor;
+    ApolloFlowSensor *entryFlowSensor;
+    ApolloFlowSensor *exitFlowSensor;
+    ApolloValve *entryEV;
+    ApolloValve *exitEV;
 
-        void openEntryEV();
-        void openExitEV();
-        
+    void openEntryEV();
+    void openExitEV();
 
-    public:
-        ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, 
-                ApolloFlowSensor *exitFlowSensor, ApolloValve *enrtyEV, ApolloValve *exitEV);
-        ~ApolloHal();
+public:
+    ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *enrtyEV, ApolloValve *exitEV);
+    ~ApolloHal();
 
-        bool begin();
-        void setFlow(float flow, float pressure);
-        float getMetricPressureEntry();        
-        float getMetricVolumeEntry();
-        float getMetricVolumeExit();
-        void beginInspiration();
-        void beginEspiration();
-    
+    bool begin();
+    void setFlow(float flow, float pressure);
+    float getMetricPressureEntry();
+    float getMetricVolumeEntry();
+    float getMetricVolumeExit();
+    void beginInspiration();
+    void beginEspiration();
+
+    //Test only
+    void valveInsOpen();
+    void valveInsClose();
+    void valveExsOpen();
+    void valveExsClose();
+
+    int getPresureIns();
+    int getPresureExp();
 };
-
 
 #endif

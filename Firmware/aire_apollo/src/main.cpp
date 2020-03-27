@@ -25,6 +25,9 @@
 #include "ApolloBME.h"
 #include "MksmValve.h"
 #include "Comunications.h"
+#include "MechVentilation.h"
+#include "ApolloEncoder.h"
+#include "Display.h"
 
 #define DEBUG
 
@@ -77,17 +80,7 @@ uint16_t espTime = 0;
 //uint8_t power;
 char logBuffer[50];
 
-enum respiratorStatus
-{
-  RESPIRATOR_PAUSED,
-  WAIT_FOR_INSPIRATION,
-  INSPIRATION_CICLE,
-  ESPIRATION_CICLE,
-};
-
-respiratorStatus status = WAIT_FOR_INSPIRATION;
 Comunications com = Comunications();
-
 
 int getMetricPpeak() { return 22; }
 int getMetricPplat() { return 22; }
@@ -121,86 +114,62 @@ void setBPM(uint8_t CiclesPerMinute)
   inspirationTimeout = 60000.0 / float(bpm) * 0.15;
   TRACE("BPM set: iTime:" + String(inspTime) + ", eTime:" + String(espTime) + "iTimeout:" + String(inspirationTimeout));
 }
+MechVentilation *ventilation;
+ApolloEncoder encoderRPM(12, 13, 0);
+ApolloEncoder encoderTidal(10, 11, 0);
+ApolloEncoder encoderPorcInspira(8, 9, 0);
+Display display = Display();
+
+int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
+int rpm = DEFAULT_RPM;
+int vTidal = 0;
 
 void setup()
 {
-  Serial.begin(115200);
-  while (!Serial); // time to get serial running
 
-  // Create hal layer with 
+  // Display de inicio
+  display.init();
+  display.writeLine(2, "     Apollo AIRE");
+  delay(2000);
+  Serial.begin(115200);
+  // while (!Serial); // time to get serial running
+
+  // Create hal layer with
   hal = new ApolloHal(new ApolloBME(), new ApolloFlowSensor(), new ApolloFlowSensor(), new MksmValve(ENTRY_EV_PIN), new MksmValve(EXIT_EV_PIN));
 
-  if(!hal->begin())
+  if (!hal->begin())
   {
     TRACE("ERROR intializing sensors!!");
-    while(true);
+    while (true)
+      ;
   }
- 
+
   delayTime = 0;
   setBPM(8);
   Serial.println();
-}
-
-void beginInspiration()
-{
+  //float speedIns, speedEsp, tCiclo, tIns, tEsp;
+  // int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
+  // int rpm = DEFAULT_RPM;
+  // int vTidal = 0;
   hal->beginInspiration();
-  lastInspirationStart = millis();
-  status = INSPIRATION_CICLE;
-}
-
-void beginEspiration()
-{
+  //display.writeLine(0, "Tins  | Tesp");
+  /**MechVentilation::calcularCicloInspiratorio(&tIns, &tEsp, &tCiclo, porcentajeInspiratorio, rpm);
+  //display.writeLine(1, String(tIns) + " s | " + String(tEsp) + " s");
+  Serial.println("Tiempo del ciclo (seg):" + String(tCiclo));
+  Serial.println("Tiempo inspiratorio (seg):" + String(tIns));
+  Serial.println("Tiempo espiratorio (seg):" + String(tEsp));
   hal->beginEspiration(); // hack para pruebas!!!
-  lastEspirationStart = millis();
-  status = ESPIRATION_CICLE;
+  //int ventilationCycle_WaitBeforeInsuflationTime = 800;
+  ventilation = new MechVentilation(hal, vTidal, rpm, porcentajeInspiratorio);
+  /** ventilation->start();*/
+  display.clear();
+  display.writeLine(0, "RPM: " + String(ventilation->getRpm()));
+  display.writeLine(1, "Vol Tidal: " + String(ventilation->getTidalVolume()));
+  display.writeLine(2, "Press PEEP: " + String(ventilation->getPressionPeep()));
+  //if ((pressureReference - hal->getMetricPressureEntry()) > INSPIRATION_THRESHOLD)
 }
-
-bool checkForPatientInspiration()
-{
-  float pressureReference = 950;
-  if ((pressureReference - hal->getMetricPressureEntry()) > INSPIRATION_THRESHOLD)
-    return true;
-  else
-    return false;
-}
-
-
 void loop()
 {
-  // Control del ciclo de respiracion
-  if (status == RESPIRATOR_PAUSED)
-  {
-    TRACE("PAUSED...");
-  }
-  else if (status == WAIT_FOR_INSPIRATION)
-  {
-    if (checkForPatientInspiration())
-    {
-      TRACE("Insp DETECTED!");
-      beginInspiration();
-    }
-    else if (millis() - (lastInspirationStart + inspTime + espTime) >= inspirationTimeout)
-    {
-      TRACE("FORCING Insp");
-      beginInspiration();
-    }
-  }
-  else if (status == INSPIRATION_CICLE)
-  {
-    if (millis() - lastInspirationStart >= inspTime)
-    {
-      TRACE("BeginEspiration");
-      beginEspiration();
-    }
-  }
-  else if (status == ESPIRATION_CICLE)
-  {
-    if (millis() - lastEspirationStart >= espTime)
-    {
-      status = WAIT_FOR_INSPIRATION;
-      TRACE("Cicle Done! :), Wait for inspiration");
-    }
-  }
 
   //Comprobacion de alarmas
 
@@ -219,9 +188,25 @@ void loop()
   // ¿se debe meter la detección de perdidas en el hal?
   float volExit = hal->getMetricVolumeExit();
   checkLeak(volc, volExit);
-  
+
   calculateCompliance(pplat, peep);
 
   // envio de datos
   logData();
+  ventilation->update();
+  if (encoderRPM.updateValue(&rpm))
+  {
+    ventilation->setRpm(rpm);
+    display.writeLine(0, "RPM: " + String(ventilation->getRpm()));
+  }
+  if (encoderTidal.updateValue(&vTidal, 10))
+  {
+    ventilation->setTidalVolume(vTidal);
+    display.writeLine(1, "Vol Tidal: " + String(ventilation->getTidalVolume()));
+  }
+  if (encoderPorcInspira.updateValue(&porcentajeInspiratorio, 1))
+  {
+    ventilation->setPorcentajeInspiratorio(porcentajeInspiratorio);
+    display.writeLine(3, "% Insp: " + String(ventilation->getporcentajeInspiratorio()));
+  }
 }

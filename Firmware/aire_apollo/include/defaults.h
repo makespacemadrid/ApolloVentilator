@@ -1,9 +1,10 @@
 #ifndef DEFAULTS_H
 #define DEFAULTS_H
 
-#define I2C_DIR 0x27 //I2C Address Display
+#define LCD_DIR 0x27 //I2C Address Display
 
 #define LOG_INTERVAL 10 //milliseconds
+
 // Valores por defecto
 #define DEFAULT_ESTATURA 170 // cm
 #define DEFAULT_SEXO 0       // 0: varón, 1: mujer
@@ -19,4 +20,19 @@
 #define DEFAULT_CMH20_PICO 45
 #define DEFAULT_CMH20_MESETA 32
 #define DEFAULT_CMH20_PEEP 14
+
+// ---- Encoders ----
+//RPM
+#define PIN_ENC_RPM_DT 12
+#define PIN_ENC_RPM_CLK 13
+#define PIN_ENC_RPM_SW 0
+// % insuflacion
+#define PIN_ENC_PCTINS_DT 10
+#define PIN_ENC_PCTINS_CLK 11
+#define PIN_ENC_PCTINS_SW 0
+// Vol Tidal
+#define PIN_ENC_TIDAL_DT 8
+#define PIN_ENC_TIDAL_CLK 9
+#define PIN_ENC_TIDAL_SW 0
+
 #endif

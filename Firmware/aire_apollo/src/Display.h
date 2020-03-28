@@ -13,7 +13,7 @@ public:
   void init();
 
 private:
-  LiquidCrystal_I2C lcd = LiquidCrystal_I2C(I2C_DIR, 20, 4);
+  LiquidCrystal_I2C lcd = LiquidCrystal_I2C(LCD_DIR, 20, 4);
 };
 
 #endif // PANTALLA_H

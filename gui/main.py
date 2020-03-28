@@ -54,7 +54,7 @@ class Device(Gtk.Grid):
 
     btn_toggle_standby: Gtk.ToggleButton = Gtk.Template.Child()
     btn_send_configuration: Gtk.Button = Gtk.Template.Child()
-    
+
     entry_mode: Gtk.Entry = Gtk.Template.Child()
     entry_ie_ratio: Gtk.Entry = Gtk.Template.Child()
     entry_fio2: Gtk.Entry = Gtk.Template.Child()
@@ -70,18 +70,6 @@ class Device(Gtk.Grid):
 
         self.btn_toggle_standby.connect('toggled', self.event_toggle_standby)
         self.btn_send_configuration.connect('clicked', self.event_send_configuration)
-
-        font_config = Pango.FontDescription('Dejavu Sans Mono 40')
-
-        self.entry_mode.modify_font(font_config)
-        self.entry_ie_ratio.modify_font(font_config)
-        self.entry_fio2.modify_font(font_config)
-        self.entry_breath_per_minute.modify_font(font_config)
-        self.entry_current_volume.modify_font(font_config)
-        self.entry_pressure.modify_font(font_config)
-        self.entry_pressure_alert.modify_font(font_config)
-        self.entry_peep.modify_font(font_config)
-
 
         self.parent_window = parent_window
         self.serial_port = dev_args['port']
@@ -165,7 +153,8 @@ class Device(Gtk.Grid):
                 values = serial_data[1].split(',')
                 timestamp = dt.datetime.now().strftime('%H:%M:%S')
                 data = values[0:2]
-                args = [timestamp, data[0], data[1]]
+                args = [timestamp, data[0], data[1].strip()]
+                print(args)
                 GLib.idle_add(self.loop_update_values, *args)
             elif serial_command == "ALERT":
                 print('>>>>> ',serial_line)
@@ -180,7 +169,7 @@ class Device(Gtk.Grid):
                 self.serial.write(schema)
             else:
                 logging.error(f"Serial command not found: {serial_command}")
-            Notify.Notification.new("Alert caused by:", codes[serial_code]).show()
+                Notify.Notification.new("Serial command not found").show()
 
             time.sleep(1)
 
@@ -200,13 +189,13 @@ class App:
         entry_label = self.builder.get_object('entry_device_label')
         entry_port = self.builder.get_object('entry_device_path')
         # if entry_port.get_text() is '':
-        try:
-            self.add_device_widget_to_notebook(device_args={
-                'label': entry_label.get_text() or 'Paciente {}'.format(len(self.devices) + 1),
-                'port': entry_port.get_text()
-            })
-        except:
-            Notify.Notification.new("Serial port Not Found")
+        # try:
+        self.add_device_widget_to_notebook(device_args={
+            'label': entry_label.get_text() or 'Paciente {}'.format(len(self.devices) + 1),
+            'port': entry_port.get_text() or '/dev/ttyUSB0'
+        })
+        # except:
+            # Notify.Notification.new("Serial port Not Found")
 
 
     def add_device_widget_to_notebook(self, device_args: dict):
@@ -255,7 +244,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.WARNING, filename='/tmp/apollo.log', filemode='w', format='%(asctime)s - %(process)d - %(levelname)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
     app.window.set_title('Ventilator Metrics (pressure and volume)')
     app.window.show_all()
-    app.window.maximize()
+    # app.window.maximize()
 
     Gtk.main()
 

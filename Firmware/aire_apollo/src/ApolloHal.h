@@ -8,17 +8,17 @@
 class ApolloHal
 {
 private:
-    ApolloPressureSensor *preSensor;
-    ApolloFlowSensor *entryFlowSensor;
-    ApolloFlowSensor *exitFlowSensor;
-    ApolloValve *entryEV;
-    ApolloValve *exitEV;
+    ApolloPressureSensor  *_preSensor;
+    ApolloFlowSensor      *_entryFlowSensor;
+    ApolloFlowSensor      *_exitFlowSensor;
+    ApolloValve           *_entryEV;
+    ApolloValve           *_exitEV;
 
     void openEntryEV();
     void openExitEV();
 
 public:
-    ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *enrtyEV, ApolloValve *exitEV);
+    ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV);
     ~ApolloHal();
 
     bool begin();
@@ -28,6 +28,15 @@ public:
     float getMetricVolumeExit();
     void beginInspiration();
     void beginEspiration();
+
+    void ISR1ms(); //
+
+    ApolloPressureSensor* pressuresSensor()   {return _preSensor;}
+    ApolloFlowSensor*     intakeFlowSensor()  {return _entryFlowSensor;}
+    ApolloFlowSensor*     exitFlowSensor()    {return _exitFlowSensor;}
+    ApolloValve*          intakeValve()       {return _entryEV;}
+    ApolloValve*          exitValve()         {return _exitEV;}
+
 
     //Test only
     void valveInsOpen();

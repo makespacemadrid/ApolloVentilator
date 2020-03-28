@@ -6,26 +6,24 @@ Comunications::Comunications()
 
 void Comunications::send(String msg)
 {
-
     Serial.println(String(msg));
 }
 
 void Comunications::alert(String msg)
 {
-    Comunications::send("ALERT:" + msg);
+    send("ALERT:" + msg);
 }
 
-void Comunications::data(String msg[])
+void Comunications::data(String msg[], uint8_t size)
 {
-    unsigned long now = millis();
-    if ((now - lastLogTime) >= logInterval)
-    {
+        //Serial.println("PENESSSS!!!!");
+        //Serial.println(msg[0]);
+
         String msgs;
-        for (size_t i = 0; i < msg->length() - 1; i++)
+        msgs = msg[0];
+        for (size_t i = 1; i < size ; i++)
         {
-            msgs = msgs + "," + msg[i];
+            msgs += "," + msg[i];
         }
-        lastLogTime = now;
-        //Comunications::send("DATA:" + msgs);
-    }
+        send("DATA:" + msgs);
 }

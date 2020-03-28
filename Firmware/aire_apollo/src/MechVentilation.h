@@ -1,4 +1,4 @@
-/** 
+/**
  * Mechanical ventilation.
  *
  * @file MechVentilation.h
@@ -54,7 +54,7 @@ public:
         int mlTidalVolume,
         int rpm,
         int porcentajeInspiratorio);
-    /**,        
+    /**,
         float secTimeoutInsufflation,
         float secTimeoutExsufflation,
         int ventilationCyle_WaitTime);*/
@@ -95,7 +95,7 @@ public:
      * @param sexo 0: varón, 1: mujer, sexo del paciente
      * @return *volumenTidal volumen tidal estimado, en mililitros
      */
-    int static MechVentilation::calcularVolumenTidal(int estatura, int sexo, float mlByKgWeight = DEFAULT_ML_POR_KG_DE_PESO_IDEAL)
+    int static calcularVolumenTidal(int estatura, int sexo, float mlByKgWeight = DEFAULT_ML_POR_KG_DE_PESO_IDEAL)
     {
         float peso0, pesoIdeal;
         if (sexo == 0)

@@ -4,6 +4,8 @@
 #include "ApolloPressureSensor.h"
 #include <Adafruit_BME280.h>
 
+ #define ATM_PRESURE_PASCAL 95100
+
 /**
  * @brief BME280 I2C sensor
  *

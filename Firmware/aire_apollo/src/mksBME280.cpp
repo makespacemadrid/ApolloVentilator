@@ -56,5 +56,5 @@ bool mksBME280::begin()
  */
 float mksBME280::readPascal()
 {
-     return _bme.readPressure();
+     return _bme.readPressure() - ATM_PRESURE_PASCAL;
 }

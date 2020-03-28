@@ -19,7 +19,7 @@ class ApolloPresI2C : public ApolloPressureSensor
        
           
     private:
-        uint8_t     addr;
+        uint8_t     _addr;
         
 };
 

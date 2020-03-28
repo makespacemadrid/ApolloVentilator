@@ -9,7 +9,7 @@
  */
 HscSpiPresSensor::HscSpiPresSensor(uint8_t pin)
 {
-    this->pin=pin;
+    this->_pin=pin;
 }    
 
 HscSpiPresSensor::~HscSpiPresSensor()
@@ -26,14 +26,14 @@ HscSpiPresSensor::~HscSpiPresSensor()
  */
 bool HscSpiPresSensor::begin()
 {
-    this->sensor = new TruStabilityPressureSensor( this->pin,  min_pressure, max_pressure );
+    _sensor = new TruStabilityPressureSensor( this->_pin,  _min_pressure, _max_pressure );
     
-    sensor->begin();
-    uint8_t status = sensor->readSensor();
+    _sensor->begin();
+    
+    uint8_t status = _sensor->readSensor();
 
     // TODO need to check value returned when there is no connection to the sensor
     // wrong SS pin, etc.
-
     if(status!=HscValidData)
         return false;
 
@@ -51,12 +51,12 @@ float HscSpiPresSensor::read()
 {
     float val = 0;
 
-    uint8_t status =sensor->readSensor();
+    uint8_t status =_sensor->readSensor();
 
     if( status == HscValidData  || status == HscStaleData) 
-        val=sensor->pressure();
+        val = _sensor->pressure();
     else
-        val = min_pressure*10.00F;  ///< Return an out of range value to indicate and error condition
+        val = _min_pressure*10.00F;  ///< Return an out of range value to indicate and error condition
      
     return val; 
 }

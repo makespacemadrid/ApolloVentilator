@@ -31,10 +31,10 @@ class HscSpiPresSensor : public ApolloPressureSensor
        
           
     private:
-        uint8_t     pin;
-        TruStabilityPressureSensor *sensor;
-        const float min_pressure = -6894.76;     ///< Value in Pa
-        const float max_pressure = 6894.76;    ///< Value in Pa
+        uint8_t     _pin;
+        TruStabilityPressureSensor *_sensor;
+        const float _min_pressure = -6894.76;     ///< Value in Pa
+        const float _max_pressure = 6894.76;    ///< Value in Pa
 };
 
 

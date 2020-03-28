@@ -143,9 +143,9 @@ class Device(Gtk.Grid):
             return command_and_data
 
         while True:
-            time.sleep(0.5)
+            # time.sleep(0.5)
             serial_line =  self.serial.readline()
-            print(serial_line)
+            print("======== ", serial_line)
             if ("DATA" or "ALERT" or "DEBUG" or "CONFIG") in serial_line.decode('utf-8'): # TODO: revisar para resto de casos
                 serial_data = parse_serial_line(serial_line)  # TODO: Usar funciones de Parser
                 serial_command = serial_data[0]
@@ -171,9 +171,9 @@ class Device(Gtk.Grid):
                     self.serial.write(schema)
             else:
                 logging.warning(f"Serial command not found:")
-                Notify.Notification.new("Serial command not found").show()
+                # Notify.Notification.new("Serial command not found").show()
 
-            time.sleep(1)
+            # time.sleep(1)
 
 
 class App:

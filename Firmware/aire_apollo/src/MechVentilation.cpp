@@ -8,85 +8,16 @@
 #include <float.h>
 #include "MechVentilation.h"
 #include "defaults.h"
-
-
-int currentWaitTriggerTime = 0;
-int currentStopInsufflationTime = 0;
-float currentFlow = 0;
-#if DEBUG_STATE_MACHINE
-extern String debugMsg[];
-extern byte debugMsgCounter;
-#endif
+#include "ApolloConfiguration.h"
 
 MechVentilation::MechVentilation(
     ApolloHal *hal,
-    int mlTidalVolume,
-    int rpm,
-    int porcentajeInspiratorio)
+    ApolloConfiguration *config)
 {
-    _init(
-        hal,
-        mlTidalVolume,
-        rpm,
-        porcentajeInspiratorio);
-}
-void MechVentilation::setRpm(int rpm)
-{
-    if (rpm >= 10 && rpm <= 30)
-    {
-        this->_cfgRpm = rpm;
-        this->_cfgUpdate = true;
-    }
+    this->configurationUpdate();
+    this->_currentState = State::Wait;
 }
 
-void MechVentilation::setTidalVolume(float mlTidalVolume)
-{
-    if (mlTidalVolume >= 300 && mlTidalVolume <= 600)
-    {
-        this->_cfgmlTidalVolume = mlTidalVolume;
-        this->_cfgUpdate = true;
-    }
-}
-
-void MechVentilation::setPressionPeep(float pressionPeep)
-{
-    this->_cfgPresionPeep = pressionPeep;
-    this->_cfgUpdate = true;
-}
-
-void MechVentilation::setPorcentajeInspiratorio(int porcentajeInspiratorio)
-{
-    if (porcentajeInspiratorio >= 25 && porcentajeInspiratorio <= 50)
-    {
-        this->_cfgPorcentajeInspiratorio = porcentajeInspiratorio;
-        this->_cfgUpdate = true;
-    }
-}
-
-// Get tidal volume
-float MechVentilation::getTidalVolume()
-{
-    return this->_cfgmlTidalVolume;
-}
-//Set RPM
-int MechVentilation::getRpm()
-{
-    return this->_cfgRpm;
-}
-//Set Porcentaje inspiratorio
-int MechVentilation::getporcentajeInspiratorio()
-{
-    return this->_cfgPorcentajeInspiratorio;
-}
-// Set presion peep
-float MechVentilation::getPressionPeep()
-{
-    return this->_cfgPresionPeep;
-}
-
-/**
- * Function called by timer every 5 miliseconds
- */
 void MechVentilation::update(void)
 {
     switch (_currentState)
@@ -113,29 +44,6 @@ void MechVentilation::update(void)
         exsufflationBefore();
         break;
     }
-}
-
-void MechVentilation::_init(
-    ApolloHal *hal,
-    int mlTidalVolume,
-    int rpm,
-    int porcentajeInspiratorio)
-{
-    /* Set configuration parameters */
-    this->hal = hal;
-    this->_cfgmlTidalVolume = mlTidalVolume;
-    this->_cfgRpm = rpm,
-    this->_cfgPorcentajeInspiratorio = porcentajeInspiratorio;
-    this->calcularCiclo(this->_cfgPorcentajeInspiratorio, this->_cfgRpm);
-    // this->_cfgSecTimeoutInsufflation = secTimeoutInsufflation;
-    // this->_cfgSecTimeoutExsufflation = secTimeoutExsufflation;
-    this->_cfgLpmFluxTriggerValue = DEFAULT_LPM_FLUX_TRIGGER_VALUE;
-
-    /* Initialize internal state */
-    this->_currentState = State::Wait;
-    // this->_secTimerCnt = 0;
-    // this->_secTimeoutInsufflation = 0;
-    // this->_secTimeoutExsufflation = 0;
 }
 
 void MechVentilation::_setState(State state)
@@ -176,19 +84,16 @@ void MechVentilation::stateNext()
 
 void MechVentilation::wait()
 {
-    if (this->_cfgUpdate)
+    if (this->configuration->update())
     {
-        this->calcularCiclo(this->_cfgPorcentajeInspiratorio, this->_cfgRpm);
+        this->configurationUpdate();
     }
 
-    digitalWrite(5, HIGH);
-
     //Detecta aspiración del paciente
-    if (this->hal->getPresureIns() <= _cfgLpmFluxTriggerValue)
+    if (this->hal->getPresureIns() <= this->_cfgLpmFluxTriggerValue)
     {
         /** @todo Pendiente desarrollo */
         stateNext();
-        digitalWrite(5, LOW);
     }
 
     //Se lanza por tiempo
@@ -196,7 +101,6 @@ void MechVentilation::wait()
     if ((this->lastExecution + this->_cfgSecCiclo) < now)
     {
         stateNext();
-        digitalWrite(5, LOW);
     }
 }
 void MechVentilation::insuflationBefore()
@@ -267,16 +171,23 @@ void MechVentilation::exsufflationAfter()
     stateNext();
 }
 
-void MechVentilation::calcularCiclo(
-    int porcentajeInspiratorio,
-    int rpm)
+void MechVentilation::calcularCiclo()
 {
-    this->_cfgSecCiclo = 60 / rpm; // Tiempo de ciclo en segundos
-    this->_cfgSecTimeInsufflation = this->_cfgSecCiclo * porcentajeInspiratorio / 100;
+    this->_cfgSecCiclo = 60 / this->_cfgRpm; // Tiempo de ciclo en segundos
+    this->_cfgSecTimeInsufflation = this->_cfgSecCiclo * this->_cfgPorcentajeInspiratorio / 100;
     this->_cfgSecTimeExsufflation = this->_cfgSecCiclo - this->_cfgSecTimeInsufflation;
     Serial.println("tCiclo " + String(this->_cfgSecCiclo, DEC));
     Serial.println("T Ins " + String(this->_cfgSecTimeInsufflation, DEC));
     Serial.println("T Exs " + String(this->_cfgSecTimeExsufflation, DEC));
     Serial.flush();
-    this->_cfgUpdate = false;
+}
+
+void MechVentilation::configurationUpdate()
+{
+    this->_cfgmlTidalVolume = this->configuration->getMlTidalVolumen();
+    this->_cfgPorcentajeInspiratorio = this->configuration->getPorcentajeInspiratorio();
+    this->_cfgRpm = this->configuration->getRpm();
+    this->_cfgLpmFluxTriggerValue = this->configuration->getLpmTriggerInspiration();
+    this->_cfgPresionPeep = this->configuration->getPressionPeep();
+    this->calcularCiclo();
 }

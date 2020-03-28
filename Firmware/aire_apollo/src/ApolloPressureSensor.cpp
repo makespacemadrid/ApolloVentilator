@@ -4,21 +4,26 @@
 
 /**
  * @brief read pressure from sensor
- * 
+ *
  * @return float the pressure measured in hPa
  */
-float ApolloPressureSensor::readHpa()
+float ApolloPressureSensor::readMilibar()
 {
-
-   return read() / 100.0;
+   return readPascal() / 100.0F;
 }
 
 /**
  * @brief read pressure from sensor
- * 
+ *
  * @return float the pressure measured in mmHg
  */
+
 float ApolloPressureSensor::readMMHg()
 {
-return read() / 0.00750062; //mmhg
+  return readPascal() * 0.00750062F; //mmhg
+}
+
+float ApolloPressureSensor::readCMH2O()
+{
+  return readPascal() * 0.0101972F; //mmhg
 }

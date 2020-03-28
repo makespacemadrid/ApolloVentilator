@@ -1,5 +1,5 @@
 
-#include <ApolloBME.h>
+#include <mksBME280.h>
 
 #include <Arduino.h>
 #include <Wire.h>
@@ -9,37 +9,36 @@
 
 /**
  * @brief Construct a new Apollo B M E:: Apollo B M E object
- * 
+ *
  */
-ApolloBME::ApolloBME(uint8_t addr)
+mksBME280::mksBME280(uint8_t addr) : _addr(addr)
 {
-    this->addr=addr;
-    bme=new Adafruit_BME280();
+    _bme= new Adafruit_BME280(_addr);
 }
 
-ApolloBME::~ApolloBME()
+mksBME280::~mksBME280()
 {
-    if(bme)
-        delete bme;
+    if(_bme)
+        delete _bme;
 }
 
 
 /**
  * @brief Check if the sensor is detected and configure sampling
- * 
+ *
  * @param addr sensor I2C address
  * @return true if the sensor is detected
  * @return false if the sensor is not detected
  */
-bool ApolloBME::begin()
+bool mksBME280::begin()
 {
-    
-     if (!bme->begin(addr)) {
+
+     if (!_bme->begin(_addr)) {
         return false;
     }
 
     // set max sampling for pressure sensor
-    bme->setSampling(Adafruit_BME280::MODE_NORMAL,
+    _bme->setSampling(Adafruit_BME280::MODE_NORMAL,
                    Adafruit_BME280::SAMPLING_X1,
                    Adafruit_BME280::SAMPLING_X16,
                    Adafruit_BME280::SAMPLING_X1,
@@ -52,12 +51,10 @@ bool ApolloBME::begin()
 
 /**
  * @brief read pressure from sensor
- * 
+ *
  * @return float the pressure measured in mBars
  */
-float ApolloBME::read()
+float mksBME280::readPascal()
 {
-     float val = bme->readPressure();
-    return val / 100.0F; 
+     return _bme->readPressure();
 }
-

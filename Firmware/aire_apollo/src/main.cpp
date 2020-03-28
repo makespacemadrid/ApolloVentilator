@@ -22,8 +22,9 @@
 #include <Adafruit_BME280.h>
 #include "trace.h"
 #include "ApolloHal.h"
-#include "ApolloBME.h"
+#include "mksBME280.h"
 #include "MksmValve.h"
+#include "MksmFlowSensor.h"
 #include "Comunications.h"
 #include "MechVentilation.h"
 #include "ApolloEncoder.h"
@@ -47,8 +48,6 @@
 #define INSPIRATION_THRESHOLD 10 //Descenso en la presion que marca el inicio de la respiracion
 
 ApolloHal *hal;
-
-unsigned long delayTime;
 
 float volmax;
 float presmax;
@@ -82,6 +81,7 @@ char logBuffer[50];
 
 Comunications com = Comunications();
 
+/*
 int getMetricPpeak() { return 22; }
 int getMetricPplat() { return 22; }
 
@@ -100,6 +100,7 @@ int calculateCompliance(int pplat, int peep)
 {
   return pplat - peep;
 }
+*/
 
 void logData()
 {
@@ -107,17 +108,12 @@ void logData()
   com.data(data);
 }
 
-void setBPM(uint8_t CiclesPerMinute)
-{
-  inspTime = 60000.0 / float(bpm) * 0.25;
-  espTime = 60000.0 / float(bpm) * 0.60;
-  inspirationTimeout = 60000.0 / float(bpm) * 0.15;
-  TRACE("BPM set: iTime:" + String(inspTime) + ", eTime:" + String(espTime) + "iTimeout:" + String(inspirationTimeout));
-}
+
 MechVentilation *ventilation;
 ApolloEncoder encoderRPM(12, 13, 0);
 ApolloEncoder encoderTidal(10, 11, 0);
 ApolloEncoder encoderPorcInspira(8, 9, 0);
+
 Display display = Display();
 
 int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
@@ -135,25 +131,27 @@ void setup()
   // while (!Serial); // time to get serial running
 
   // Create hal layer with
-  hal = new ApolloHal(new ApolloBME(), new ApolloFlowSensor(), new ApolloFlowSensor(), new MksmValve(ENTRY_EV_PIN), new MksmValve(EXIT_EV_PIN));
+  MksmFlowSensor*       fInSensor   = new MksmFlowSensor();
+  ApolloFlowSensor*     fOutSensor  = new MksmFlowSensor();
+  ApolloPressureSensor* pSensor     = new mksBME280(BME280_ADDR);
+  ApolloValve*          inValve     = new MksmValve(ENTRY_EV_PIN);
+  ApolloValve*          outValve    = new MksmValve(EXIT_EV_PIN);
+  hal = new ApolloHal(pSensor,fInSensor,fOutSensor,inValve,outValve);
 
-  if (!hal->begin())
+  while(!hal->begin())
   {
-    TRACE("ERROR intializing sensors!!");
-    while (true)
-      ;
+    TRACE("ERROR intializing HAL!!");
   }
 
-  delayTime = 0;
-  setBPM(8);
-  Serial.println();
+//  Serial.println();
   //float speedIns, speedEsp, tCiclo, tIns, tEsp;
   // int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
   // int rpm = DEFAULT_RPM;
   // int vTidal = 0;
   hal->beginInspiration();
   //display.writeLine(0, "Tins  | Tesp");
-  /**MechVentilation::calcularCicloInspiratorio(&tIns, &tEsp, &tCiclo, porcentajeInspiratorio, rpm);
+
+  /* MechVentilation::calcularCicloInspiratorio(&tIns, &tEsp, &tCiclo, porcentajeInspiratorio, rpm);
   //display.writeLine(1, String(tIns) + " s | " + String(tEsp) + " s");
   Serial.println("Tiempo del ciclo (seg):" + String(tCiclo));
   Serial.println("Tiempo inspiratorio (seg):" + String(tIns));
@@ -161,49 +159,52 @@ void setup()
   hal->beginEspiration(); // hack para pruebas!!!
   //int ventilationCycle_WaitBeforeInsuflationTime = 800;
   ventilation = new MechVentilation(hal, vTidal, rpm, porcentajeInspiratorio);
-  /** ventilation->start();*/
+  ventilation->start();*/
   display.clear();
   display.writeLine(0, "RPM: " + String(ventilation->getRpm()));
   display.writeLine(1, "Vol Tidal: " + String(ventilation->getTidalVolume()));
   display.writeLine(2, "Press PEEP: " + String(ventilation->getPressionPeep()));
   //if ((pressureReference - hal->getMetricPressureEntry()) > INSPIRATION_THRESHOLD)
 }
+
+
 void loop()
 {
 
   //Comprobacion de alarmas
 
-  ppeak = getMetricPpeak();
-  pplat = getMetricPplat();
+//  ppeak = getMetricPpeak();
+//  pplat = getMetricPplat();
 
-  calculateResistance(ppeak, pplat);
+//  calculateResistance(ppeak, pplat);
 
-  if (ppeak > 40)
-  {
-    com.alert("PRESSURE ALERT");
-  }
+//  if (ppeak > 40)
+//  {
+//    com.alert("PRESSURE ALERT");
+//  }
 
-  int peep = getMetricPeep();
-
-  // ¿se debe meter la detección de perdidas en el hal?
-  float volExit = hal->getMetricVolumeExit();
-  checkLeak(volc, volExit);
-
-  calculateCompliance(pplat, peep);
+//  int peep = getMetricPeep();
+// ¿se debe meter la detección de perdidas en el hal?
+//  float volExit = hal->getMetricVolumeExit();
+//  checkLeak(volc, volExit);
+//  calculateCompliance(pplat, peep);
 
   // envio de datos
-  logData();
+  if(millis()%100 ==0)logData();
   ventilation->update();
+
   if (encoderRPM.updateValue(&rpm))
   {
     ventilation->setRpm(rpm);
     display.writeLine(0, "RPM: " + String(ventilation->getRpm()));
   }
+
   if (encoderTidal.updateValue(&vTidal, 10))
   {
     ventilation->setTidalVolume(vTidal);
     display.writeLine(1, "Vol Tidal: " + String(ventilation->getTidalVolume()));
   }
+
   if (encoderPorcInspira.updateValue(&porcentajeInspiratorio, 1))
   {
     ventilation->setPorcentajeInspiratorio(porcentajeInspiratorio);

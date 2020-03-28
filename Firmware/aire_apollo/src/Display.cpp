@@ -1,6 +1,6 @@
 #include "Display.h"
 #include "Arduino.h"
-#include "../include/defaults.h";
+#include "../include/defaults.h"
 
 Display::Display()
 {

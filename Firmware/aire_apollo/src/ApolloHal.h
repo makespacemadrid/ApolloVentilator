@@ -29,6 +29,8 @@ public:
     void beginInspiration();
     void beginEspiration();
 
+    void ISR1ms(); //
+
     //Test only
     void valveInsOpen();
     void valveInsClose();

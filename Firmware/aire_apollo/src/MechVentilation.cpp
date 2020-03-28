@@ -8,7 +8,7 @@
 #include <float.h>
 #include "MechVentilation.h"
 #include "defaults.h"
-#include <../lib/TimerOne-1.1.0/TimerOne.h>
+
 
 int currentWaitTriggerTime = 0;
 int currentStopInsufflationTime = 0;
@@ -205,7 +205,7 @@ void MechVentilation::insuflationBefore()
     this->lastExecution = now;
     /**
      *  @todo Decir a la válvula que se abra
-     * 
+     *
     */
     this->hal->valveExsClose();
     this->hal->valveInsOpen();

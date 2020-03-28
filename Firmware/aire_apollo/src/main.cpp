@@ -33,7 +33,7 @@
 #define DEBUG
 
 #define ENTRY_EV_PIN 10 //ElectroValvula - Entrada
-#define EXIT_EV_PIN 9   //ElectroValvula - Salida
+#define EXIT_EV_PIN 8   //ElectroValvula - Salida
 
 #define ENTRY_FLOW_PIN 4 //Sensor de Flujo - Entrada
 #define EXIT_FLOW_PIN 5  //Sendor de Flujo - Salida
@@ -77,7 +77,7 @@ uint16_t espTime = 0;
 // Gestion rtc? / deteccion de desbordamiento?
 
 //uint8_t power;
-char logBuffer[50];
+//char logBuffer[50];
 
 Comunications com = Comunications();
 
@@ -104,17 +104,24 @@ int calculateCompliance(int pplat, int peep)
 
 void logData()
 {
-  String data[] = {String(hal->getMetricPressureEntry()), String(hal->getMetricVolumeEntry()), String(hal->getMetricVolumeExit())};
-  com.data(data);
+
+
+
+
+  String pressure(hal->getMetricPressureEntry());
+  String intakeFlow(hal->getMetricVolumeEntry());
+  String exitFlow(hal->getMetricVolumeExit());
+  String data[] = {pressure,intakeFlow,exitFlow};
+  com.data(data,3);
 }
 
 
 MechVentilation *ventilation;
-ApolloEncoder encoderRPM(12, 13, 0);
-ApolloEncoder encoderTidal(10, 11, 0);
-ApolloEncoder encoderPorcInspira(8, 9, 0);
+//ApolloEncoder encoderRPM(12, 13, 0);
+//ApolloEncoder encoderTidal(10, 11, 0);
+//ApolloEncoder encoderPorcInspira(8, 9, 0);
 
-Display display = Display();
+//Display display = Display();
 
 int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
 int rpm = DEFAULT_RPM;
@@ -122,12 +129,15 @@ int vTidal = 0;
 
 void setup()
 {
-
-  // Display de inicio
-  display.init();
-  display.writeLine(2, "     Apollo AIRE");
-  delay(2000);
   Serial.begin(115200);
+  delay(100);
+  Serial.println("INIT");
+  //Serial.flush();
+  // Display de inicio
+//  display.init()
+//  display.writeLine(2, "     Apollo AIRE");
+//  delay(2000);
+
   // while (!Serial); // time to get serial running
 
   // Create hal layer with
@@ -136,40 +146,39 @@ void setup()
   ApolloPressureSensor* pSensor     = new mksBME280(BME280_ADDR);
   ApolloValve*          inValve     = new MksmValve(ENTRY_EV_PIN);
   ApolloValve*          outValve    = new MksmValve(EXIT_EV_PIN);
+
+  Serial.println("INIT HAL!");
+  //Serial.flush();
+
   hal = new ApolloHal(pSensor,fInSensor,fOutSensor,inValve,outValve);
+
+  Serial.println("begin HAL!");
+  Serial.flush();
 
   while(!hal->begin())
   {
-    TRACE("ERROR intializing HAL!!");
+    //TRACE("ERROR intializing HAL!!");
+    Serial.println("PROBLEMA HALLLLLL!!!");
+    Serial.flush();
   }
 
-//  Serial.println();
-  //float speedIns, speedEsp, tCiclo, tIns, tEsp;
-  // int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
-  // int rpm = DEFAULT_RPM;
-  // int vTidal = 0;
-  hal->beginInspiration();
-  //display.writeLine(0, "Tins  | Tesp");
-
-  /* MechVentilation::calcularCicloInspiratorio(&tIns, &tEsp, &tCiclo, porcentajeInspiratorio, rpm);
-  //display.writeLine(1, String(tIns) + " s | " + String(tEsp) + " s");
-  Serial.println("Tiempo del ciclo (seg):" + String(tCiclo));
-  Serial.println("Tiempo inspiratorio (seg):" + String(tIns));
-  Serial.println("Tiempo espiratorio (seg):" + String(tEsp));
-  hal->beginEspiration(); // hack para pruebas!!!
-  //int ventilationCycle_WaitBeforeInsuflationTime = 800;
+  Serial.println("HAL LISTO!");
+  Serial.flush();
   ventilation = new MechVentilation(hal, vTidal, rpm, porcentajeInspiratorio);
-  ventilation->start();*/
-  display.clear();
-  display.writeLine(0, "RPM: " + String(ventilation->getRpm()));
-  display.writeLine(1, "Vol Tidal: " + String(ventilation->getTidalVolume()));
-  display.writeLine(2, "Press PEEP: " + String(ventilation->getPressionPeep()));
-  //if ((pressureReference - hal->getMetricPressureEntry()) > INSPIRATION_THRESHOLD)
+
+//  display.clear();
+//  display.writeLine(0, "RPM: " + String(ventilation->getRpm()));
+//  display.writeLine(1, "Vol Tidal: " + String(ventilation->getTidalVolume()));
+//  display.writeLine(2, "Press PEEP: " + String(ventilation->getPressionPeep()));
+  Serial.println("Setup completado!");
+  Serial.flush();
 }
 
 
 void loop()
 {
+//  Serial.println("LOOOOP");
+// Serial.flush();
 
   //Comprobacion de alarmas
 
@@ -189,25 +198,28 @@ void loop()
 //  checkLeak(volc, volExit);
 //  calculateCompliance(pplat, peep);
 
+
+
   // envio de datos
   if(millis()%100 ==0)logData();
   ventilation->update();
-
+/*
   if (encoderRPM.updateValue(&rpm))
   {
     ventilation->setRpm(rpm);
-    display.writeLine(0, "RPM: " + String(ventilation->getRpm()));
+//    display.writeLine(0, "RPM: " + String(ventilation->getRpm()));
   }
 
   if (encoderTidal.updateValue(&vTidal, 10))
   {
     ventilation->setTidalVolume(vTidal);
-    display.writeLine(1, "Vol Tidal: " + String(ventilation->getTidalVolume()));
+//    display.writeLine(1, "Vol Tidal: " + String(ventilation->getTidalVolume()));
   }
 
   if (encoderPorcInspira.updateValue(&porcentajeInspiratorio, 1))
   {
     ventilation->setPorcentajeInspiratorio(porcentajeInspiratorio);
-    display.writeLine(3, "% Insp: " + String(ventilation->getporcentajeInspiratorio()));
+//    display.writeLine(3, "% Insp: " + String(ventilation->getporcentajeInspiratorio()));
   }
+*/
 }

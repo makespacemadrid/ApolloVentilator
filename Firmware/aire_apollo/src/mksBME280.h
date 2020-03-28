@@ -18,8 +18,8 @@ class mksBME280 : public ApolloPressureSensor
         float readPascal();
 
     private:
-        uint8_t          _addr;
-        Adafruit_BME280 *_bme = NULL; // I2C
+        uint8_t         _addr;
+        Adafruit_BME280 _bme; // I2C
 };
 
 

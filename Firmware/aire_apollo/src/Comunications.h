@@ -8,7 +8,7 @@ class Comunications
 public:
     Comunications();
     void alert(String msg);
-    void data(String msg[]);
+    void data(String msg[],uint8_t size);
 
 protected:
     void send(String msg);

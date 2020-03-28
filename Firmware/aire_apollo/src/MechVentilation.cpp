@@ -277,5 +277,6 @@ void MechVentilation::calcularCiclo(
     Serial.println("tCiclo " + String(this->_cfgSecCiclo, DEC));
     Serial.println("T Ins " + String(this->_cfgSecTimeInsufflation, DEC));
     Serial.println("T Exs " + String(this->_cfgSecTimeExsufflation, DEC));
+    Serial.flush();
     this->_cfgUpdate = false;
 }

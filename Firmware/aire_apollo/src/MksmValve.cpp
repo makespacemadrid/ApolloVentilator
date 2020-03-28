@@ -6,10 +6,13 @@ MksmValve::MksmValve(uint8_t pin, uint16_t openDelay, uint16_t closeDelay, bool 
 _pin(pin),_trueState(!invertedLogic),
 _openDelayMS(openDelay),_closeDelayMS(closeDelay) {;}
 
-void MksmValve::setup()
+bool MksmValve::begin()
 {
+  Serial.println("BEGIN VALVE");
+  Serial.flush();
   pinMode(_pin, OUTPUT);
-  close();
+  //close();
+  return true;
 }
 
 void MksmValve::open(uint8_t percent)

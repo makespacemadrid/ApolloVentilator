@@ -6,9 +6,8 @@ class ApolloValve
 {
     public:
         ApolloValve();
-        ApolloValve(uint8_t pin, uint16_t hz = 10, bool invertedLogic = false);
         ~ApolloValve();
-        virtual bool    begin();
+        virtual bool    begin()                     {  Serial.println("BEGIN VALVE FATHER");Serial.flush();return true;}
         virtual void    open(uint8_t percent = 100) {;}
         virtual void    close()                     {;}
         virtual uint8_t status()                    {return 0;}

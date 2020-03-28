@@ -8,17 +8,17 @@
 class ApolloHal
 {
 private:
-    ApolloPressureSensor *preSensor;
-    ApolloFlowSensor *entryFlowSensor;
-    ApolloFlowSensor *exitFlowSensor;
-    ApolloValve *entryEV;
-    ApolloValve *exitEV;
+    ApolloPressureSensor  *_preSensor;
+    ApolloFlowSensor      *_entryFlowSensor;
+    ApolloFlowSensor      *_exitFlowSensor;
+    ApolloValve           *_entryEV;
+    ApolloValve           *_exitEV;
 
     void openEntryEV();
     void openExitEV();
 
 public:
-    ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *enrtyEV, ApolloValve *exitEV);
+    ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV);
     ~ApolloHal();
 
     bool begin();

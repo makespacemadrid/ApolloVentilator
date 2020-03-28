@@ -9,7 +9,7 @@ class MksmValve : public ApolloValve
 public:
   MksmValve(uint8_t pin, uint16_t openDelay = 30 , uint16_t closeDelay = 10 , bool invertedLogic = false);
 
-  void setup();
+  bool begin();
   void open(uint8_t percent = 100);
   void close();
 

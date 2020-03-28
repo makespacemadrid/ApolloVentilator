@@ -13,8 +13,3 @@
 ApolloValve::ApolloValve() {;}
 
 ApolloValve::~ApolloValve() {;}
-
-bool ApolloValve::begin()
-{
-    return true;
-}

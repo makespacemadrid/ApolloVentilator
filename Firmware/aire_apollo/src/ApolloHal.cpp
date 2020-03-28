@@ -1,13 +1,13 @@
 #include "ApolloHal.h"
 #include <Arduino.h>
 
-ApolloHal::ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *enrtyEV, ApolloValve *exitEV)
+ApolloHal::ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV)
 {
-    this->preSensor = preSensor;
-    this->entryFlowSensor = entryFlowSensor;
-    this->exitFlowSensor = exitFlowSensor;
-    this->entryEV = entryEV;
-    this->exitEV = exitEV;
+    _preSensor    = preSensor;
+    _entryFlowSensor = entryFlowSensor;
+    _exitFlowSensor = exitFlowSensor;
+    _entryEV = entryEV;
+    _exitEV = exitEV;
 }
 
 
@@ -24,24 +24,53 @@ ApolloHal::~ApolloHal()
  */
 bool ApolloHal::begin()
 {
-    bool status = true;
 
-    status &= preSensor->begin();
-    status &= entryFlowSensor->begin();
-    status &= exitFlowSensor->begin();
-    status &= entryEV->begin();
-    status &= exitEV->begin();
+    bool status = true;
+    if(!_preSensor->begin())
+    {
+      Serial.println("ERROR PRESION");
+      Serial.flush();
+      status = false;
+    }
+
+    if(!_entryFlowSensor->begin())
+    {
+      Serial.println("ERROR FLOW1");
+      Serial.flush();
+      status = false;
+    }
+
+    if(!_exitFlowSensor->begin())
+    {
+      Serial.println("ERROR FLOW2");
+      Serial.flush();
+      status = false;
+    }
+
+    if(!_entryEV->begin())
+    {
+      Serial.println("ERROR ev1");
+      Serial.flush();
+      status = false;
+    }
+
+    if(!_exitEV->begin())
+    {
+      Serial.println("ERROR ev2");
+      Serial.flush();
+      status = false;
+    }
 
     return status;
 }
 
 void ApolloHal::ISR1ms()
 {
-  entryFlowSensor->update();
-  exitFlowSensor->update();
-  entryEV->update();
-  exitEV->update();
-  preSensor->update();
+  _entryFlowSensor->update();
+  _exitFlowSensor->update();
+  _entryEV->update();
+  _exitEV->update();
+  _preSensor->update();
 }
 
 void ApolloHal::setFlow(float flow, float pressure)
@@ -52,11 +81,11 @@ void ApolloHal::setFlow(float flow, float pressure)
 float ApolloHal::getMetricPressureEntry()
 {
     // preSensor MUST return value in mBar
-    float val = preSensor->readMilibar();
-    return val;
+    return _preSensor->readMilibar();;
 }
 int ApolloHal::getPresureIns()
 {
+  return 1;
     if (digitalRead(0) == HIGH)
     {
         Serial.println("Respira");
@@ -69,6 +98,7 @@ int ApolloHal::getPresureIns()
 }
 int ApolloHal::getPresureExp()
 {
+  return 40;
     if (digitalRead(1) == HIGH)
     {
         Serial.println("Expira demasiado");
@@ -82,45 +112,43 @@ int ApolloHal::getPresureExp()
 
 void ApolloHal::valveInsOpen()
 {
-  entryEV->open();
+  _entryEV->open();
 }
 void ApolloHal::valveInsClose()
 {
-  entryEV->close();
+  _entryEV->close();
 }
 void ApolloHal::valveExsOpen()
 {
-  exitEV->open();
+  _exitEV->open();
 }
 void ApolloHal::valveExsClose()
 {
-  exitEV->close();
+  _exitEV->close();
 }
 
 // Get metric from entry flow sensor
 float ApolloHal::getMetricVolumeEntry()
 {
-    float val = entryFlowSensor->getInstantFlow();
-    return val;
+    return _entryFlowSensor->getInstantFlow();
 }
 
 // Get metric from pressure sensor in mBar
 float ApolloHal::getMetricVolumeExit()
 {
     // preSensor MUST return value in mBar
-    float val = exitFlowSensor->getInstantFlow();
-    return val;
+    return _exitFlowSensor->getInstantFlow();;
 }
 
 
 void ApolloHal::beginInspiration()
 {
-    entryEV->open();
-    exitEV->close();
+    _entryEV->open();
+    _exitEV->close();
 }
 
 void ApolloHal::beginEspiration()
 {
-    entryEV->close();
-    exitEV->open();
+    _entryEV->close();
+    _exitEV->open();
 }

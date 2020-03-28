@@ -13,13 +13,13 @@
  */
 mksBME280::mksBME280(uint8_t addr) : _addr(addr)
 {
-    _bme= new Adafruit_BME280(_addr);
+//    _bme = new Adafruit_BME280();
 }
 
 mksBME280::~mksBME280()
 {
-    if(_bme)
-        delete _bme;
+//    if(_bme)
+//        delete _bme;
 }
 
 
@@ -33,12 +33,12 @@ mksBME280::~mksBME280()
 bool mksBME280::begin()
 {
 
-     if (!_bme->begin(_addr)) {
+     if (!_bme.begin(_addr)) {
         return false;
     }
 
     // set max sampling for pressure sensor
-    _bme->setSampling(Adafruit_BME280::MODE_NORMAL,
+    _bme.setSampling(Adafruit_BME280::MODE_NORMAL,
                    Adafruit_BME280::SAMPLING_X1,
                    Adafruit_BME280::SAMPLING_X16,
                    Adafruit_BME280::SAMPLING_X1,
@@ -56,5 +56,5 @@ bool mksBME280::begin()
  */
 float mksBME280::readPascal()
 {
-     return _bme->readPressure();
+     return _bme.readPressure();
 }

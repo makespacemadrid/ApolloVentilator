@@ -194,7 +194,7 @@ class App:
         # try:
         self.add_device_widget_to_notebook(device_args={
             'label': entry_label.get_text() or 'Paciente {}'.format(len(self.devices) + 1),
-            'port': entry_port.get_text() or '/dev/ttyUSB0'
+            'port': entry_port.get_text() or '/dev/ttyACM0'
         })
         # except:
             # Notify.Notification.new("Serial port Not Found")

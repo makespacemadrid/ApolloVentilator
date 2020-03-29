@@ -17,9 +17,9 @@ jobs:
       run: cd Firmware/aire_apollo/
     # - name: configure
     #   run: ./configure
-    - name: make
-      run: Firmware/aire_apollo/make
+    - name: make -f Firmware/aire_apollo/Makefile
+      run: make
     - name: make check
-      run: Firmware/aire_apollo/make check
+      run: make -f Firmware/aire_apollo/Makefile check
     - name: make distcheck
-      run: Firmware/aire_apollo/make distcheck
+      run: make -f Firmware/aire_apollo/Makefile distcheck

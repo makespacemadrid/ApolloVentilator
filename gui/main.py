@@ -122,6 +122,7 @@ class Device(Gtk.Grid):
     def loop_plot_update(self, interval):
         plt.subplots_adjust(bottom=0.2)
         plt.xticks(rotation=45, ha='right')
+
         self.plot_ax_volume.plot(self.axis_x_time, self.axis_y_volume)
         self.plot_ax_pressure.plot(self.axis_x_time, self.axis_y_pressure)
 
@@ -129,13 +130,19 @@ class Device(Gtk.Grid):
         self.axis_x_time.append(timestamp)  # should point to data timeline in class
         self.axis_y_pressure.append(float(pressure))
         self.axis_y_volume.append(float(volume))
-
-        if len(self.axis_x_time) > 40:
+        if len(self.axis_x_time) > 40: # FIXME: clear too slow
             self.axis_x_time.pop(0)
             self.axis_y_pressure.pop(0)
             self.axis_y_volume.pop(0)
             self.plot_ax_pressure.clear()
             self.plot_ax_volume.clear()
+            print(len(self.axis_x_time))
+            plt.xticks(rotation=45, ha='right')
+
+            self.plot_ax_volume.plot(self.axis_x_time, self.axis_y_volume)
+            self.plot_ax_pressure.plot(self.axis_x_time, self.axis_y_pressure)
+
+
 
     def read_buffer(self):
         buffer = bytes()
@@ -235,7 +242,7 @@ class App:
 def get_main_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--testdata', action='store_true', help='Random values to test graphics')
-    parser.add_argument('--serialport', nargs='?', default='/dev/ttyUSB0', type=str, help='Serial port name')
+    parser.add_argument('--serialport', nargs='?', default='/dev/ttyACM0', type=str, help='Serial port name')
     parser.add_argument('--show_seconds', nargs='?', default='10', type=int, help='Seconds shown in graphic')
     args = parser.parse_args()
     return args

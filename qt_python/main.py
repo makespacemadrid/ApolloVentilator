@@ -5,6 +5,8 @@ import pyqtgraph as pg
 from random import randint
 import sys
 import serial
+import argparse
+
 
 class MainWindow(QMainWindow):
     
@@ -23,7 +25,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(self.left, self.top,self.width,self.height)
         self.graphWidget = pg.PlotWidget()
         self.setCentralWidget(self.graphWidget)
-        self.serial_port = serial.Serial('/dev/ttyUSB0', baudrate=115200, timeout=0)
+        self.serial_port = serial.Serial(args.serialport, baudrate=115200, timeout=0)
         self.x = list(range(100))  # 100 time points
         self.y = [randint(0,100) for _ in range(100)]  # 100 data points
 
@@ -83,6 +85,9 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--serialport', nargs='?', default='/dev/ttyACM0', type=str, help='Serial port name')
+    args = parser.parse_args()
     
     app = QApplication(sys.argv) 
     window = MainWindow()

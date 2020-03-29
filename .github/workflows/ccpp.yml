@@ -14,12 +14,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Change folder
-      run: cd Firmware/aire_apollo
+      run: cd ${HOME}/Firmware/aire_apollo/
     # - name: configure
     #   run: ./configure
     - name: make
-      run: make
+      run: ${HOME}/Firmware/aire_apollo/make
     - name: make check
-      run: make check
+      run: ${HOME}/Firmware/aire_apollo/make check
     - name: make distcheck
-      run: make distcheck
+      run: ${HOME}/Firmware/aire_apollo/make distcheck

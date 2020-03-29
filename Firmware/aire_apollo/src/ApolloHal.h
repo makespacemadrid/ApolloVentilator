@@ -31,6 +31,13 @@ public:
 
     void ISR1ms(); //
 
+    ApolloPressureSensor* pressuresSensor()   {return _preSensor;}
+    ApolloFlowSensor*     intakeFlowSensor()  {return _entryFlowSensor;}
+    ApolloFlowSensor*     exitFlowSensor()    {return _exitFlowSensor;}
+    ApolloValve*          intakeValve()       {return _entryEV;}
+    ApolloValve*          exitValve()         {return _exitEV;}
+
+
     //Test only
     void valveInsOpen();
     void valveInsClose();

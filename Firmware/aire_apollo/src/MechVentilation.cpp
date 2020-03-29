@@ -10,6 +10,7 @@
 #include "defaults.h"
 #include "ApolloConfiguration.h"
 
+
 MechVentilation::MechVentilation(
     ApolloHal *hal,
     ApolloConfiguration *config)
@@ -111,6 +112,7 @@ void MechVentilation::insuflationBefore()
      *  @todo Decir a la válvula que se abra
      *
     */
+    this->hal->intakeFlowSensor()->resetFlow();
     this->hal->valveExsClose();
     this->hal->valveInsOpen();
     this->stateNext();
@@ -119,7 +121,7 @@ void MechVentilation::insufaltionProcess()
 {
     //El proceso de insuflación está en marcha, esperamos al sensor de medida o tiempo de insuflación max
     /** @todo conectar sesor ml/min */
-    float volumensensor = 0;
+    float volumensensor = this->hal->intakeFlowSensor()->getFlow();
     unsigned long now = millis();
     if (volumensensor >= this->_cfgmlTidalVolume || (now - this->lastExecution) >= (this->_cfgSecTimeInsufflation * 1000))
     {
@@ -190,4 +192,5 @@ void MechVentilation::configurationUpdate()
     this->_cfgLpmFluxTriggerValue = this->configuration->getLpmTriggerInspiration();
     this->_cfgPresionPeep = this->configuration->getPressionPeep();
     this->calcularCiclo();
+    this->_cfgUpdate = false;
 }

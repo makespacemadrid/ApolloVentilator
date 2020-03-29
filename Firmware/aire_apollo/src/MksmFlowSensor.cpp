@@ -4,7 +4,7 @@
 MksmFlowSensor::MksmFlowSensor(uint16_t pulses_per_liter,uint8_t sampling_ms) :
   _pulsesPerLiter(pulses_per_liter), _samplingMS(sampling_ms)
   {
-
+    _lastSampleTime = 0;
   }
 
   MksmFlowSensor::~MksmFlowSensor()
@@ -24,10 +24,12 @@ MksmFlowSensor::MksmFlowSensor(uint16_t pulses_per_liter,uint8_t sampling_ms) :
 
   void MksmFlowSensor::update()
   {
-    if( millis() % _samplingMS==0 )
+    unsigned long now = millis();
+    if( now - _lastSampleTime > _samplingMS)
     {
-      _instantFlow = (_pulsesSinceLastSample / float(_pulsesPerLiter) ) * (60*(1000/float(_samplingMS))) * 1000.0 ;
+      _instantFlow = (float(_pulsesSinceLastSample) / float(_pulsesPerLiter) ) * (60.0*(1000.0/float(_samplingMS))) ;
       _pulsesSinceLastSample = 0;
+      _lastSampleTime = now;
     }
   }
 

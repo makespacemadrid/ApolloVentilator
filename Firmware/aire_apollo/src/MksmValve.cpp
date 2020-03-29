@@ -8,10 +8,7 @@ _openDelayMS(openDelay),_closeDelayMS(closeDelay) {;}
 
 bool MksmValve::begin()
 {
-  Serial.println("BEGIN VALVE");
-  Serial.flush();
   pinMode(_pin, OUTPUT);
-  //close();
   return true;
 }
 

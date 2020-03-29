@@ -6,7 +6,7 @@
 class MksmFlowSensor : public ApolloFlowSensor
 {
     public:
-        MksmFlowSensor(uint16_t pulses_per_liter = 100,uint8_t sampling_ms = 25);
+        MksmFlowSensor(uint16_t pulses_per_liter = 100,uint8_t sampling_ms = 100);
         ~MksmFlowSensor();
         bool begin();
         float getFlow();
@@ -21,6 +21,7 @@ class MksmFlowSensor : public ApolloFlowSensor
         uint16_t      _pulsesSinceLastSample;
         uint16_t      _instantFlow;
         unsigned long _pulseCounter;
+        unsigned long _lastSampleTime;
 };
 
 

@@ -13,6 +13,7 @@ class ApolloFlowSensor
         virtual float getInstantFlow()  {return 0;}
         virtual void resetFlow()        {;}
         virtual void update()           {;}
+        virtual void pulse()            {;}
     protected:
 
 

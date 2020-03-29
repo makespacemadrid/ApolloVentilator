@@ -1,0 +1,5 @@
+PyQt5
+PyQt5-sip
+PyQtChart
+pyqtgraph
+pyserial

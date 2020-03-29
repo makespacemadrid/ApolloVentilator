@@ -50,7 +50,7 @@ public:
 	 */
     MechVentilation(
         ApolloHal *hal,
-        ApolloConfiguration *config);
+        ApolloConfiguration *configuration);
 
     /**,
         float secTimeoutInsufflation,

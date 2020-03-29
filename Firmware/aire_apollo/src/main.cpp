@@ -43,7 +43,7 @@ int vTidal = DEFAULT_MIN_VOLUMEN_TIDAL;
 int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
 
 ApolloHal *hal;
-ApolloConfiguration *configuration;
+ApolloConfiguration *configuration = new ApolloConfiguration();
 Comunications com = Comunications(configuration);
 MechVentilation *ventilation;
 
@@ -99,15 +99,18 @@ void logData()
 
 void setup()
 {
-  ApolloConfiguration *configuration = new ApolloConfiguration();
+  Serial.begin(115200);
+  TRACE("INIT SETUP");
+
+  TRACE("BEGIN CONFIG!");
+
+  //ApolloConfiguration *configuration = new ApolloConfiguration();
   while (!configuration->begin())
   {
     com.debug("setup", "Esperando configuración");
   }
   com.debug("setup", "Configuración recibida");
-
-  Serial.begin(115200);
-  TRACE("INIT");
+  TRACE("CONFIG END");
 
   // Create hal layer with
   ApolloFlowSensor *fInSensor = new MksmFlowSensor();
@@ -137,6 +140,7 @@ void setup()
   display.writeLine(0, "RPM: " + String(configuration->getRpm()));
   display.writeLine(1, "Vol Tidal: " + String(configuration->getMlTidalVolumen()));
   display.writeLine(2, "Press PEEP: " + String(configuration->getPressionPeep()));
+  display.writeLine(3, "% Insp: " + String(configuration->getPorcentajeInspiratorio()));
 #endif
 
   //ISRs
@@ -197,5 +201,5 @@ void loop()
     display.writeLine(3, "% Insp: " + String(configuration->getPorcentajeInspiratorio()));
   }
 #endif
-  com.serialRead();
+  //com.serialRead();
 }

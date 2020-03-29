@@ -18,7 +18,8 @@ public:
     int getWeight() { return this->weight; };
     int getHeight() { return this->height; };
 
-    int update() { return this->updated; }; //Return true if the configuration has been updated
+    bool isUpdated() { return this->updated; }; //Return true if the configuration has been updated
+    void resetUpdated() { this->updated = false; }
     bool begin();
     // Set tidal volume
     void setTidalVolume(float mlTidalVolume);
@@ -61,15 +62,15 @@ public:
     }
 
 private:
-    int weight = DEFAULT_WEIGHT;
-    int height = DEFAULT_HEIGHT;
-    int sexo = DEFAULT_GENDER;
-    int rpm = DEFAULT_RPM;
+    int weight;
+    int height;
+    int sexo;
+    int rpm;
     int mlTidalVolume;
-    int pressionPeep = DEFAULT_CMH20_PEEP;
-    int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
-    int porcentajeFiO2 = DEFAULT_POR_FIO2;
-    int lpmTriggerInspiration = DEFAULT_LPM_FLUX_TRIGGER_VALUE;
+    int pressionPeep;
+    int porcentajeInspiratorio;
+    int porcentajeFiO2;
+    int lpmTriggerInspiration;
     void calcularCiclo();
 
     float secCiclo = 0;
@@ -78,6 +79,8 @@ private:
 
     bool updated = false;
     bool ready = false;
+
+    bool defaultConfig();
 };
 
 #endif //_APOLLO_CONFIGURATION_H

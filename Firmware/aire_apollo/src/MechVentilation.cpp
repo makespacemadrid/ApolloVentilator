@@ -12,8 +12,10 @@
 
 MechVentilation::MechVentilation(
     ApolloHal *hal,
-    ApolloConfiguration *config)
+    ApolloConfiguration *configuration)
 {
+    this->hal = hal;
+    this->configuration = configuration;
     this->configurationUpdate();
     this->_currentState = State::Wait;
 }
@@ -84,7 +86,7 @@ void MechVentilation::stateNext()
 
 void MechVentilation::wait()
 {
-    if (this->configuration->update())
+    if (this->configuration->isUpdated())
     {
         this->configurationUpdate();
     }
@@ -177,9 +179,9 @@ void MechVentilation::calcularCiclo()
     this->_cfgSecCiclo = 60 / this->_cfgRpm; // Tiempo de ciclo en segundos
     this->_cfgSecTimeInsufflation = this->_cfgSecCiclo * this->_cfgPorcentajeInspiratorio / 100;
     this->_cfgSecTimeExsufflation = this->_cfgSecCiclo - this->_cfgSecTimeInsufflation;
-    Serial.println("tCiclo " + String(this->_cfgSecCiclo, DEC));
-    Serial.println("T Ins " + String(this->_cfgSecTimeInsufflation, DEC));
-    Serial.println("T Exs " + String(this->_cfgSecTimeExsufflation, DEC));
+    Serial.println("_cfgSecCiclo " + String(this->_cfgSecCiclo, DEC));
+    Serial.println("_cfgSecTimeInsufflation " + String(this->_cfgSecTimeInsufflation, DEC));
+    Serial.println("_cfgSecTimeExsufflation " + String(this->_cfgSecTimeExsufflation, DEC));
     Serial.flush();
 }
 
@@ -187,8 +189,15 @@ void MechVentilation::configurationUpdate()
 {
     this->_cfgmlTidalVolume = this->configuration->getMlTidalVolumen();
     this->_cfgPorcentajeInspiratorio = this->configuration->getPorcentajeInspiratorio();
-    this->_cfgRpm = this->configuration->getRpm();
+    this->_cfgRpm = String(this->configuration->getRpm()).toInt();
     this->_cfgLpmFluxTriggerValue = this->configuration->getLpmTriggerInspiration();
     this->_cfgPresionPeep = this->configuration->getPressionPeep();
+    Serial.println("_cfgRpm " + String(this->_cfgRpm));
+    Serial.println("_cfgmlTidalVolume " + String(this->_cfgmlTidalVolume));
+    Serial.println("_cfgPorcentajeInspiratorio " + String(this->_cfgPorcentajeInspiratorio));
+    Serial.println("_cfgPresionPeep " + String(this->_cfgPresionPeep));
+    Serial.flush();
+
     this->calcularCiclo();
+    this->configuration->resetUpdated();
 }

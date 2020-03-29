@@ -1,7 +1,10 @@
 #include "ApolloConfiguration.h"
 #include "Arduino.h"
 
-ApolloConfiguration::ApolloConfiguration(){};
+ApolloConfiguration::ApolloConfiguration()
+{
+    this->defaultConfig();
+};
 
 bool ApolloConfiguration::begin()
 {
@@ -18,9 +21,28 @@ bool ApolloConfiguration::begin()
         }
         //Esperamos a recibir confguración o X tiempo
     }
+    // Serial.println("RPM->" + String(this->rpm));
+    // Serial.println("TidalVol>" + String(this->mlTidalVolume));
+    // Serial.println("isnp>" + String(this->porcentajeInspiratorio));
+    // Serial.println("peep>" + String(this->pressionPeep));
+    // Serial.println("sexo>" + String(this->sexo));
+    // Serial.println("wigth>" + String(this->weight));
+    // Serial.println("height>" + String(this->height));
+    // Serial.flush();
+
     return true;
 }
-
+bool ApolloConfiguration::defaultConfig()
+{
+    this->setRpm(DEFAULT_RPM);
+    this->setTidalVolume(DEFAULT_MIN_VOLUMEN_TIDAL);
+    this->setPorcentajeInspiratorio(DEFAULT_POR_INSPIRATORIO);
+    this->setPressionPeep(DEFAULT_CMH20_PEEP);
+    this->setSexo(DEFAULT_SEXO);
+    this->setWeight(DEFAULT_WEIGHT);
+    this->setHeight(DEFAULT_HEIGHT);
+    return true;
+}
 bool ApolloConfiguration::parseConfig(char *strings)
 {
 
@@ -32,15 +54,6 @@ bool ApolloConfiguration::parseConfig(char *strings)
     this->setWeight(String(strings[6]).toFloat());
     this->setHeight(String(strings[7]).toFloat());
 
-    Serial.println("RPM" + String(this->rpm));
-    Serial.println("TidalVol" + String(this->mlTidalVolume));
-    Serial.println("isnp" + String(this->porcentajeInspiratorio));
-    Serial.println("peep" + String(this->pressionPeep));
-    Serial.println("sexo " + this->sexo);
-    Serial.println("wigth " + this->weight);
-    Serial.println("height " + this->height);
-    Serial.flush();
-
     return true;
 }
 
@@ -50,6 +63,10 @@ void ApolloConfiguration::setRpm(int rpm)
     {
         this->rpm = rpm;
         this->updated = true;
+    }
+    else
+    {
+        Serial.println("RPM fuera de parámetros -> " + String(rpm));
     }
 }
 

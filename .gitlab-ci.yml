@@ -1,0 +1,40 @@
+stages:
+  - build_image
+  - build_fw
+
+variables:
+  DOCKER_DRIVER: overlay2
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_PIPELINE_ID
+
+services:
+  - docker:19.03.8-dind
+
+build_image:
+  stage: build_image
+  image: docker:19.03.8-dind
+  script:
+    - docker build -t $IMAGE_TAG .
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker push $IMAGE_TAG
+    - docker tag $IMAGE_TAG $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:latest
+  only:
+    variables:
+      - $CI_COMMIT_MESSAGE =~ /.*\[build_img]\.*/
+
+build_fw:
+  stage: build_fw
+  image: docker:19.03.8-dind
+  script:
+    - docker run --rm -v $(pwd)/Firmware/aire_apollo:/app/ $CI_REGISTRY_IMAGE:latest
+    - docker run -e BOARD_TAG=leonardo --rm -v $(pwd)/Firmware/aire_apollo:/app/ $CI_REGISTRY_IMAGE:latest
+    - docker run -e BOARD_TAG=mega -e BOARD_SUB=atmega2560 --rm -v $(pwd)/Firmware/aire_apollo:/app/ $CI_REGISTRY_IMAGE:latest
+    - docker run -e BOARD_TAG=nano -e BOARD_SUB=atmega328 --rm -v $(pwd)/Firmware/aire_apollo:/app/ $CI_REGISTRY_IMAGE:latest
+    - mkdir -p artifacts
+    - mv Firmware/aire_apollo/bin/uno/app.elf artifacts/uno.elf
+    - mv Firmware/aire_apollo/bin/leonardo/app.elf artifacts/leonardo.elf
+    - mv Firmware/aire_apollo/bin/mega/app.elf artifacts/mega.elf
+    - mv Firmware/aire_apollo/bin/nano/app.elf artifacts/nano.elf
+  artifacts:
+    paths:
+      - artifacts/*.elf

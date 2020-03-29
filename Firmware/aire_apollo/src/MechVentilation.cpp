@@ -10,7 +10,6 @@
 #include "defaults.h"
 #include "ApolloConfiguration.h"
 
-
 MechVentilation::MechVentilation(
     ApolloHal *hal,
     ApolloConfiguration *config)
@@ -192,5 +191,4 @@ void MechVentilation::configurationUpdate()
     this->_cfgLpmFluxTriggerValue = this->configuration->getLpmTriggerInspiration();
     this->_cfgPresionPeep = this->configuration->getPressionPeep();
     this->calcularCiclo();
-    this->_cfgUpdate = false;
 }

@@ -95,14 +95,7 @@ int calculateCompliance(int pplat, int peep)
 }
 */
 
-void logData()
-{
-  String pressure   (hal->pressuresSensor()->readMMHg());
-  String intakeFlow (hal->intakeFlowSensor()->getInstantFlow());
-  String exitFlow   (hal->exitFlowSensor()->getInstantFlow());
-  String data[] =   {pressure,intakeFlow,exitFlow};
-  com.data(data,3);
-}
+
 
 
 void ISR1ms() //Esta funcion se ejecuta cada 1ms para gestionar sensores/actuadores!
@@ -122,6 +115,21 @@ void ISR1ms() //Esta funcion se ejecuta cada 1ms para gestionar sensores/actuado
   }
 #endif
 
+
+/// Porgram Begin
+
+void logData()
+{
+  String pressure           (hal->pressuresSensor()->readCMH2O());
+  String intakeFlow         (hal->intakeFlowSensor()->getFlow());
+  String exitFlow           (hal->exitFlowSensor()->getFlow());
+  String intakeInstantFlow  (hal->intakeFlowSensor()->getInstantFlow());
+  String exitInstantFlow    (hal->exitFlowSensor()->getInstantFlow());
+
+
+  String data[] =   {pressure,intakeFlow,exitFlow,intakeInstantFlow,exitInstantFlow};
+  com.data(data,5);
+}
 
 void setup()
 {

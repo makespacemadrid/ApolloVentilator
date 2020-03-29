@@ -42,9 +42,12 @@
 #define DEFAULT_MIN_RPM                 10
 #define DEFAULT_POR_INSPIRATORIO        33 // %
 #define DEFAULT_LPM_FLUX_TRIGGER_VALUE -10
-#define DEFAULT_CMH20_PICO              45
-#define DEFAULT_CMH20_MESETA            32
-#define DEFAULT_CMH20_PEEP              14
+#define DEFAULT_CMH20_PICO 45
+#define DEFAULT_CMH20_MESETA 32
+#define DEFAULT_CMH20_PEEP 14
 
-
+#define DEFAULT_WEIGHT 80;
+#define DEFAULT_HEIGHT 170;
+#define DEFAULT_GENDER 0;
+#define DEFAULT_POR_FIO2 90;
 #endif

@@ -12,6 +12,7 @@
 #include <inttypes.h>
 #include "defaults.h"
 #include "ApolloHal.h"
+#include "ApolloConfiguration.h"
 
 /** States of the mechanical ventilation. */
 enum State
@@ -43,40 +44,18 @@ public:
     /**
 	 * Constructor
 	 *
-     * @param[ApolloHal]    hal                       Hal object.
-     * @param[int]          mlTidalVolume             Tidal volume in millilitres.
-	 * @param[float]        secTimeoutInsufflation    Insufflation timeout in seconds.
-	 * @param[float]        secTimeoutExsufflation    Exsufflation timeout in seconds.
+     * @param[ApolloHal]            hal                       Hal object.
+     * @param[ApolloConfiguration]  config                    Configuration Object
      *
 	 */
     MechVentilation(
         ApolloHal *hal,
-        int mlTidalVolume,
-        int rpm,
-        int porcentajeInspiratorio);
+        ApolloConfiguration *config);
+
     /**,
         float secTimeoutInsufflation,
         float secTimeoutExsufflation,
         int ventilationCyle_WaitTime);*/
-
-    /* Setters/getters */
-
-    // Set tidal volume
-    void setTidalVolume(float mlTidalVolume);
-    //Set RPM
-    void setRpm(int rpm);
-    //Set Porcentaje inspiratorio
-    void setPorcentajeInspiratorio(int porcentajeInspiratorio);
-    // Set presion peep
-    void setPressionPeep(float presionPeep);
-    // Get tidal volume
-    float getTidalVolume();
-    //Set RPM
-    int getRpm();
-    //Set Porcentaje inspiratorio
-    int getporcentajeInspiratorio();
-    // Set presion peep
-    float getPressionPeep();
 
     /**
      * Update mechanical ventilation.
@@ -88,28 +67,6 @@ public:
      * @note This method must be called on the main loop.
      */
     void update(void);
-    /**
-     * @brief estima el volumen tidal en función de estatura y sexo, en ml.
-     *
-     * @param estatura en cm, del paciente
-     * @param sexo 0: varón, 1: mujer, sexo del paciente
-     * @return *volumenTidal volumen tidal estimado, en mililitros
-     */
-    int static calcularVolumenTidal(int estatura, int sexo, float mlByKgWeight = DEFAULT_ML_POR_KG_DE_PESO_IDEAL)
-    {
-        float peso0, pesoIdeal;
-        if (sexo == 0)
-        { // Varón
-            peso0 = 50.0;
-        }
-        else if (sexo == 1)
-        { // Mujer
-            peso0 = 45.5;
-        }
-        pesoIdeal = peso0 + 0.91 * (estatura - 152.4); // en kg
-
-        return ((int)(round(pesoIdeal * mlByKgWeight)));
-    }
 
 private:
     /** Initialization. */
@@ -122,9 +79,10 @@ private:
     /** Set state. */
     void _setState(State state);
 
-    /* Configuration parameters */
     ApolloHal *hal;
-    bool _cfgUpdate = false;
+
+    ApolloConfiguration *configuration;
+
     /** Tidal volume in millilitres. */
     float _cfgmlTidalVolume;
     /** Respiraciones por minuto */
@@ -142,8 +100,6 @@ private:
     float _cfgSecTimeExsufflation;
     /* Presion peep (presión mínima en pulmones a la salida). */
     float _cfgPresionPeep;
-
-    /* Internal state */
     /** Current state. */
     State _currentState;
     /** Timer counter in seconds. */
@@ -152,23 +108,6 @@ private:
     float _secTimeoutInsufflation;
     /** Exsufflation timeout in seconds. */
     float _secTimeoutExsufflation;
-    /** Insufflation speed. @todo Denote units. */
-    float _speedInsufflation;
-    /** Exsufflation speed. @todo Denote units. */
-    float _speedExsufflation;
-    bool _running = false;
-    bool _sensor_error_detected;
-    bool _startWasTriggeredByPatient = false;
-    float _currentVolume = 0;
-
-    /** Estimated flux accross the bmes. @todo Denote units. */
-    //float _flux;
-
-    /* @todo PID stuff */
-
-    int totalCyclesInThisState = 0;
-    int currentTime = 0;
-    int flowSetpoint = 0;
 
     unsigned long lastExecution = 0;
 
@@ -182,7 +121,9 @@ private:
 
     void stateNext();
 
-    void calcularCiclo(int porcentajeInspiratorio, int rpm);
+    void calcularCiclo();
+
+    void configurationUpdate();
 };
 
 #endif /* INC_MECHANICAL_VENTILATION_H */

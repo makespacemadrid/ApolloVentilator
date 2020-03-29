@@ -40,7 +40,7 @@
 #include "MechVentilation.h"
 #include "ApolloEncoder.h"
 #include "Display.h"
-
+#include "ApolloConfiguration.h"
 
 
 
@@ -62,26 +62,6 @@ MechVentilation* ventilation;
 #endif
 
 
-/*
-float volmax;
-float presmax;
-float o2insp;
-float limitO2;
-float co2esp;
-float limitCO2;
-float volumeentry;
-float volumeexit;
-int ppeak = 23;
-int pplat = 18;
-int peep  = 5;
-
-// Parameters
-int weight  = 70;       // kg
-int volc    = weight * 6; // weight * 6u8 (mL) Volumen tidal
-int bpm     = 10;          // breaths per minute
-int voli    = volc * bpm;
-
-
 int calculateResistance(int ppeak, int pplat)
 {
   return ppeak - pplat;
@@ -94,7 +74,6 @@ int calculateCompliance(int pplat, int peep)
   return pplat - peep;
 }
 */
-
 
 
 
@@ -116,6 +95,7 @@ void ISR1ms() //Esta funcion se ejecuta cada 1ms para gestionar sensores/actuado
 #endif
 
 
+
 /// Porgram Begin
 
 void logData()
@@ -133,6 +113,13 @@ void logData()
 
 void setup()
 {
+  ApolloConfiguration *configuration = new ApolloConfiguration();
+  while (!configuration->begin())
+  {
+    com.debug("setup", "Esperando configuración");
+  }
+  com.debug("setup", "Configuración recibida");
+
   Serial.begin(115200);
   TRACE("INIT");
 
@@ -147,8 +134,15 @@ void setup()
 
   TRACE("BEGIN HAL!");
 
+  // Create hal layer with
+  MksmFlowSensor *fInSensor = new MksmFlowSensor();
+  ApolloFlowSensor *fOutSensor = new MksmFlowSensor();
+  ApolloPressureSensor *pSensor = new mksBME280(BME280_ADDR);
+  ApolloValve *inValve = new MksmValve(ENTRY_EV_PIN);
+  ApolloValve *outValve = new MksmValve(EXIT_EV_PIN);
+  hal = new ApolloHal(pSensor, fInSensor, fOutSensor, inValve, outValve);
 
-  while(!hal->begin())
+  while (!hal->begin())
   {
     TRACE("HAL ERR!"); // No arrancamos si falla algun componente o podemos arrancar con algunos en fallo?
     delay(1000);
@@ -176,32 +170,39 @@ void setup()
       attachInterrupt(digitalPinToInterrupt(EXIT_FLOW_PIN) , flowOut, RISING);
 #endif
   TRACE("SETUP COMPLETED!");
+
 }
 
+void logData()
+{
+  String data[] = {String(hal->getMetricPressureEntry()), String(hal->getMetricVolumeEntry()), String(hal->getMetricVolumeExit())};
+  com.data(data, 3);
+}
 
 void loop()
 {
+
 //Comprobacion de alarmas
 
-//  ppeak = getMetricPpeak();
-//  pplat = getMetricPplat();
 
-//  calculateResistance(ppeak, pplat);
+  //  ppeak = getMetricPpeak();
+  //  pplat = getMetricPplat();
 
-//  if (ppeak > 40)
-//  {
-//    com.alert("PRESSURE ALERT");
-//  }
+  //  calculateResistance(ppeak, pplat);
 
-//  int peep = getMetricPeep();
-// ¿se debe meter la detección de perdidas en el hal?
-//  float volExit = hal->getMetricVolumeExit();
-//  checkLeak(volc, volExit);
-//  calculateCompliance(pplat, peep);
+  //  if (ppeak > 40)
+  //  {
+  //    com.alert("PRESSURE ALERT");
+  //  }
 
-
+  //  int peep = getMetricPeep();
+  // ¿se debe meter la detección de perdidas en el hal?
+  //  float volExit = hal->getMetricVolumeExit();
+  //  checkLeak(volc, volExit);
+  //  calculateCompliance(pplat, peep);
 
   // envio de datos
+
   if(millis()%LOG_INTERVAL==0)logData();
   // gestion del ventilador
   ventilation->update();
@@ -209,21 +210,22 @@ void loop()
 #ifdef LOCALCONTROLS
   if (encoderRPM.updateValue(&rpm))
   {
-    ventilation->setRpm(rpm);
-    display.writeLine(0, "RPM: " + String(ventilation->getRpm()));
+    configuration->setRpm(rpm);
+    display.writeLine(0, "RPM: " + String(configuration->getRpm()));
   }
 
   if (encoderTidal.updateValue(&vTidal, 10))
   {
-    ventilation->setTidalVolume(vTidal);
-    display.writeLine(1, "Vol Tidal: " + String(ventilation->getTidalVolume()));
+    configuration->setTidalVolume(vTidal);
+    display.writeLine(1, "Vol Tidal: " + String(configuration->getMlTidalVolumen()));
   }
 
   if (encoderPorcInspira.updateValue(&porcentajeInspiratorio, 1))
   {
-    ventilation->setPorcentajeInspiratorio(porcentajeInspiratorio);
-    display.writeLine(3, "% Insp: " + String(ventilation->getporcentajeInspiratorio()));
+    configuration->setPorcentajeInspiratorio(porcentajeInspiratorio);
+    display.writeLine(3, "% Insp: " + String(configuration->getPorcentajeInspiratorio()));
   }
 #endif
+  com.serialRead();
 
 }

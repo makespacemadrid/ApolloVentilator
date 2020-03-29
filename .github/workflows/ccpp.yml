@@ -14,9 +14,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Change folder
-      run: cd /Firmware/aire_apollo
-    - name: configure
-      run: ./configure
+      run: cd Firmware/aire_apollo
+    # - name: configure
+    #   run: ./configure
     - name: make
       run: make
     - name: make check

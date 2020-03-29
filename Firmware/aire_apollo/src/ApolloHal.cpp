@@ -1,5 +1,6 @@
 #include "ApolloHal.h"
 #include <Arduino.h>
+#include "trace.h"
 
 ApolloHal::ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV)
 {
@@ -28,36 +29,31 @@ bool ApolloHal::begin()
     bool status = true;
     if(!_preSensor->begin())
     {
-      Serial.println("ERROR PRESION");
-      Serial.flush();
+      TRACE("ERROR PRESION!");
       status = false;
     }
 
     if(!_entryFlowSensor->begin())
     {
-      Serial.println("ERROR FLOW1");
-      Serial.flush();
+      TRACE("ERROR FLOW-IN!");
       status = false;
     }
 
     if(!_exitFlowSensor->begin())
     {
-      Serial.println("ERROR FLOW2");
-      Serial.flush();
+      TRACE("ERROR FLOW-OUT");
       status = false;
     }
 
     if(!_entryEV->begin())
     {
-      Serial.println("ERROR ev1");
-      Serial.flush();
+      TRACE("ERROR VALVE-IN");
       status = false;
     }
 
     if(!_exitEV->begin())
     {
-      Serial.println("ERROR ev2");
-      Serial.flush();
+      TRACE("ERROR VALVE-OUT");
       status = false;
     }
 
@@ -83,6 +79,7 @@ float ApolloHal::getMetricPressureEntry()
     // preSensor MUST return value in mBar
     return _preSensor->readMilibar();;
 }
+
 int ApolloHal::getPresureIns()
 {
   return 1;

@@ -7,7 +7,7 @@ class ApolloValve
     public:
         ApolloValve();
         ~ApolloValve();
-        virtual bool    begin()                     {  Serial.println("BEGIN VALVE FATHER");Serial.flush();return true;}
+        virtual bool    begin()                     {return true;}
         virtual void    open(uint8_t percent = 100) {;}
         virtual void    close()                     {;}
         virtual uint8_t status()                    {return 0;}

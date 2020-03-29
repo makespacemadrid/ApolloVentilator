@@ -50,7 +50,7 @@ void Display::clear()
 
 void Display::init()
 {
-#ifdef I2C_DIR
+#ifdef LCD_DIR
   lcd.init();
   lcd.backlight();
 #else

@@ -8,7 +8,7 @@
 #include <float.h>
 #include "MechVentilation.h"
 #include "defaults.h"
-
+#include "trace.h"
 
 int currentWaitTriggerTime = 0;
 int currentStopInsufflationTime = 0;
@@ -207,6 +207,7 @@ void MechVentilation::insuflationBefore()
      *  @todo Decir a la válvula que se abra
      *
     */
+    this->hal->intakeFlowSensor()->resetFlow();
     this->hal->valveExsClose();
     this->hal->valveInsOpen();
     this->stateNext();
@@ -215,7 +216,7 @@ void MechVentilation::insufaltionProcess()
 {
     //El proceso de insuflación está en marcha, esperamos al sensor de medida o tiempo de insuflación max
     /** @todo conectar sesor ml/min */
-    float volumensensor = 0;
+    float volumensensor = this->hal->intakeFlowSensor()->getFlow();
     unsigned long now = millis();
     if (volumensensor >= this->_cfgmlTidalVolume || (now - this->lastExecution) >= (this->_cfgSecTimeInsufflation * 1000))
     {
@@ -274,9 +275,8 @@ void MechVentilation::calcularCiclo(
     this->_cfgSecCiclo = 60 / rpm; // Tiempo de ciclo en segundos
     this->_cfgSecTimeInsufflation = this->_cfgSecCiclo * porcentajeInspiratorio / 100;
     this->_cfgSecTimeExsufflation = this->_cfgSecCiclo - this->_cfgSecTimeInsufflation;
-    Serial.println("tCiclo " + String(this->_cfgSecCiclo, DEC));
-    Serial.println("T Ins " + String(this->_cfgSecTimeInsufflation, DEC));
-    Serial.println("T Exs " + String(this->_cfgSecTimeExsufflation, DEC));
-    Serial.flush();
+    TRACE("tCiclo " + String(this->_cfgSecCiclo, DEC));
+    TRACE("T Ins " + String(this->_cfgSecTimeInsufflation, DEC));
+    TRACE("T Exs " + String(this->_cfgSecTimeExsufflation, DEC));
     this->_cfgUpdate = false;
 }

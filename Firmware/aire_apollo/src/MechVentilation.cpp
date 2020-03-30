@@ -92,7 +92,7 @@ void MechVentilation::wait()
     }
 
     //Detecta aspiración del paciente
-    if (this->hal->getPresureIns() <= this->_cfgLpmFluxTriggerValue)
+    if (this->hal->getPresureIns() <= this->_cfgCmh2oTriggerValue)
     {
         /** @todo Pendiente desarrollo */
         stateNext();
@@ -129,6 +129,11 @@ void MechVentilation::insufaltionProcess()
         /** @todo Paramos la insuflación */
         this->stateNext();
     }
+    if (this->hal->getPresureIns() > DEFAULT_CMH20_MAX)
+    {
+        // @todo Alerta por sobrepresion
+        this->hal->valveInsClose();
+    }
 }
 void MechVentilation::insuflationAfter()
 {
@@ -158,10 +163,11 @@ void MechVentilation::exsufflationProcess()
     if (this->hal->getPresureExp() <= this->_cfgPresionPeep)
     {
         this->hal->valveExsClose();
+        stateNext();
     }
 
     //Detecta aspiración del paciente
-    if (this->hal->getPresureIns() <= this->_cfgLpmFluxTriggerValue)
+    if (this->hal->getPresureIns() <= this->_cfgCmh2oTriggerValue)
     {
         /** @todo Pendiente desarrollo */
         _setState(State::InsuflationBefore);
@@ -190,12 +196,12 @@ void MechVentilation::configurationUpdate()
     this->_cfgmlTidalVolume = this->configuration->getMlTidalVolumen();
     this->_cfgPorcentajeInspiratorio = this->configuration->getPorcentajeInspiratorio();
     this->_cfgRpm = String(this->configuration->getRpm()).toInt();
-    this->_cfgLpmFluxTriggerValue = this->configuration->getLpmTriggerInspiration();
+    this->_cfgCmh2oTriggerValue = this->configuration->getPresionTriggerInspiration();
     this->_cfgPresionPeep = this->configuration->getPressionPeep();
     Serial.println("_cfgRpm " + String(this->_cfgRpm));
     Serial.println("_cfgmlTidalVolume " + String(this->_cfgmlTidalVolume));
     Serial.println("_cfgPorcentajeInspiratorio " + String(this->_cfgPorcentajeInspiratorio));
-    Serial.println("_cfgLpmFluxTriggerValue " + String(this->_cfgLpmFluxTriggerValue));
+    Serial.println("_cfgCmh2oTriggerValue " + String(this->_cfgCmh2oTriggerValue));
     Serial.println("_cfgPresionPeep " + String(this->_cfgPresionPeep));
     Serial.flush();
 

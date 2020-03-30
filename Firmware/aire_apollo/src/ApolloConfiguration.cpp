@@ -41,7 +41,7 @@ bool ApolloConfiguration::defaultConfig()
     this->setSexo(DEFAULT_SEXO);
     this->setWeight(DEFAULT_WEIGHT);
     this->setHeight(DEFAULT_HEIGHT);
-    this->lpmTriggerInspiration = DEFAULT_LPM_FLUX_TRIGGER_VALUE;
+    this->presionTriggerInspiration = DEFAULT_CMH2O_FLUX_TRIGGER_VALUE;
     return true;
 }
 bool ApolloConfiguration::parseConfig(String *strings)

@@ -87,29 +87,11 @@ float ApolloHal::getMetricPressureEntry()
 
 int ApolloHal::getPresureIns()
 {
-  return 1;
-  if (digitalRead(0) == HIGH)
-  {
-    Serial.println("Respira");
-    return -10;
-  }
-  else
-  {
-    return 1;
-  }
+  return this->pressuresSensor()->readCMH2O();
 }
 int ApolloHal::getPresureExp()
 {
-  return 40;
-  if (digitalRead(1) == HIGH)
-  {
-    Serial.println("Expira demasiado");
-    return 13;
-  }
-  else
-  {
-    return 40;
-  }
+  return this->pressuresSensor()->readCMH2O();
 }
 
 void ApolloHal::valveInsOpen()

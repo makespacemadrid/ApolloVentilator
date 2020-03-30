@@ -90,8 +90,8 @@ private:
     /** Porcentaje tiempo inspiración */
     int _cfgPorcentajeInspiratorio;
 
-    /** Flux trigger value in litres per minute. */
-    float _cfgLpmFluxTriggerValue;
+    /** Pression trigger value in litres per minute. */
+    float _cfgCmh2oTriggerValue;
     /**  Ciclo time in seconds. */
     float _cfgSecCiclo;
     /**  Insufflation time in seconds. */

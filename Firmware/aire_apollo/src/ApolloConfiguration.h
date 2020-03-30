@@ -13,10 +13,10 @@ public:
     int getPorcentajeInspiratorio() { return this->porcentajeInspiratorio; };
     int getPorcetajeFiO2() { return this->porcentajeFiO2; };
     int getRpm() { return this->rpm; };
-    int getLpmTriggerInspiration() { return this->lpmTriggerInspiration; };
     int getSexo() { return this->sexo; };
     int getWeight() { return this->weight; };
     int getHeight() { return this->height; };
+    float getPresionTriggerInspiration() { return this->presionTriggerInspiration; };
 
     bool isUpdated() { return this->updated; }; //Return true if the configuration has been updated
     void resetUpdated() { this->updated = false; }
@@ -70,7 +70,7 @@ private:
     int pressionPeep;
     int porcentajeInspiratorio;
     int porcentajeFiO2;
-    int lpmTriggerInspiration;
+    float presionTriggerInspiration;
     void calcularCiclo();
 
     float secCiclo = 0;

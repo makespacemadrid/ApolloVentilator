@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "express": "",
+    "mimic-response": "",
+    "mri": "",
+    "serialport": "",
+    "socket.io": ""
+  },
+  "scripts": {
+    "start": "node test.js"
+  }
+}

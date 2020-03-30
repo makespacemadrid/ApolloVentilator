@@ -122,11 +122,26 @@ void MechVentilation::insufaltionProcess()
 {
     //El proceso de insuflación está en marcha, esperamos al sensor de medida o tiempo de insuflación max
     /** @todo conectar sesor ml/min */
-    float volumensensor = this->hal->intakeFlowSensor()->getFlow();
     unsigned long now = millis();
-    if (volumensensor >= this->_cfgmlTidalVolume || (now - this->lastExecution) >= (this->_cfgSecTimeInsufflation * 1000))
+    switch (this->mode)
     {
-        /** @todo Paramos la insuflación */
+    case Mode::Presion:
+        if (this->hal->getPresureIns() > this->_cfgPresionPico)
+        {
+            this->hal->valveInsClose();
+        }
+        break;
+    case Mode::Flow:
+#ifdef INTFLOWSENSOR
+        if (this->hal->intakeFlowSensor()->getFlow() >= this->_cfgmlTidalVolume)
+        {
+            this->stateNext();
+        }
+#endif
+        break;
+    }
+    if ((now - this->lastExecution) >= (this->_cfgSecTimeInsufflation * 1000))
+    {
         this->stateNext();
     }
     if (this->hal->getPresureIns() > DEFAULT_CMH20_MAX)

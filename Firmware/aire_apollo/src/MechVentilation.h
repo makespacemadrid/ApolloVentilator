@@ -35,6 +35,12 @@ enum Trigger
     PattientInpiration = 1, //Lanzado por el paciente al inspirar
 };
 
+enum Mode
+{
+    Presion = 0,
+    Flow = 1
+};
+
 /**
  * This is the mechanical ventilation class.
  */
@@ -98,8 +104,15 @@ private:
     float _cfgSecTimeInsufflation;
     /* Exsufflation time in seconds. */
     float _cfgSecTimeExsufflation;
-    /* Presion peep (presión mínima en pulmones a la salida). */
+    /* Presion peep (presión mínima en pulmones a la salida). CMH2O */
     float _cfgPresionPeep;
+    /* Presión pico de insuflación CMH2O */
+    float _cfgPresionPico;
+    /* Presión meseta de insuflación CMH2O */
+    float _cfgPresionMeseta;
+    /* Presión Máxima de seguridad de insuflación CMH2O */
+    float _cfgPresionMax;
+
     /** Current state. */
     State _currentState;
     /** Timer counter in seconds. */
@@ -108,6 +121,8 @@ private:
     float _secTimeoutInsufflation;
     /** Exsufflation timeout in seconds. */
     float _secTimeoutExsufflation;
+
+    Mode mode = Mode::Presion;
 
     unsigned long lastExecution = 0;
 

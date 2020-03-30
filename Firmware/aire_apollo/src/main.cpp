@@ -18,7 +18,7 @@
 
 #define DEBUG         //Activar mensajes debug
 #define INTFLOWSENSOR //Activar para usar los sensores de flujo por interrupcion.
-#define LOCALCONTROLS // Display y encoders presentes.
+//#define LOCALCONTROLS // Display y encoders presentes.
 
 #include "Arduino.h"
 #include <Wire.h>
@@ -89,9 +89,11 @@ void logData()
 {
   String pressure(hal->pressuresSensor()->readCMH2O());
   String intakeFlow(hal->intakeFlowSensor()->getFlow());
-  String exitFlow(hal->exitFlowSensor()->getFlow());
+///  String exitFlow(hal->exitFlowSensor()->getFlow());
+  String exitFlow(hal->intakeFlowSensor()->getFlow());
   String intakeInstantFlow(hal->intakeFlowSensor()->getInstantFlow());
-  String exitInstantFlow(hal->exitFlowSensor()->getInstantFlow());
+//  String exitInstantFlow(hal->exitFlowSensor()->getInstantFlow());
+  String exitInstantFlow(hal->intakeFlowSensor()->getInstantFlow());
 
   String data[] = {pressure, intakeFlow, exitFlow, intakeInstantFlow, exitInstantFlow};
   com.data(data, 5);
@@ -177,11 +179,11 @@ void loop()
 
   // envio de datos
 
-  if (millis() % LOG_INTERVAL == 0)
+//  if (millis() % LOG_INTERVAL == 0)
     logData();
   // gestion del ventilador
   ventilation->update();
-  ;
+
 
 #ifdef LOCALCONTROLS
   if (encoderRPM.updateValue(&rpm))
@@ -206,6 +208,6 @@ void loop()
     display.writeLine(3, "% Insp: " + String(configuration->getPorcentajeInspiratorio()));
   }
 #else
-  com.serialRead()
+  com.serialRead();
 #endif
 }

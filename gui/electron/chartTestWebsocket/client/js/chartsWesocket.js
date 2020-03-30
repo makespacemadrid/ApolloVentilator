@@ -90,11 +90,12 @@
                 if ( commandID === 'DATA'){
                      let ventilatorData = rawCommand[1].split(',');
                      if (ventilatorData.length > 2){
-                        let flow     = parseFloat(ventilatorData[0]);
-                        let pressure = parseFloat(ventilatorData[1]);
 
-                        addDataToChart(flowChart,flow);
+                        let pressure  = parseFloat(ventilatorData[0]);
+                        let flow      = parseFloat(ventilatorData[1]);
+
                         addDataToChart(pressureChart,pressure);
+                        addDataToChart(flowChart,flow);
                      }
                 }
           });

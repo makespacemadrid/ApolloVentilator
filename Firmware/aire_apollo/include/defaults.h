@@ -39,10 +39,11 @@
 #define DEFAULT_MIN_RPM 10
 #define DEFAULT_POR_INSPIRATORIO 33 // %
 #define DEFAULT_CMH2O_FLUX_TRIGGER_VALUE -10
-#define DEFAULT_CMH20_PICO 45
-#define DEFAULT_CMH20_MESETA 32
-#define DEFAULT_CMH20_PEEP 14
-#define DEFAULT_CMH20_MAX 50
+
+#define DEFAULT_CMH20_MAX 50    //Presión máxima de seguridad
+#define DEFAULT_CMH20_PICO 45   //Presión máxima regular
+#define DEFAULT_CMH20_MESETA 32 //Presión mínima al insuflar
+#define DEFAULT_CMH20_PEEP 14   //Presión mínima en el vaciado
 
 #define DEFAULT_WEIGHT 80
 #define DEFAULT_HEIGHT 170

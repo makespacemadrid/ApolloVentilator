@@ -1,6 +1,6 @@
 #include "ApolloConfiguration.h"
 #include "Arduino.h"
-
+#include "Display.h"
 ApolloConfiguration::ApolloConfiguration()
 {
     this->defaultConfig();
@@ -41,10 +41,19 @@ bool ApolloConfiguration::defaultConfig()
     this->setSexo(DEFAULT_SEXO);
     this->setWeight(DEFAULT_WEIGHT);
     this->setHeight(DEFAULT_HEIGHT);
+    this->lpmTriggerInspiration = DEFAULT_LPM_FLUX_TRIGGER_VALUE;
     return true;
 }
-bool ApolloConfiguration::parseConfig(char *strings)
+bool ApolloConfiguration::parseConfig(String *strings)
 {
+    Serial.println("Parse Config");
+    Serial.println(String(strings[1]).toFloat());
+    Serial.println(String(strings[2]).toFloat());
+    Serial.println(String(strings[3]).toFloat());
+    Serial.println(String(strings[4]).toFloat());
+    Serial.println(String(strings[5]).toInt());
+    Serial.println(String(strings[6]).toFloat());
+    Serial.println(String(strings[7]).toFloat());
 
     this->setRpm(String(strings[1]).toFloat());
     this->setTidalVolume(String(strings[2]).toFloat());
@@ -53,6 +62,14 @@ bool ApolloConfiguration::parseConfig(char *strings)
     this->setSexo(String(strings[5]).toInt());
     this->setWeight(String(strings[6]).toFloat());
     this->setHeight(String(strings[7]).toFloat());
+    Serial.println("RPM->" + String(this->rpm));
+    Serial.println("TidalVol>" + String(this->mlTidalVolume));
+    Serial.println("isnp>" + String(this->porcentajeInspiratorio));
+    Serial.println("peep>" + String(this->pressionPeep));
+    Serial.println("sexo>" + String(this->sexo));
+    Serial.println("wigth>" + String(this->weight));
+    Serial.println("height>" + String(this->height));
+    Serial.flush();
 
     return true;
 }

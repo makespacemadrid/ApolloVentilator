@@ -32,28 +32,24 @@ void Comunications::debug(String module, String msg)
     send("DEBUG:" + module + ":" + msg);
 }
 
-void Comunications::serialRead()
+bool Comunications::serialRead()
 {
-    String string = "";
-    if (Serial.available())
+    if (Serial.available() == 0)
     {
-        string = Serial.readString(); // read the incoming data as string
+        return false;
     }
-    if (string == "")
-    {
-        return;
-    }
-
+    String string = Serial.readString(); // read the incoming data as string
+    Serial.println("RECEIBED->" + string);
     String ipmsg[16];
     char received[50];
     string.toCharArray(received, 50);
     byte index = 0;
-    char strings[10];
+    String strings[10];
     char *ptr = NULL;
     ptr = strtok(received, ":,"); // takes a list of delimiters
     while (ptr != NULL)
     {
-        strings[index] = ptr;
+        strings[index] = String(ptr);
         index++;
         ptr = strtok(NULL, ":,"); // takes a list of delimiters
     }
@@ -63,14 +59,14 @@ void Comunications::serialRead()
     //     Serial.println(String(n) + " " + String(strings[n]));
     //     Serial.flush();
     // }
-    if (!String(strings[0]).equals("CONFIG"))
+    if (strings[0] == String("CONFIG"))
     {
         this->config->parseConfig(strings);
-        return;
+        return true;
     }
-    if (!String(strings[0]).equals("GETCONFIG"))
+    if (strings[0] == String("GETCONFIG"))
     {
         this->send(config->getConfig());
-        return;
+        return false;
     }
 }

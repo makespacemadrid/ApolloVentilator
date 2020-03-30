@@ -11,7 +11,7 @@ public:
     void alert(String msg);
     void data(String msg[], uint8_t size);
     void debug(String module, String msg);
-    void serialRead();
+    bool serialRead();
 
 protected:
     void send(String msg);

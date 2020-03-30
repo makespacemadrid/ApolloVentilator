@@ -3,7 +3,7 @@
 
 #include "../include/defaults.h"
 #include "Arduino.h"
-
+#include "Display.h"
 class ApolloConfiguration
 {
 public:
@@ -37,7 +37,7 @@ public:
     void setHeight(int height);
 
     String getConfig();
-    bool parseConfig(char *strings);
+    bool parseConfig(String *strings);
     /**
      * @brief estima el volumen tidal en función de estatura y sexo, en ml.
      *

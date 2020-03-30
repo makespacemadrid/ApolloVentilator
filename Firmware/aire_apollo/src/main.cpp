@@ -181,6 +181,7 @@ void loop()
     logData();
   // gestion del ventilador
   ventilation->update();
+  ;
 
 #ifdef LOCALCONTROLS
   if (encoderRPM.updateValue(&rpm))
@@ -188,18 +189,23 @@ void loop()
     configuration->setRpm(rpm);
     display.writeLine(0, "RPM: " + String(configuration->getRpm()));
   }
-
   if (encoderTidal.updateValue(&vTidal, 10))
   {
     configuration->setTidalVolume(vTidal);
     display.writeLine(1, "Vol Tidal: " + String(configuration->getMlTidalVolumen()));
   }
-
   if (encoderPorcInspira.updateValue(&porcentajeInspiratorio, 1))
   {
     configuration->setPorcentajeInspiratorio(porcentajeInspiratorio);
     display.writeLine(3, "% Insp: " + String(configuration->getPorcentajeInspiratorio()));
   }
+  if (com.serialRead())
+  {
+    display.writeLine(0, "RPM: " + String(configuration->getRpm()));
+    display.writeLine(1, "Vol Tidal: " + String(configuration->getMlTidalVolumen()));
+    display.writeLine(3, "% Insp: " + String(configuration->getPorcentajeInspiratorio()));
+  }
+#else
+  com.serialRead()
 #endif
-  //com.serialRead();
 }

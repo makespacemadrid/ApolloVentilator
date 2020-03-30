@@ -43,10 +43,6 @@ port.on('data', function (data) {
 //websocket server
 server.listen(options.webSocketPort);
 
-app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/index.html');
-});
-
 io.on('connection', function (socket) {
   	socket.on('newCommand', function (data) {
     	console.log(data);

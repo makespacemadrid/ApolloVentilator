@@ -3,7 +3,7 @@
 		function addDataToChart(chart,data){
         	chart.data.labels.push('');
                 chart.data.datasets[0].data.push(data);
-                if(chart.data.labels.length > 50) {
+                if(chart.data.labels.length > 100) {
                     chart.data.labels.shift();
                     chart.data.datasets[0].data.shift();
                 }
@@ -91,11 +91,11 @@
                      let ventilatorData = rawCommand[1].split(',');
                      if (ventilatorData.length > 2){
 
-                        let pressure  = parseFloat(ventilatorData[0]);
-                        let flow      = parseFloat(ventilatorData[1]);
+                        let flow      = parseFloat(ventilatorData[0]);
+                        let pressure  = parseFloat(ventilatorData[1]);
 
-                        addDataToChart(pressureChart,pressure);
                         addDataToChart(flowChart,flow);
+                        addDataToChart(pressureChart,pressure);
                      }
                 }
           });

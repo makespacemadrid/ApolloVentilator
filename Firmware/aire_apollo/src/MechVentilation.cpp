@@ -9,19 +9,29 @@
 #include "MechVentilation.h"
 #include "defaults.h"
 #include "ApolloConfiguration.h"
+#include "ApolloAlarms.h"
 
 MechVentilation::MechVentilation(
     ApolloHal *hal,
-    ApolloConfiguration *configuration)
+    ApolloConfiguration *configuration,
+    ApolloAlarms *alarms)
 {
     this->hal = hal;
     this->configuration = configuration;
     this->configurationUpdate();
     this->_currentState = State::Wait;
+    this->alarms = alarms;
 }
 
 void MechVentilation::update(void)
 {
+    if (this->hal->getPresureIns() > DEFAULT_CMH20_MAX)
+    {
+        // @todo Alerta por sobrepresion
+        this->hal->valveInsClose();
+        this->alarms->critical(12, "Presion máxima alcanzada");
+    }
+
     switch (_currentState)
     {
     case State::Wait:
@@ -128,6 +138,7 @@ void MechVentilation::insufaltionProcess()
     case Mode::Presion:
         if (this->hal->getPresureIns() > this->_cfgPresionPico)
         {
+            this->alarms->info(14, "Alcanzada presión pico ");
             this->hal->valveInsClose();
         }
         break;
@@ -144,14 +155,15 @@ void MechVentilation::insufaltionProcess()
     {
         this->stateNext();
     }
-    if (this->hal->getPresureIns() > DEFAULT_CMH20_MAX)
-    {
-        // @todo Alerta por sobrepresion
-        this->hal->valveInsClose();
-    }
 }
 void MechVentilation::insuflationAfter()
 {
+    if (this->hal->getPresureExp() < this->_cfgPresionPico)
+    {
+        this->hal->valveExsClose();
+        this->alarms->info(14, "No llegamos a presión Pico");
+    }
+
     unsigned long now = millis();
     if ((now - this->lastExecution) >= (this->_cfgSecTimeInsufflation * 1000))
     {
@@ -178,7 +190,11 @@ void MechVentilation::exsufflationProcess()
     if (this->hal->getPresureExp() <= this->_cfgPresionPeep)
     {
         this->hal->valveExsClose();
-        stateNext();
+    }
+    if (this->hal->getPresureExp() <= (this->_cfgPresionPeep - 1) && !this->hal->getValveExsState())
+    {
+        this->hal->valveExsClose();
+        this->alarms->info(13, "Presión debajo de PEEP");
     }
 
     //Detecta aspiración del paciente
@@ -186,10 +202,16 @@ void MechVentilation::exsufflationProcess()
     {
         /** @todo Pendiente desarrollo */
         _setState(State::InsuflationBefore);
+        this->alarms->info(99, "Aspiración del paciente");
     }
 }
 void MechVentilation::exsufflationAfter()
 {
+    if (this->hal->getPresureExp() < (this->_cfgPresionPeep - 1) && !this->hal->getValveExsState())
+    {
+        this->hal->valveExsClose();
+        this->alarms->info(13, "Presión debajo de PEEP");
+    }
     /** @todo Cerramos valvula de salida? */
     //this->hal->valveExsClose();
     stateNext();

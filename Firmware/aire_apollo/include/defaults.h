@@ -43,11 +43,13 @@
 #define DEFAULT_CMH20_MAX 50    //Presión máxima de seguridad
 #define DEFAULT_CMH20_PICO 45   //Presión máxima regular
 #define DEFAULT_CMH20_MESETA 32 //Presión mínima al insuflar
-//#define DEFAULT_CMH20_PEEP 14 //Presión mínima en el vaciado
-#define DEFAULT_CMH20_PEEP -1   //Presión mínima en el vaciado //HAck para funcionar sin suministro de aire!
+//#define DEFAULT_CMH20_PEEP 14   //Presión mínima en el vaciado
+#define DEFAULT_CMH20_PEEP -1 //Presión mínima en el vaciado //HAck para funcionar sin suministro de aire!
 
 #define DEFAULT_WEIGHT 80
 #define DEFAULT_HEIGHT 170
 #define DEFAULT_GENDER 0
 #define DEFAULT_POR_FIO2 90
+
+#define PIN_BUZZER 53
 #endif

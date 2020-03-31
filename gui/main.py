@@ -146,9 +146,9 @@ class Device(Gtk.Grid):
             # time.sleep(0.5)
             serial_line =  self.serial.readline()
             print("======== ", serial_line)
-            if ("DATA" or "ALERT" or "DEBUG" or "CONFIG") in serial_line.decode('utf-8'): # TODO: revisar para resto de casos
-                serial_data = parse_serial_line(serial_line)  # TODO: Usar funciones de Parser
-                serial_command = serial_data[0]
+            serial_data = parse_serial_line(serial_line)  # TODO: Usar funciones de Parser
+            serial_command = serial_data[0]
+            if serial_command in ("DATA", "ALERT", "DEBUG", "CONFIG"): # TODO: revisar para resto de casos
                 if serial_command == "DATA":
                     print('>>>>> ',serial_line)
                     serial_code = serial_data[1].strip()

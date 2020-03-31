@@ -182,7 +182,7 @@ void loop()
   // envio de datos
 
   //  if (millis() % LOG_INTERVAL == 0)
-  //logData();
+  logData();
   // gestion del ventilador
   ventilation->update();
 

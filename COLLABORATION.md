@@ -42,6 +42,9 @@ Changelog
 > git log // Contabilizas los commits que has producido en tu rama (ej. 5)  
 > git rebase -i HEAD~5  
 > // Cambias todos los commits que aparecen menos el primero (borrar pick y escribir squash o 's')
+> También se puede hacer en la PR
+
+- En la PR, si se utiliza la opción de Squash y --no-ff se puede mergear el commit sin añadir commits de merge al historico.
 
 4. Documentación
 

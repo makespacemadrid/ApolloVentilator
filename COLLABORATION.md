@@ -38,9 +38,9 @@ Changelog
 - Link Evento Serie con metodo redraw
 ``` 
 
-- Antes de hacer pull request se puede hacer squash (merge) de los commits en uno solo, editando el mensaje resultante.
-> git log // Contabilizas los commits que has producido en tu rama (ej. 5)
-> git rebase -i HEAD~5
+- Antes de hacer pull request se puede hacer squash (merge) de los commits en uno solo, editando el mensaje resultante.  
+> git log // Contabilizas los commits que has producido en tu rama (ej. 5)  
+> git rebase -i HEAD~5  
 > // Cambias todos los commits que aparecen menos el primero (borrar pick y escribir squash o 's')
 
 4. Documentación

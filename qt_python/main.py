@@ -26,8 +26,8 @@ class MainWindow(QMainWindow):
         self.graphWidget = pg.PlotWidget()
         self.setCentralWidget(self.graphWidget)
         self.serial_port = serial.Serial(args.serialport, baudrate=115200, timeout=0)
-        self.x = list(range(100))  # 100 time points
-        self.y = [randint(0,100) for _ in range(100)]  # 100 data points
+        self.x = list(range(8))  # 100 time points
+        self.y = [randint(0,8) for _ in range(8)]  # 100 data points
 
         self.graphWidget.setBackground('w')
 
@@ -61,32 +61,12 @@ class MainWindow(QMainWindow):
             self.y.append(0.0)  # Add a new random value.
 
         self.data_line.setData(self.x, self.y)
-
-
-        # self.textbox = QLineEdit(self)
-        # self.textbox.move(20,20)
-        # self.textbox.resize(280,40)
-
-        # self.button = QPushButton('Connect', self)
-        # self.button.move(20,80)
-
-        # self.button.clicked.connect(self.on_click)
-        # layout = QVBoxLayout()
-        # widget = QWidget()
-        # widget.setLayout(layout)
         self.show()
-
-    @pyqtSlot()
-    def on_click(self):
-        textboxValue = self.textbox.text()
-        QMessageBox.question(self, 'Confirm connection', "Connected to: " + textboxValue, QMessageBox.Ok, QMessageBox.Ok)
-        self.textbox.setText("")
-  
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--serialport', nargs='?', default='/dev/ttyACM0', type=str, help='Serial port name')
+    parser.add_argument('--serialport', nargs='?', default='/dev/ttyUSB0', type=str, help='Serial port name')
     args = parser.parse_args()
     
     app = QApplication(sys.argv) 

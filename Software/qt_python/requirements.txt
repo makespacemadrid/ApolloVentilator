@@ -1,0 +1,5 @@
+PyQt5 # pip install PyQt5==5.10
+PyQt5-sip
+PyQtChart
+pyqtgraph
+pyserial

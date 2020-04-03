@@ -44,7 +44,8 @@ int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
 
 ApolloHal *hal;
 ApolloConfiguration *configuration = new ApolloConfiguration();
-Comunications com = Comunications(configuration);
+Comunications *com = new Comunications(configuration);
+ApolloAlarms *alarms = new ApolloAlarms(com, PIN_BUZZER, true);
 MechVentilation *ventilation;
 
 #ifdef LOCALCONTROLS
@@ -89,29 +90,30 @@ void logData()
 {
   String pressure(hal->pressuresSensor()->readCMH2O());
   String intakeFlow(hal->intakeFlowSensor()->getFlow());
-///  String exitFlow(hal->exitFlowSensor()->getFlow());
+  ///  String exitFlow(hal->exitFlowSensor()->getFlow());
   String exitFlow(hal->intakeFlowSensor()->getFlow());
   String intakeInstantFlow(hal->intakeFlowSensor()->getInstantFlow());
-//  String exitInstantFlow(hal->exitFlowSensor()->getInstantFlow());
+  //  String exitInstantFlow(hal->exitFlowSensor()->getInstantFlow());
   String exitInstantFlow(hal->intakeFlowSensor()->getInstantFlow());
 
   String data[] = {pressure, intakeFlow, exitFlow, intakeInstantFlow, exitInstantFlow};
-  com.data(data, 5);
+  com->data(data, 5);
 }
 
 void setup()
 {
   Serial.begin(115200);
   TRACE("INIT SETUP");
+  alarms->begin();
 
   TRACE("BEGIN CONFIG!");
 
   //ApolloConfiguration *configuration = new ApolloConfiguration();
   while (!configuration->begin())
   {
-    com.debug("setup", "Esperando configuración");
+    com->debug("setup", "Esperando configuración");
   }
-  com.debug("setup", "Configuración recibida");
+  com->debug("setup", "Configuración recibida");
   TRACE("CONFIG END");
 
   // Create hal layer with
@@ -121,7 +123,7 @@ void setup()
   ApolloValve *inValve = new MksmValve(ENTRY_EV_PIN);
   ApolloValve *outValve = new MksmValve(EXIT_EV_PIN);
 
-  hal = new ApolloHal(pSensor, fInSensor, fOutSensor, inValve, outValve);
+  hal = new ApolloHal(pSensor, fInSensor, fOutSensor, inValve, outValve, alarms);
 
   TRACE("BEGIN HAL!");
 
@@ -134,7 +136,7 @@ void setup()
 
   TRACE("HAL READY!");
 
-  ventilation = new MechVentilation(hal, configuration);
+  ventilation = new MechVentilation(hal, configuration, alarms);
 
 #ifdef LOCALCONTROLS
   display.init();
@@ -179,11 +181,10 @@ void loop()
 
   // envio de datos
 
-//  if (millis() % LOG_INTERVAL == 0)
-    logData();
+  //  if (millis() % LOG_INTERVAL == 0)
+  logData();
   // gestion del ventilador
   ventilation->update();
-
 
 #ifdef LOCALCONTROLS
   if (encoderRPM.updateValue(&rpm))
@@ -208,6 +209,7 @@ void loop()
     display.writeLine(3, "% Insp: " + String(configuration->getPorcentajeInspiratorio()));
   }
 #else
-  com.serialRead();
+  com->serialRead();
 #endif
+  alarms->check();
 }

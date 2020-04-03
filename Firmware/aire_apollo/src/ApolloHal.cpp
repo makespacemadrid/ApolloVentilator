@@ -2,13 +2,14 @@
 #include <Arduino.h>
 #include "trace.h"
 
-ApolloHal::ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV)
+ApolloHal::ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms)
 {
   _preSensor = preSensor;
   _entryFlowSensor = entryFlowSensor;
   _exitFlowSensor = exitFlowSensor;
   _entryEV = entryEV;
   _exitEV = exitEV;
+  alarms = alarms;
 }
 
 ApolloHal::~ApolloHal()
@@ -97,18 +98,22 @@ int ApolloHal::getPresureExp()
 void ApolloHal::valveInsOpen()
 {
   _entryEV->open();
+  valveInsState = true;
 }
 void ApolloHal::valveInsClose()
 {
   _entryEV->close();
+  valveInsState = false;
 }
 void ApolloHal::valveExsOpen()
 {
   _exitEV->open();
+  valveExsState = true;
 }
 void ApolloHal::valveExsClose()
 {
   _exitEV->close();
+  valveExsState = false;
 }
 
 // Get metric from entry flow sensor

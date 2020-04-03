@@ -12,7 +12,7 @@ void Comunications::send(String msg)
     Serial.println(String(msg));
 }
 
-void Comunications::alert(String msg)
+void Comunications::alert(int errn, String msg)
 {
     send("ALERT:" + msg);
 }

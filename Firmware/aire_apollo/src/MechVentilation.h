@@ -13,6 +13,7 @@
 #include "defaults.h"
 #include "ApolloHal.h"
 #include "ApolloConfiguration.h"
+#include "ApolloAlarms.h"
 
 /** States of the mechanical ventilation. */
 enum State
@@ -56,7 +57,8 @@ public:
 	 */
     MechVentilation(
         ApolloHal *hal,
-        ApolloConfiguration *configuration);
+        ApolloConfiguration *configuration,
+        ApolloAlarms *alarms);
 
     /**,
         float secTimeoutInsufflation,
@@ -88,6 +90,8 @@ private:
     ApolloHal *hal;
 
     ApolloConfiguration *configuration;
+
+    ApolloAlarms *alarms;
 
     /** Tidal volume in millilitres. */
     float _cfgmlTidalVolume;

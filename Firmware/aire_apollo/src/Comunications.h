@@ -8,7 +8,7 @@ class Comunications
 {
 public:
     Comunications(ApolloConfiguration *config);
-    void alert(String msg);
+    void alert(int errn, String msg);
     void data(String msg[], uint8_t size);
     void debug(String module, String msg);
     bool serialRead();

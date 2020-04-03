@@ -20,13 +20,13 @@ enum State
 {
     Wait = 0, //Espera a que lance el trigger o al tiempo
 
-    InsuflationBefore = 1,
+    InsuflationPre = 1,
     InsufaltionProcess = 2, //Proceso mientras insufla aire
-    InsuflationAfter = 3,
+    InsuflationPost = 3,
 
-    ExsufflationBefore = 4,
+    ExsufflationPre = 4,
     ExsufflationProcess = 5, //Proceso de exsuflación aire
-    ExsufflationAfter = 6,
+    ExsufflationPost = 6,
 
 };
 /** Trigger of the proccess mechanical ventilation. */
@@ -38,7 +38,7 @@ enum Trigger
 
 enum Mode
 {
-    Presion = 0,
+    Pressure = 0,
     Flow = 1
 };
 
@@ -126,21 +126,21 @@ private:
     /** Exsufflation timeout in seconds. */
     float _secTimeoutExsufflation;
 
-    Mode mode = Mode::Presion;
+    Mode mode = Mode::Pressure;
 
     unsigned long lastExecution = 0;
 
     void wait();
-    void insuflationBefore();
+    void insuflationPre();
     void insufaltionProcess();
-    void insuflationAfter();
-    void exsufflationBefore();
+    void insuflationPost();
+    void exsufflationPre();
     void exsufflationProcess();
-    void exsufflationAfter();
+    void exsufflationPost();
 
     void stateNext();
 
-    void calcularCiclo();
+    void calculateCicle();
 
     void configurationUpdate();
 };

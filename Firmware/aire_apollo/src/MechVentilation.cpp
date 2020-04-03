@@ -35,25 +35,25 @@ void MechVentilation::update(void)
     switch (_currentState)
     {
     case State::Wait:
-        wait();
+        this->wait();
         break;
-    case State::InsuflationBefore:
-        this->insuflationBefore();
+    case State::InsuflationPre:
+        this->insuflationPre();
         break;
     case State::InsufaltionProcess:
-        insufaltionProcess();
+        this->insufaltionProcess();
         break;
-    case State::InsuflationAfter:
-        insuflationAfter();
+    case State::InsuflationPost:
+        this->insuflationPost();
         break;
-    case State::ExsufflationAfter:
-        exsufflationAfter();
+    case State::ExsufflationPre:
+        this->exsufflationPre();
         break;
     case State::ExsufflationProcess:
-        exsufflationProcess();
+        this->exsufflationProcess();
         break;
-    case State::ExsufflationBefore:
-        exsufflationBefore();
+    case State::ExsufflationPost:
+        this->exsufflationPost();
         break;
     }
 }
@@ -69,24 +69,24 @@ void MechVentilation::stateNext()
     switch (this->_currentState)
     {
     case State::Wait:
-        this->_currentState = State::InsuflationBefore;
+        this->_currentState = State::InsuflationPre;
         break;
-    case State::InsuflationBefore:
+    case State::InsuflationPre:
         this->_currentState = State::InsufaltionProcess;
         break;
     case State::InsufaltionProcess:
-        this->_currentState = State::InsuflationAfter;
+        this->_currentState = State::InsuflationPost;
         break;
-    case State::InsuflationAfter:
-        this->_currentState = State::ExsufflationBefore;
+    case State::InsuflationPost:
+        this->_currentState = State::ExsufflationPre;
         break;
-    case State::ExsufflationBefore:
+    case State::ExsufflationPre:
         this->_currentState = State::ExsufflationProcess;
         break;
     case State::ExsufflationProcess:
-        this->_currentState = State::ExsufflationAfter;
+        this->_currentState = State::ExsufflationPost;
         break;
-    case State::ExsufflationAfter:
+    case State::ExsufflationPost:
         this->_currentState = State::Wait;
         break;
     default:
@@ -115,7 +115,7 @@ void MechVentilation::wait()
         stateNext();
     }
 }
-void MechVentilation::insuflationBefore()
+void MechVentilation::insuflationPre()
 {
     unsigned long now = millis();
     this->lastExecution = now;
@@ -135,7 +135,7 @@ void MechVentilation::insufaltionProcess()
     unsigned long now = millis();
     switch (this->mode)
     {
-    case Mode::Presion:
+    case Mode::Pressure:
         if (this->hal->getPresureIns() > this->_cfgPresionPico)
         {
             this->alarms->info(14, "Alcanzada presión pico ");
@@ -156,7 +156,7 @@ void MechVentilation::insufaltionProcess()
         this->stateNext();
     }
 }
-void MechVentilation::insuflationAfter()
+void MechVentilation::insuflationPost()
 {
     if (this->hal->getPresureExp() < this->_cfgPresionPico)
     {
@@ -171,7 +171,7 @@ void MechVentilation::insuflationAfter()
         this->stateNext();
     }
 }
-void MechVentilation::exsufflationBefore()
+void MechVentilation::exsufflationPre()
 {
     /** @todo Abrimos válvulas de salida */
     this->hal->valveExsOpen();
@@ -201,11 +201,11 @@ void MechVentilation::exsufflationProcess()
     if (this->hal->getPresureIns() <= this->_cfgCmh2oTriggerValue)
     {
         /** @todo Pendiente desarrollo */
-        _setState(State::InsuflationBefore);
+        _setState(State::InsuflationPre);
         this->alarms->info(99, "Aspiración del paciente");
     }
 }
-void MechVentilation::exsufflationAfter()
+void MechVentilation::exsufflationPost()
 {
     if (this->hal->getPresureExp() < (this->_cfgPresionPeep - 1) && !this->hal->getValveExsState())
     {
@@ -217,15 +217,17 @@ void MechVentilation::exsufflationAfter()
     stateNext();
 }
 
-void MechVentilation::calcularCiclo()
+void MechVentilation::calculateCicle()
 {
     this->_cfgSecCiclo = 60 / this->_cfgRpm; // Tiempo de ciclo en segundos
     this->_cfgSecTimeInsufflation = this->_cfgSecCiclo * this->_cfgPorcentajeInspiratorio / 100;
     this->_cfgSecTimeExsufflation = this->_cfgSecCiclo - this->_cfgSecTimeInsufflation;
     Serial.println("_cfgSecCiclo " + String(this->_cfgSecCiclo, DEC));
+#ifdef DEBUG
     Serial.println("_cfgSecTimeInsufflation " + String(this->_cfgSecTimeInsufflation, DEC));
     Serial.println("_cfgSecTimeExsufflation " + String(this->_cfgSecTimeExsufflation, DEC));
     Serial.flush();
+#endif // DEBUG
 }
 
 void MechVentilation::configurationUpdate()
@@ -235,13 +237,14 @@ void MechVentilation::configurationUpdate()
     this->_cfgRpm = String(this->configuration->getRpm()).toInt();
     this->_cfgCmh2oTriggerValue = this->configuration->getPresionTriggerInspiration();
     this->_cfgPresionPeep = this->configuration->getPressionPeep();
+#ifdef DEBUG
     Serial.println("_cfgRpm " + String(this->_cfgRpm));
     Serial.println("_cfgmlTidalVolume " + String(this->_cfgmlTidalVolume));
     Serial.println("_cfgPorcentajeInspiratorio " + String(this->_cfgPorcentajeInspiratorio));
     Serial.println("_cfgCmh2oTriggerValue " + String(this->_cfgCmh2oTriggerValue));
     Serial.println("_cfgPresionPeep " + String(this->_cfgPresionPeep));
     Serial.flush();
-
-    this->calcularCiclo();
+#endif // DEBUG
+    this->calculateCicle();
     this->configuration->resetUpdated();
 }

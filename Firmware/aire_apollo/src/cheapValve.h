@@ -4,17 +4,16 @@
 #include<Arduino.h>
 #include "ApolloValve.h"
 
-class MksmValve : public ApolloValve
+class cheapValve : public ApolloValve
 {
 public:
-  MksmValve(uint8_t pin, uint16_t openDelay = 30 , uint16_t closeDelay = 10 , bool invertedLogic = false);
+  cheapValve(uint8_t pin, uint16_t openDelay = 15 , uint16_t closeDelay = 10 , bool invertedLogic = false);
 
   bool begin();
   void open(uint8_t percent = 100);
   void close();
 
-  uint8_t openPercent() {return _openPercent;}
-  bool    isOpen()      {return _openPercent > 0;}
+  uint8_t status()      {return _openPercent;}
   void update();
 
 
@@ -33,6 +32,7 @@ protected:
   uint16_t        _cycleTimeMS;
   uint16_t        _magnetizedTimeMS;
   uint16_t        _deMagnetizedTimeMS;
+  uint16_t        _waitTimeMS;
 };
 
 #endif

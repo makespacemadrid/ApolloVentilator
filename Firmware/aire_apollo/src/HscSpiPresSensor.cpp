@@ -7,9 +7,8 @@
  * @brief Construct a new HSCMRRD001PDSA5 sensor object
  * 
  */
-HscSpiPresSensor::HscSpiPresSensor(uint8_t pin)
-{
-    this->_pin=pin;
+HscSpiPresSensor::HscSpiPresSensor(uint8_t sensorPin) :  _pin(sensorPin),  _sensor(sensorPin, _min_pressure, _max_pressure)
+{    
 }    
 
 HscSpiPresSensor::~HscSpiPresSensor()
@@ -26,14 +25,12 @@ HscSpiPresSensor::~HscSpiPresSensor()
  */
 bool HscSpiPresSensor::begin()
 {
-    _sensor = new TruStabilityPressureSensor( this->_pin,  _min_pressure, _max_pressure );
     
-    _sensor->begin();
+    _sensor.begin();
     
-    uint8_t status = _sensor->readSensor();
+    uint8_t status = _sensor.readSensor();
 
-    // TODO need to check value returned when there is no connection to the sensor
-    // wrong SS pin, etc.
+    
     if(status!=HscValidData)
         return false;
 
@@ -47,14 +44,14 @@ bool HscSpiPresSensor::begin()
  * 
  * @return float the pressure measured in Pa
  */
-float HscSpiPresSensor::read()
+float HscSpiPresSensor::readPascal()
 {
     float val = 0;
 
-    uint8_t status =_sensor->readSensor();
+    uint8_t status =_sensor.readSensor();
 
     if( status == HscValidData  || status == HscStaleData) 
-        val = _sensor->pressure();
+        val = _sensor.pressure();
     else
         val = _min_pressure*10.00F;  ///< Return an out of range value to indicate and error condition
      

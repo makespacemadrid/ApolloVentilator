@@ -2,3 +2,5 @@ Firmware/aire_apollo/.vscode/*
 .vscode/*
 metrics/__pycache__/*
 
+Firmware/aire_apollo/.vscode/c_cpp_properties.json
+Firmware/aire_apollo/.vscode/launch.json

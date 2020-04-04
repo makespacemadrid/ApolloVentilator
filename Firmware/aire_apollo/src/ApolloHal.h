@@ -45,9 +45,9 @@ private:
     bool enablePressureIns = false;
     bool enablePressureExp = false;
 
-    PID pidPressureIns = PID(&currentPressureExp, &statusPressureIns, &pressureExpTarget, _consKp, _consKi, _consKd, DIRECT);
-    PID pidFlowIns = PID(&currentPressureIns, &statusPressureExp, &pressureInsTarget, _consKp, _consKi, _consKd, DIRECT);
-    PID pidPressureExp = PID(&currentFlowIns, &statusFlowIns, &flowInsTarget, _consKp, _consKi, _consKd, DIRECT);
+    PID pidPressureIns = PID(&this->currentPressureIns, &this->statusPressureIns, &this->pressureInsTarget, _consKp, _consKi, _consKd, DIRECT);
+    PID pidPressureExp = PID(&this->currentPressureExp, &this->statusPressureExp, &this->pressureExpTarget, _consKp, _consKi, _consKd, DIRECT);
+    PID pidFlowIns = PID(&this->currentFlowIns, &this->statusFlowIns, &this->flowInsTarget, _consKp, _consKi, _consKd, DIRECT);
 
     void initializePidPressureIns();
     void initializePidPressureExp();
@@ -78,19 +78,19 @@ public:
     ApolloValve *exitValve() { return _exitEV; }
 
     //Test only
-    void valveInsOpen(float pressureTarget);
+    void valveInsOpen(double pressureTarget);
     void valveInsClose();
-    void valveExsOpen(float pressureTarget);
+    void valveExsOpen(double pressureTarget);
     void valveExsClose();
 
-    int getPresureIns(bool cache = false);
-    int getPresureExp(bool cache = false);
+    double getPresureIns(bool cache = false);
+    double getPresureExp(bool cache = false);
     bool getValveExsState() { return this->_exitEV->status(); };
     bool getValveInsState() { return this->_entryEV->status(); };
 
-    void setPressureInsTarget(int pressure);
-    void setPressureExpTarget(int pressure);
-    void setFlowInsTarget(float flow);
+    void setPressureInsTarget(double pressure);
+    void setPressureExpTarget(double pressure);
+    void setFlowInsTarget(double flow);
 
     void prepare();
     void update();

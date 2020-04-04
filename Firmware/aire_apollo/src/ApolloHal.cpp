@@ -96,7 +96,7 @@ float ApolloHal::getMetricPressureEntry()
  * @param bool cache Return value of cache or not; Default false;
  * 
  */
-int ApolloHal::getPresureIns(bool cache)
+double ApolloHal::getPresureIns(bool cache)
 {
   if (cache)
   {
@@ -112,11 +112,11 @@ int ApolloHal::getPresureIns(bool cache)
  * @param bool cache Return value of cache or not; Default false;
  * 
  */
-int ApolloHal::getPresureExp(bool cache)
+double ApolloHal::getPresureExp(bool cache)
 {
   if (cache)
   {
-    this->currentPressureIns;
+    this->currentPressureExp;
   }
   else
   {
@@ -124,7 +124,7 @@ int ApolloHal::getPresureExp(bool cache)
   }
 }
 
-void ApolloHal::valveInsOpen(float pressureTarget)
+void ApolloHal::valveInsOpen(double pressureTarget)
 {
   this->setPressureInsTarget(pressureTarget);
 }
@@ -133,7 +133,7 @@ void ApolloHal::valveInsClose()
   this->enablePressureIns = false;
   this->_entryEV->close();
 }
-void ApolloHal::valveExsOpen(float pressureTarget)
+void ApolloHal::valveExsOpen(double pressureTarget)
 {
   this->setPressureExpTarget(pressureTarget);
 }
@@ -173,17 +173,17 @@ void ApolloHal::initializePidFlowIns()
   this->pidFlowIns.SetMode(AUTOMATIC);
 }
 
-void ApolloHal::setPressureInsTarget(int pressure)
+void ApolloHal::setPressureInsTarget(double pressure)
 {
   this->enablePressureIns = true;
   this->pressureInsTarget = pressure;
 }
-void ApolloHal::setPressureExpTarget(int pressure)
+void ApolloHal::setPressureExpTarget(double pressure)
 {
   this->enablePressureExp = true;
   this->pressureExpTarget = pressure;
 }
-void ApolloHal::setFlowInsTarget(float flow)
+void ApolloHal::setFlowInsTarget(double flow)
 {
   this->enableFlowIns = true;
   this->flowInsTarget = flow;
@@ -210,6 +210,8 @@ void ApolloHal::pidPressureInsCompute()
   {
     return;
   }
+  float _aggKp = 15, _aggKi = 0.0, _aggKd = 1;
+  float _consKp = 1, _consKi = 0.0, _consKd = 0.1;
 
   double gap = abs(this->pressureInsTarget - this->getPresureIns(true)); //distance away from setpoint
   if (gap < 5)
@@ -229,7 +231,7 @@ void ApolloHal::pidPressureInsCompute()
     this->statusPressureIns = 0;
   this->_entryEV->open(this->statusPressureIns);
 
-  //Serial.println("PID: current:" + String(_currentPressure) + " Target:"  + String(_targetPressure) + " Output:" + String(_inputValvePercent) );
+  //Serial.println("pidPressureIns: current:" + String(this->currentPressureIns) + " Target:" + String(this->pressureInsTarget) + " Output:" + String(this->statusPressureIns));
 }
 
 void ApolloHal::pidPressureExpCompute()
@@ -260,8 +262,7 @@ void ApolloHal::pidPressureExpCompute()
   if (this->statusPressureExp < 0)
     this->statusPressureExp = 0;
   this->_exitEV->open(this->statusPressureExp);
-
-  //Serial.println("PID: current:" + String(_currentPressure) + " Target:"  + String(_targetPressure) + " Output:" + String(_inputValvePercent) );
+  //Serial.println("pidPressureExp: current:" + String(this->currentPressureExp) + " Target:" + String(this->pressureExpTarget) + " Output:" + String(this->statusPressureExp));
 }
 
 void ApolloHal::pidFlowInsCompute()
@@ -292,6 +293,5 @@ void ApolloHal::pidFlowInsCompute()
   if (this->statusFlowIns < 0)
     this->statusFlowIns = 0;
   this->_entryEV->open(this->statusFlowIns);
-
-  //Serial.println("PID: current:" + String(_currentPressure) + " Target:"  + String(_targetPressure) + " Output:" + String(_inputValvePercent) );
+  //Serial.println("pidFlowIns: current:" + String(this->currentFlowIns) + " Target:" + String(this->flowInsTarget) + " Output:" + String(this->statusFlowIns));
 }

@@ -207,8 +207,8 @@ void MechVentilation::calculateCicle()
     this->_cfgSecCiclo = 60 / this->_cfgRpm; // Tiempo de ciclo en segundos
     this->_cfgSecTimeInsufflation = this->_cfgSecCiclo * this->_cfgPorcentajeInspiratorio / 100;
     this->_cfgSecTimeExsufflation = this->_cfgSecCiclo - this->_cfgSecTimeInsufflation;
-    Serial.println("_cfgSecCiclo " + String(this->_cfgSecCiclo, DEC));
 #ifdef DEBUG
+    Serial.println("_cfgSecCiclo " + String(this->_cfgSecCiclo, DEC));
     Serial.println("_cfgSecTimeInsufflation " + String(this->_cfgSecTimeInsufflation, DEC));
     Serial.println("_cfgSecTimeExsufflation " + String(this->_cfgSecTimeExsufflation, DEC));
     Serial.flush();
@@ -222,14 +222,19 @@ void MechVentilation::configurationUpdate()
     this->_cfgRpm = String(this->configuration->getRpm()).toInt();
     this->_cfgCmh2oTriggerValue = this->configuration->getPresionTriggerInspiration();
     this->_cfgPresionPeep = this->configuration->getPressionPeep();
-#ifdef DEBUG
+    this->_cfgPresionMax = this->configuration->getPressionMax();
+    this->_cfgPresionMeseta = this->configuration->getPressionMeseta();
+    this->_cfgPresionPico = this->configuration->getPressionPico();
     Serial.println("_cfgRpm " + String(this->_cfgRpm));
     Serial.println("_cfgmlTidalVolume " + String(this->_cfgmlTidalVolume));
     Serial.println("_cfgPorcentajeInspiratorio " + String(this->_cfgPorcentajeInspiratorio));
     Serial.println("_cfgCmh2oTriggerValue " + String(this->_cfgCmh2oTriggerValue));
     Serial.println("_cfgPresionPeep " + String(this->_cfgPresionPeep));
+    Serial.println("_cfgPresionMeseta " + String(this->_cfgPresionMeseta));
+    Serial.println("_cfgPresionPico " + String(this->_cfgPresionPico));
+    Serial.println("_cfgPresionMax " + String(this->_cfgPresionMax));
+
     Serial.flush();
-#endif // DEBUG
     this->calculateCicle();
     this->configuration->resetUpdated();
 }

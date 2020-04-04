@@ -41,6 +41,10 @@ bool ApolloConfiguration::defaultConfig()
     this->setSexo(DEFAULT_SEXO);
     this->setWeight(DEFAULT_WEIGHT);
     this->setHeight(DEFAULT_HEIGHT);
+    this->pressionPico = DEFAULT_CMH20_PICO;
+    this->pressionMeseta = DEFAULT_CMH20_MESETA;
+    this->pressionMax = DEFAULT_CMH20_MAX;
+
     this->presionTriggerInspiration = DEFAULT_CMH2O_FLUX_TRIGGER_VALUE;
     return true;
 }

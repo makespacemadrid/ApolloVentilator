@@ -9,14 +9,17 @@ class ApolloConfiguration
 public:
     ApolloConfiguration();
     int getMlTidalVolumen() { return this->mlTidalVolume; };
-    int getPressionPeep() { return this->pressionPeep; };
     int getPorcentajeInspiratorio() { return this->porcentajeInspiratorio; };
     int getPorcetajeFiO2() { return this->porcentajeFiO2; };
     int getRpm() { return this->rpm; };
     int getSexo() { return this->sexo; };
     int getWeight() { return this->weight; };
     int getHeight() { return this->height; };
-    float getPresionTriggerInspiration() { return this->presionTriggerInspiration; };
+    double getPressionPeep() { return this->pressionPeep; };
+    double getPressionMax() { return this->pressionMax; };
+    double getPressionPico() { return this->pressionPico; };
+    double getPressionMeseta() { return this->pressionMeseta; };
+    double getPresionTriggerInspiration() { return this->presionTriggerInspiration; };
 
     bool isUpdated() { return this->updated; }; //Return true if the configuration has been updated
     void resetUpdated() { this->updated = false; }
@@ -67,10 +70,14 @@ private:
     int sexo;
     int rpm;
     int mlTidalVolume;
-    int pressionPeep;
+
     int porcentajeInspiratorio;
     int porcentajeFiO2;
-    float presionTriggerInspiration;
+    double pressionPeep;
+    double pressionPico;
+    double pressionMeseta;
+    double pressionMax;
+    double presionTriggerInspiration;
     void calcularCiclo();
 
     float secCiclo = 0;

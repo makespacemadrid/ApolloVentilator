@@ -6,7 +6,7 @@
 
 /**
  * @brief Generic I2C pressure sensor
- * 
+ *
  */
 class ApolloPresI2C : public ApolloPressureSensor
 {
@@ -14,11 +14,12 @@ class ApolloPresI2C : public ApolloPressureSensor
         ApolloPresI2C(uint8_t addr = 0x28);
         ~ApolloPresI2C();
 
-        float read();
-        bool begin();  
-       
-          
+        float readInstantFlow();
+        bool begin();
+
+
     private:
+
         uint8_t     _addr;
         
 };

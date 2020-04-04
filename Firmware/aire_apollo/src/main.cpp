@@ -15,198 +15,201 @@
   BSD license, all text above must be included in any redistribution
   See the LICENSE file for details.
  ***************************************************************************/
+
+#define DEBUG         //Activar mensajes debug
+#define INTFLOWSENSOR //Activar para usar los sensores de flujo por interrupcion.
+//#define LOCALCONTROLS // Display y encoders presentes.
+
 #include "Arduino.h"
 #include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
+#include <MsTimer2.h>
+
 #include "trace.h"
 #include "ApolloHal.h"
-#include "ApolloBME.h"
+#include "mksBME280.h"
 #include "MksmValve.h"
+#include "MksmFlowSensor.h"
 #include "Comunications.h"
 #include "MechVentilation.h"
 #include "ApolloEncoder.h"
 #include "Display.h"
+#include "ApolloConfiguration.h"
 
-#define DEBUG
-
-#define ENTRY_EV_PIN 10 //ElectroValvula - Entrada
-#define EXIT_EV_PIN 9   //ElectroValvula - Salida
-
-#define ENTRY_FLOW_PIN 4 //Sensor de Flujo - Entrada
-#define EXIT_FLOW_PIN 5  //Sendor de Flujo - Salida
-
-//#define PRESSURE_SENSOR_PIN      ??
-#define BME280_ADDR 0x76
-
-#define SEALEVELPRESSURE_HPA (1013.25)
-
-#define INSPIRATION_TIME 1000
-#define ESPIRATION_TIME 4000
-#define INSPIRATION_THRESHOLD 10 //Descenso en la presion que marca el inicio de la respiracion
+int rpm = DEFAULT_RPM;
+int vTidal = DEFAULT_MIN_VOLUMEN_TIDAL;
+int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
 
 ApolloHal *hal;
+ApolloConfiguration *configuration = new ApolloConfiguration();
+Comunications *com = new Comunications(configuration);
+ApolloAlarms *alarms = new ApolloAlarms(com, PIN_BUZZER, true);
+MechVentilation *ventilation;
 
-unsigned long delayTime;
-
-float volmax;
-float presmax;
-float o2insp;
-float limitO2;
-float co2esp;
-float limitCO2;
-float volumeentry;
-float volumeexit;
-int ppeak = 23;
-int pplat = 18;
-int peep = 5;
-
-// Parameters
-int weight = 70;       // kg
-int volc = weight * 6; // weight * 6u8 (mL) Volumen tidal
-int bpm = 10;          // breaths per minute
-int voli = volc * bpm;
-//int timep; // good to have, pause
-unsigned long lastInspirationStart = 0; // (s)
-unsigned long lastEspirationStart = 0;  // (s)
-uint16_t inspirationTimeout = 0;
-uint16_t inspTime = 0;
-uint16_t espTime = 0;
-
-//OJO a los contadores que se desbordan en algun momento!!!!
-// Gestion rtc? / deteccion de desbordamiento?
-
-//uint8_t power;
-char logBuffer[50];
-
-Comunications com = Comunications();
-
-int getMetricPpeak() { return 22; }
-int getMetricPplat() { return 22; }
+#ifdef LOCALCONTROLS
+ApolloEncoder encoderRPM(PIN_ENC_RPM_DT, PIN_ENC_RPM_CLK, PIN_ENC_RPM_SW);
+ApolloEncoder encoderTidal(PIN_ENC_TIDAL_DT, PIN_ENC_TIDAL_CLK, PIN_ENC_TIDAL_SW);
+ApolloEncoder encoderPorcInspira(PIN_ENC_PCTINS_DT, PIN_ENC_PCTINS_CLK, PIN_ENC_PCTINS_SW);
+Display display = Display();
+#endif
 
 int calculateResistance(int ppeak, int pplat)
 {
   return ppeak - pplat;
 }
 
-int getMetricPeep() { return 22; }
-
 void checkLeak(float volEntry, float volExit) {}
-float getMetricVolMax() { return 22; }
-float getMetricPresMax() { return 22; }
 
 int calculateCompliance(int pplat, int peep)
 {
   return pplat - peep;
 }
 
+void ISR1ms() //Esta funcion se ejecuta cada 1ms para gestionar sensores/actuadores!
+{             // OJO!!! no bloquear ni hacer nada muy costoso en tiempo!!!!!!
+  hal->ISR1ms();
+}
+
+#ifdef INTFLOWSENSOR // Gestion de los sensores de flujo por interrupcion
+void flowIn()
+{
+  hal->intakeFlowSensor()->pulse();
+}
+
+void flowOut()
+{
+  hal->exitFlowSensor()->pulse();
+}
+#endif
+
+/// Porgram Begin
+
 void logData()
 {
-  String data[] = {String(hal->getMetricPressureEntry()), String(hal->getMetricVolumeEntry()), String(hal->getMetricVolumeExit())};
-  com.data(data);
-}
+  String pressure(hal->pressuresSensor()->readCMH2O());
+  String intakeFlow(hal->intakeFlowSensor()->getFlow());
+  ///  String exitFlow(hal->exitFlowSensor()->getFlow());
+  String exitFlow(hal->intakeFlowSensor()->getFlow());
+  String intakeInstantFlow(hal->intakeFlowSensor()->getInstantFlow());
+  //  String exitInstantFlow(hal->exitFlowSensor()->getInstantFlow());
+  String exitInstantFlow(hal->intakeFlowSensor()->getInstantFlow());
 
-void setBPM(uint8_t CiclesPerMinute)
-{
-  inspTime = 60000.0 / float(bpm) * 0.25;
-  espTime = 60000.0 / float(bpm) * 0.60;
-  inspirationTimeout = 60000.0 / float(bpm) * 0.15;
-  TRACE("BPM set: iTime:" + String(inspTime) + ", eTime:" + String(espTime) + "iTimeout:" + String(inspirationTimeout));
+  String data[] = {pressure, intakeFlow, exitFlow, intakeInstantFlow, exitInstantFlow};
+  com->data(data, 5);
 }
-MechVentilation *ventilation;
-ApolloEncoder encoderRPM(12, 13, 0);
-ApolloEncoder encoderTidal(10, 11, 0);
-ApolloEncoder encoderPorcInspira(8, 9, 0);
-Display display = Display();
-
-int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
-int rpm = DEFAULT_RPM;
-int vTidal = 0;
 
 void setup()
 {
-
-  // Display de inicio
-  display.init();
-  display.writeLine(2, "     Apollo AIRE");
-  delay(2000);
   Serial.begin(115200);
-  // while (!Serial); // time to get serial running
+  TRACE("INIT SETUP");
+  alarms->begin();
+
+  TRACE("BEGIN CONFIG!");
+
+  //ApolloConfiguration *configuration = new ApolloConfiguration();
+  while (!configuration->begin())
+  {
+    com->debug("setup", "Esperando configuración");
+  }
+  com->debug("setup", "Configuración recibida");
+  TRACE("CONFIG END");
 
   // Create hal layer with
-  hal = new ApolloHal(new ApolloBME(), new ApolloFlowSensor(), new ApolloFlowSensor(), new MksmValve(ENTRY_EV_PIN), new MksmValve(EXIT_EV_PIN));
+  ApolloFlowSensor *fInSensor = new MksmFlowSensor();
+  ApolloFlowSensor *fOutSensor = new MksmFlowSensor();
+  ApolloPressureSensor *pSensor = new mksBME280(BME280_ADDR);
+  ApolloValve *inValve = new MksmValve(ENTRY_EV_PIN);
+  ApolloValve *outValve = new MksmValve(EXIT_EV_PIN);
 
-  if (!hal->begin())
+  hal = new ApolloHal(pSensor, fInSensor, fOutSensor, inValve, outValve, alarms);
+
+  TRACE("BEGIN HAL!");
+
+  while (!hal->begin())
   {
-    TRACE("ERROR intializing sensors!!");
-    while (true)
-      ;
+    TRACE("HAL ERR!"); // No arrancamos si falla algun componente o podemos arrancar con algunos en fallo?
+    delay(1000);
+    //alarma!!
   }
 
-  delayTime = 0;
-  setBPM(8);
-  Serial.println();
-  //float speedIns, speedEsp, tCiclo, tIns, tEsp;
-  // int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
-  // int rpm = DEFAULT_RPM;
-  // int vTidal = 0;
-  hal->beginInspiration();
-  //display.writeLine(0, "Tins  | Tesp");
-  /**MechVentilation::calcularCicloInspiratorio(&tIns, &tEsp, &tCiclo, porcentajeInspiratorio, rpm);
-  //display.writeLine(1, String(tIns) + " s | " + String(tEsp) + " s");
-  Serial.println("Tiempo del ciclo (seg):" + String(tCiclo));
-  Serial.println("Tiempo inspiratorio (seg):" + String(tIns));
-  Serial.println("Tiempo espiratorio (seg):" + String(tEsp));
-  hal->beginEspiration(); // hack para pruebas!!!
-  //int ventilationCycle_WaitBeforeInsuflationTime = 800;
-  ventilation = new MechVentilation(hal, vTidal, rpm, porcentajeInspiratorio);
-  /** ventilation->start();*/
+  TRACE("HAL READY!");
+
+  ventilation = new MechVentilation(hal, configuration, alarms);
+
+#ifdef LOCALCONTROLS
+  display.init();
   display.clear();
-  display.writeLine(0, "RPM: " + String(ventilation->getRpm()));
-  display.writeLine(1, "Vol Tidal: " + String(ventilation->getTidalVolume()));
-  display.writeLine(2, "Press PEEP: " + String(ventilation->getPressionPeep()));
-  //if ((pressureReference - hal->getMetricPressureEntry()) > INSPIRATION_THRESHOLD)
+  display.writeLine(0, "RPM: " + String(configuration->getRpm()));
+  display.writeLine(1, "Vol Tidal: " + String(configuration->getMlTidalVolumen()));
+  display.writeLine(2, "Press PEEP: " + String(configuration->getPressionPeep()));
+  display.writeLine(3, "% Insp: " + String(configuration->getPorcentajeInspiratorio()));
+#endif
+
+  //ISRs
+  MsTimer2::set(1, ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
+  MsTimer2::start();
+
+#ifdef INTFLOWSENSOR
+  attachInterrupt(digitalPinToInterrupt(ENTRY_FLOW_PIN), flowIn, RISING);
+  attachInterrupt(digitalPinToInterrupt(EXIT_FLOW_PIN), flowOut, RISING);
+#endif
+  TRACE("SETUP COMPLETED!");
 }
+
 void loop()
 {
 
   //Comprobacion de alarmas
 
-  ppeak = getMetricPpeak();
-  pplat = getMetricPplat();
+  //  ppeak = getMetricPpeak();
+  //  pplat = getMetricPplat();
 
-  calculateResistance(ppeak, pplat);
+  //  calculateResistance(ppeak, pplat);
 
-  if (ppeak > 40)
-  {
-    com.alert("PRESSURE ALERT");
-  }
+  //  if (ppeak > 40)
+  //  {
+  //    com.alert("PRESSURE ALERT");
+  //  }
 
-  int peep = getMetricPeep();
-
+  //  int peep = getMetricPeep();
   // ¿se debe meter la detección de perdidas en el hal?
-  float volExit = hal->getMetricVolumeExit();
-  checkLeak(volc, volExit);
-
-  calculateCompliance(pplat, peep);
+  //  float volExit = hal->getMetricVolumeExit();
+  //  checkLeak(volc, volExit);
+  //  calculateCompliance(pplat, peep);
 
   // envio de datos
+
+  //  if (millis() % LOG_INTERVAL == 0)
   logData();
+  // gestion del ventilador
   ventilation->update();
+
+#ifdef LOCALCONTROLS
   if (encoderRPM.updateValue(&rpm))
   {
-    ventilation->setRpm(rpm);
-    display.writeLine(0, "RPM: " + String(ventilation->getRpm()));
+    configuration->setRpm(rpm);
+    display.writeLine(0, "RPM: " + String(configuration->getRpm()));
   }
   if (encoderTidal.updateValue(&vTidal, 10))
   {
-    ventilation->setTidalVolume(vTidal);
-    display.writeLine(1, "Vol Tidal: " + String(ventilation->getTidalVolume()));
+    configuration->setTidalVolume(vTidal);
+    display.writeLine(1, "Vol Tidal: " + String(configuration->getMlTidalVolumen()));
   }
   if (encoderPorcInspira.updateValue(&porcentajeInspiratorio, 1))
   {
-    ventilation->setPorcentajeInspiratorio(porcentajeInspiratorio);
-    display.writeLine(3, "% Insp: " + String(ventilation->getporcentajeInspiratorio()));
+    configuration->setPorcentajeInspiratorio(porcentajeInspiratorio);
+    display.writeLine(3, "% Insp: " + String(configuration->getPorcentajeInspiratorio()));
   }
+  if (com.serialRead())
+  {
+    display.writeLine(0, "RPM: " + String(configuration->getRpm()));
+    display.writeLine(1, "Vol Tidal: " + String(configuration->getMlTidalVolumen()));
+    display.writeLine(3, "% Insp: " + String(configuration->getPorcentajeInspiratorio()));
+  }
+#else
+  com->serialRead();
+#endif
+  alarms->check();
 }

@@ -1,6 +1,6 @@
 #include "Display.h"
 #include "Arduino.h"
-#include "../include/defaults.h";
+#include "../include/defaults.h"
 
 Display::Display()
 {
@@ -50,7 +50,7 @@ void Display::clear()
 
 void Display::init()
 {
-#ifdef I2C_DIR
+#ifdef LCD_DIR
   lcd.init();
   lcd.backlight();
 #else

@@ -8,134 +8,54 @@
 #include <float.h>
 #include "MechVentilation.h"
 #include "defaults.h"
-#include <../lib/TimerOne-1.1.0/TimerOne.h>
-
-int currentWaitTriggerTime = 0;
-int currentStopInsufflationTime = 0;
-float currentFlow = 0;
-#if DEBUG_STATE_MACHINE
-extern String debugMsg[];
-extern byte debugMsgCounter;
-#endif
+#include "ApolloConfiguration.h"
+#include "ApolloAlarms.h"
 
 MechVentilation::MechVentilation(
     ApolloHal *hal,
-    int mlTidalVolume,
-    int rpm,
-    int porcentajeInspiratorio)
+    ApolloConfiguration *configuration,
+    ApolloAlarms *alarms)
 {
-    _init(
-        hal,
-        mlTidalVolume,
-        rpm,
-        porcentajeInspiratorio);
-}
-void MechVentilation::setRpm(int rpm)
-{
-    if (rpm >= 10 && rpm <= 30)
-    {
-        this->_cfgRpm = rpm;
-        this->_cfgUpdate = true;
-    }
+    this->hal = hal;
+    this->configuration = configuration;
+    this->configurationUpdate();
+    this->_currentState = State::Wait;
+    this->alarms = alarms;
 }
 
-void MechVentilation::setTidalVolume(float mlTidalVolume)
-{
-    if (mlTidalVolume >= 300 && mlTidalVolume <= 600)
-    {
-        this->_cfgmlTidalVolume = mlTidalVolume;
-        this->_cfgUpdate = true;
-    }
-}
-
-void MechVentilation::setPressionPeep(float pressionPeep)
-{
-    this->_cfgPresionPeep = pressionPeep;
-    this->_cfgUpdate = true;
-}
-
-void MechVentilation::setPorcentajeInspiratorio(int porcentajeInspiratorio)
-{
-    if (porcentajeInspiratorio >= 25 && porcentajeInspiratorio <= 50)
-    {
-        this->_cfgPorcentajeInspiratorio = porcentajeInspiratorio;
-        this->_cfgUpdate = true;
-    }
-}
-
-// Get tidal volume
-float MechVentilation::getTidalVolume()
-{
-    return this->_cfgmlTidalVolume;
-}
-//Set RPM
-int MechVentilation::getRpm()
-{
-    return this->_cfgRpm;
-}
-//Set Porcentaje inspiratorio
-int MechVentilation::getporcentajeInspiratorio()
-{
-    return this->_cfgPorcentajeInspiratorio;
-}
-// Set presion peep
-float MechVentilation::getPressionPeep()
-{
-    return this->_cfgPresionPeep;
-}
-
-/**
- * Function called by timer every 5 miliseconds
- */
 void MechVentilation::update(void)
 {
+    if (this->hal->getPresureIns() > DEFAULT_CMH20_MAX)
+    {
+        // @todo Alerta por sobrepresion
+        this->hal->valveInsClose();
+        this->alarms->critical(12, "Presion máxima alcanzada");
+    }
+
     switch (_currentState)
     {
     case State::Wait:
-        wait();
+        this->wait();
         break;
-    case State::InsuflationBefore:
-        this->insuflationBefore();
+    case State::InsuflationPre:
+        this->insuflationPre();
         break;
     case State::InsufaltionProcess:
-        insufaltionProcess();
+        this->insufaltionProcess();
         break;
-    case State::InsuflationAfter:
-        insuflationAfter();
+    case State::InsuflationPost:
+        this->insuflationPost();
         break;
-    case State::ExsufflationAfter:
-        exsufflationAfter();
+    case State::ExsufflationPre:
+        this->exsufflationPre();
         break;
     case State::ExsufflationProcess:
-        exsufflationProcess();
+        this->exsufflationProcess();
         break;
-    case State::ExsufflationBefore:
-        exsufflationBefore();
+    case State::ExsufflationPost:
+        this->exsufflationPost();
         break;
     }
-}
-
-void MechVentilation::_init(
-    ApolloHal *hal,
-    int mlTidalVolume,
-    int rpm,
-    int porcentajeInspiratorio)
-{
-    /* Set configuration parameters */
-    this->hal = hal;
-    this->_cfgmlTidalVolume = mlTidalVolume;
-    this->_cfgRpm = rpm,
-    this->_cfgPorcentajeInspiratorio = porcentajeInspiratorio;
-    this->calcularCiclo(this->_cfgPorcentajeInspiratorio, this->_cfgRpm);
-    // this->_cfgSecTimeoutInsufflation = secTimeoutInsufflation;
-    // this->_cfgSecTimeoutExsufflation = secTimeoutExsufflation;
-    this->_cfgLpmFluxTriggerValue = DEFAULT_LPM_FLUX_TRIGGER_VALUE;
-
-    /* Initialize internal state */
-    this->_currentState = State::Wait;
-    // this->_secTimerCnt = 0;
-    // this->_secTimeoutInsufflation = 0;
-    // this->_secTimeoutExsufflation = 0;
 }
 
 void MechVentilation::_setState(State state)
@@ -149,24 +69,24 @@ void MechVentilation::stateNext()
     switch (this->_currentState)
     {
     case State::Wait:
-        this->_currentState = State::InsuflationBefore;
+        this->_currentState = State::InsuflationPre;
         break;
-    case State::InsuflationBefore:
+    case State::InsuflationPre:
         this->_currentState = State::InsufaltionProcess;
         break;
     case State::InsufaltionProcess:
-        this->_currentState = State::InsuflationAfter;
+        this->_currentState = State::InsuflationPost;
         break;
-    case State::InsuflationAfter:
-        this->_currentState = State::ExsufflationBefore;
+    case State::InsuflationPost:
+        this->_currentState = State::ExsufflationPre;
         break;
-    case State::ExsufflationBefore:
+    case State::ExsufflationPre:
         this->_currentState = State::ExsufflationProcess;
         break;
     case State::ExsufflationProcess:
-        this->_currentState = State::ExsufflationAfter;
+        this->_currentState = State::ExsufflationPost;
         break;
-    case State::ExsufflationAfter:
+    case State::ExsufflationPost:
         this->_currentState = State::Wait;
         break;
     default:
@@ -176,19 +96,16 @@ void MechVentilation::stateNext()
 
 void MechVentilation::wait()
 {
-    if (this->_cfgUpdate)
+    if (this->configuration->isUpdated())
     {
-        this->calcularCiclo(this->_cfgPorcentajeInspiratorio, this->_cfgRpm);
+        this->configurationUpdate();
     }
 
-    digitalWrite(5, HIGH);
-
     //Detecta aspiración del paciente
-    if (this->hal->getPresureIns() <= _cfgLpmFluxTriggerValue)
+    if (this->hal->getPresureIns() <= this->_cfgCmh2oTriggerValue)
     {
         /** @todo Pendiente desarrollo */
         stateNext();
-        digitalWrite(5, LOW);
     }
 
     //Se lanza por tiempo
@@ -196,17 +113,17 @@ void MechVentilation::wait()
     if ((this->lastExecution + this->_cfgSecCiclo) < now)
     {
         stateNext();
-        digitalWrite(5, LOW);
     }
 }
-void MechVentilation::insuflationBefore()
+void MechVentilation::insuflationPre()
 {
     unsigned long now = millis();
     this->lastExecution = now;
     /**
      *  @todo Decir a la válvula que se abra
-     * 
+     *
     */
+    this->hal->intakeFlowSensor()->resetFlow();
     this->hal->valveExsClose();
     this->hal->valveInsOpen();
     this->stateNext();
@@ -215,16 +132,38 @@ void MechVentilation::insufaltionProcess()
 {
     //El proceso de insuflación está en marcha, esperamos al sensor de medida o tiempo de insuflación max
     /** @todo conectar sesor ml/min */
-    float volumensensor = 0;
     unsigned long now = millis();
-    if (volumensensor >= this->_cfgmlTidalVolume || (now - this->lastExecution) >= (this->_cfgSecTimeInsufflation * 1000))
+    switch (this->mode)
     {
-        /** @todo Paramos la insuflación */
+    case Mode::Pressure:
+        if (this->hal->getPresureIns() > this->_cfgPresionPico)
+        {
+            this->alarms->info(14, "Alcanzada presión pico ");
+            this->hal->valveInsClose();
+        }
+        break;
+    case Mode::Flow:
+#ifdef INTFLOWSENSOR
+        if (this->hal->intakeFlowSensor()->getFlow() >= this->_cfgmlTidalVolume)
+        {
+            this->stateNext();
+        }
+#endif
+        break;
+    }
+    if ((now - this->lastExecution) >= (this->_cfgSecTimeInsufflation * 1000))
+    {
         this->stateNext();
     }
 }
-void MechVentilation::insuflationAfter()
+void MechVentilation::insuflationPost()
 {
+    if (this->hal->getPresureExp() < this->_cfgPresionPico)
+    {
+        this->hal->valveExsClose();
+        this->alarms->info(14, "No llegamos a presión Pico");
+    }
+
     unsigned long now = millis();
     if ((now - this->lastExecution) >= (this->_cfgSecTimeInsufflation * 1000))
     {
@@ -232,7 +171,7 @@ void MechVentilation::insuflationAfter()
         this->stateNext();
     }
 }
-void MechVentilation::exsufflationBefore()
+void MechVentilation::exsufflationPre()
 {
     /** @todo Abrimos válvulas de salida */
     this->hal->valveExsOpen();
@@ -252,30 +191,60 @@ void MechVentilation::exsufflationProcess()
     {
         this->hal->valveExsClose();
     }
+    if (this->hal->getPresureExp() <= (this->_cfgPresionPeep - 1) && !this->hal->getValveExsState())
+    {
+        this->hal->valveExsClose();
+        this->alarms->info(13, "Presión debajo de PEEP");
+    }
 
     //Detecta aspiración del paciente
-    if (this->hal->getPresureIns() <= _cfgLpmFluxTriggerValue)
+    if (this->hal->getPresureIns() <= this->_cfgCmh2oTriggerValue)
     {
         /** @todo Pendiente desarrollo */
-        _setState(State::InsuflationBefore);
+        _setState(State::InsuflationPre);
+        this->alarms->info(99, "Aspiración del paciente");
     }
 }
-void MechVentilation::exsufflationAfter()
+void MechVentilation::exsufflationPost()
 {
+    if (this->hal->getPresureExp() < (this->_cfgPresionPeep - 1) && !this->hal->getValveExsState())
+    {
+        this->hal->valveExsClose();
+        this->alarms->info(13, "Presión debajo de PEEP");
+    }
     /** @todo Cerramos valvula de salida? */
     //this->hal->valveExsClose();
     stateNext();
 }
 
-void MechVentilation::calcularCiclo(
-    int porcentajeInspiratorio,
-    int rpm)
+void MechVentilation::calculateCicle()
 {
-    this->_cfgSecCiclo = 60 / rpm; // Tiempo de ciclo en segundos
-    this->_cfgSecTimeInsufflation = this->_cfgSecCiclo * porcentajeInspiratorio / 100;
+    this->_cfgSecCiclo = 60 / this->_cfgRpm; // Tiempo de ciclo en segundos
+    this->_cfgSecTimeInsufflation = this->_cfgSecCiclo * this->_cfgPorcentajeInspiratorio / 100;
     this->_cfgSecTimeExsufflation = this->_cfgSecCiclo - this->_cfgSecTimeInsufflation;
-    Serial.println("tCiclo " + String(this->_cfgSecCiclo, DEC));
-    Serial.println("T Ins " + String(this->_cfgSecTimeInsufflation, DEC));
-    Serial.println("T Exs " + String(this->_cfgSecTimeExsufflation, DEC));
-    this->_cfgUpdate = false;
+    Serial.println("_cfgSecCiclo " + String(this->_cfgSecCiclo, DEC));
+#ifdef DEBUG
+    Serial.println("_cfgSecTimeInsufflation " + String(this->_cfgSecTimeInsufflation, DEC));
+    Serial.println("_cfgSecTimeExsufflation " + String(this->_cfgSecTimeExsufflation, DEC));
+    Serial.flush();
+#endif // DEBUG
+}
+
+void MechVentilation::configurationUpdate()
+{
+    this->_cfgmlTidalVolume = this->configuration->getMlTidalVolumen();
+    this->_cfgPorcentajeInspiratorio = this->configuration->getPorcentajeInspiratorio();
+    this->_cfgRpm = String(this->configuration->getRpm()).toInt();
+    this->_cfgCmh2oTriggerValue = this->configuration->getPresionTriggerInspiration();
+    this->_cfgPresionPeep = this->configuration->getPressionPeep();
+#ifdef DEBUG
+    Serial.println("_cfgRpm " + String(this->_cfgRpm));
+    Serial.println("_cfgmlTidalVolume " + String(this->_cfgmlTidalVolume));
+    Serial.println("_cfgPorcentajeInspiratorio " + String(this->_cfgPorcentajeInspiratorio));
+    Serial.println("_cfgCmh2oTriggerValue " + String(this->_cfgCmh2oTriggerValue));
+    Serial.println("_cfgPresionPeep " + String(this->_cfgPresionPeep));
+    Serial.flush();
+#endif // DEBUG
+    this->calculateCicle();
+    this->configuration->resetUpdated();
 }

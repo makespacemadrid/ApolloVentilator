@@ -5,7 +5,7 @@
 
 /**
  * @brief Construct a new ApolloPresI2C
- * 
+ *
  */
 ApolloPresI2C::ApolloPresI2C(uint8_t addr)
 {
@@ -14,13 +14,13 @@ ApolloPresI2C::ApolloPresI2C(uint8_t addr)
 
 ApolloPresI2C::~ApolloPresI2C()
 {
- 
+
 }
 
 
 /**
  * @brief Check if the sensor is detected and configure sampling
- * 
+ *
  * @param addr sensor I2C address
  * @return true if the sensor is detected
  * @return false if the sensor is not detected
@@ -32,7 +32,7 @@ bool ApolloPresI2C::begin()
     //  Wire.begin(addr);
     //  Wire.requestFrom(addr,2);
     //  Wire.readBytes()
-    
+
     return true;
 }
 
@@ -40,12 +40,11 @@ bool ApolloPresI2C::begin()
 
 /**
  * @brief read pressure from sensor
- * 
+ *
  * @return float the pressure measured in mBars
  */
-float ApolloPresI2C::read()
+float ApolloPresI2C::readInstantFlow()
 {
      float val = 0;
-    return val / 100.0F; 
+    return val / 100.0F;
 }
-

@@ -9,7 +9,7 @@
  */
 ApolloPresI2C::ApolloPresI2C(uint8_t addr)
 {
-    this->addr=addr;
+    this->_addr=addr;
 }
 
 ApolloPresI2C::~ApolloPresI2C()

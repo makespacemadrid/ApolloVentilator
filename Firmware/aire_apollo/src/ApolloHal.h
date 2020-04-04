@@ -5,6 +5,9 @@
 #include "ApolloPressureSensor.h"
 #include "ApolloValve.h"
 #include "ApolloAlarms.h"
+#include <PID_v1.h>
+#include <PID_AutoTune_v0.h>
+
 class ApolloHal
 {
 private:
@@ -18,8 +21,41 @@ private:
 
     void openEntryEV();
     void openExitEV();
-    bool valveExsState;
-    bool valveInsState;
+
+    double _targetPressure, _currentPressure, _inputValvePercent;
+    //Define the aggressive and conservative Tuning Parameters
+    double _aggKp = 15, _aggKi = 0.0, _aggKd = 1;
+    double _consKp = 1, _consKi = 0.0, _consKd = 0.1;
+
+    //Cache pressure to prevent overload values of sensors
+    double currentPressureIns;
+    double currentPressureExp;
+    double currentFlowIns;
+
+    double statusPressureIns;
+    double statusPressureExp;
+    double statusFlowIns;
+
+    //Targets of PID
+    double pressureInsTarget;
+    double pressureExpTarget;
+    double flowInsTarget;
+
+    bool enableFlowIns = false;
+    bool enablePressureIns = false;
+    bool enablePressureExp = false;
+
+    PID pidPressureIns = PID(&currentPressureExp, &statusPressureIns, &pressureExpTarget, _consKp, _consKi, _consKd, DIRECT);
+    PID pidFlowIns = PID(&currentPressureIns, &statusPressureExp, &pressureInsTarget, _consKp, _consKi, _consKd, DIRECT);
+    PID pidPressureExp = PID(&currentFlowIns, &statusFlowIns, &flowInsTarget, _consKp, _consKi, _consKd, DIRECT);
+
+    void initializePidPressureIns();
+    void initializePidPressureExp();
+    void initializePidFlowIns();
+
+    void pidPressureInsCompute();
+    void pidFlowInsCompute();
+    void pidPressureExpCompute();
 
 public:
     ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms);
@@ -42,15 +78,22 @@ public:
     ApolloValve *exitValve() { return _exitEV; }
 
     //Test only
-    void valveInsOpen();
+    void valveInsOpen(float pressureTarget);
     void valveInsClose();
-    void valveExsOpen();
+    void valveExsOpen(float pressureTarget);
     void valveExsClose();
 
-    int getPresureIns();
-    int getPresureExp();
-    bool getValveExsState() { return valveExsState; };
-    bool getValveInsState() { return valveInsState; };
+    int getPresureIns(bool cache = false);
+    int getPresureExp(bool cache = false);
+    bool getValveExsState() { return this->_exitEV->status(); };
+    bool getValveInsState() { return this->_entryEV->status(); };
+
+    void setPressureInsTarget(int pressure);
+    void setPressureExpTarget(int pressure);
+    void setFlowInsTarget(float flow);
+
+    void prepare();
+    void update();
 };
 
 #endif

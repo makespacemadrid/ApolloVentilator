@@ -30,7 +30,7 @@
 #include "trace.h"
 #include "ApolloHal.h"
 #include "mksBME280.h"
-#include "MksmValve.h"
+#include "cheapValve.h"
 #include "MksmFlowSensor.h"
 #include "Comunications.h"
 #include "MechVentilation.h"
@@ -84,20 +84,50 @@ void flowOut()
 }
 #endif
 
+void setRampsPWMFreq()
+{
+  /*
+  timer 0 (controls pin 13, 4);
+  timer 1 (controls pin 12, 11);
+  timer 2 (controls pin 10, 9);
+  timer 3 (controls pin 5, 3, 2);
+  timer 4 (controls pin 8, 7, 6);
+
+    prescaler = 1 ---> PWM frequency is 31000 Hz
+    prescaler = 2 ---> PWM frequency is 4000 Hz
+    prescaler = 3 ---> PWM frequency is 490 Hz (default value)
+    prescaler = 4 ---> PWM frequency is 120 Hz
+    prescaler = 5 ---> PWM frequency is 30 Hz
+    prescaler = 6 ---> PWM frequency is <20 Hz
+
+  */
+  int myEraser = 7;             // this is 111 in binary and is used as an eraser
+  TCCR2B &= ~myEraser;   // this operation (AND plus NOT),  set the three bits in TCCR2B to 0
+  int myPrescaler = 3;         // this could be a number in [1 , 6]. In this case, 3 corresponds in binary to 011.
+  TCCR2B |= myPrescaler;  //this operation (OR), replaces the last three bits in TCCR2B with our new value 011
+}
+
 /// Porgram Begin
+
+
 
 void logData()
 {
   String pressure(hal->pressuresSensor()->readCMH2O());
   String intakeFlow(hal->intakeFlowSensor()->getFlow());
-  ///  String exitFlow(hal->exitFlowSensor()->getFlow());
-  String exitFlow(hal->intakeFlowSensor()->getFlow());
+  //String intakeFlow(0);
+//  String exitFlow(hal->exitFlowSensor()->getFlow());
+  String exitFlow(0);
   String intakeInstantFlow(hal->intakeFlowSensor()->getInstantFlow());
-  //  String exitInstantFlow(hal->exitFlowSensor()->getInstantFlow());
-  String exitInstantFlow(hal->intakeFlowSensor()->getInstantFlow());
+  //String exitInstantFlow(hal->exitFlowSensor()->getInstantFlow());
+  //String intakeInstantFlow(0);
+  String exitInstantFlow(0);
+//  String intakeValve(hal->exitValve()->status());
+  String intakeValve(hal->intakeValve()->status());
+  String ExitValve(hal->exitValve()->status());
 
-  String data[] = {pressure, intakeFlow, exitFlow, intakeInstantFlow, exitInstantFlow};
-  com->data(data, 5);
+  String data[] = {pressure,intakeInstantFlow,exitInstantFlow,intakeFlow,exitFlow,intakeValve,ExitValve};
+  com->data(data, 7);
 }
 
 void setup()
@@ -120,8 +150,8 @@ void setup()
   ApolloFlowSensor *fInSensor = new MksmFlowSensor();
   ApolloFlowSensor *fOutSensor = new MksmFlowSensor();
   ApolloPressureSensor *pSensor = new mksBME280(BME280_ADDR);
-  ApolloValve *inValve = new MksmValve(ENTRY_EV_PIN);
-  ApolloValve *outValve = new MksmValve(EXIT_EV_PIN);
+  ApolloValve *inValve = new cheapValve(ENTRY_EV_PIN);
+  ApolloValve *outValve = new cheapValve(EXIT_EV_PIN);
 
   hal = new ApolloHal(pSensor, fInSensor, fOutSensor, inValve, outValve, alarms);
 

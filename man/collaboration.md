@@ -27,6 +27,10 @@
 Issue  
 - Funcionamiento del bucle de draw en interfaz QT  
 
+Authors
+- @foo
+- @bar
+
 Objetivo  
 - Visualizar correctamente una gráfica que pinte valores que se obtienen dinámicamente (puerto serie o tty emulado).
 
@@ -45,6 +49,7 @@ Changelog
 > También se puede hacer en la PR
 
 - En la PR, si se utiliza la opción de Squash y --no-ff se puede mergear el commit sin añadir commits de merge al historico.
+> Opción Rebase and merge en el boton de acción de la PR
 
 4. Documentación
 

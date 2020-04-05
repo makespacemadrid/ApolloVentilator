@@ -1,59 +1,84 @@
-from PyQt5 import QtWidgets, uic, QtCore, QtGui
-from pyqtgraph import PlotWidget, plot
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
 import pyqtgraph as pg
+from random import randint
 import sys
-import numpy as np
-import functools
-
-## Basis
-# Plots with pyqtgraph use PlotWidget, which contains a QGraphics Scene (the surface rendered that manages canvas items).
-# That includes title, labels, grids, axis ranges.
-# QPen draws the line and manage all attributes related with it
-# PlotWidget.clear
-
-class AppDialog(QtWidgets.QDialog):
-    def plot_graph(self, chart_index, graph, graph_title, hour):
-        self.derivative[chart_index] = graph.plot(hour, title=graph_title)
-        graph.setXRange(0, self.chunkSize, padding=0)
-        # TODO: refactor
-        if chart_index is 0:
-            graph.setYRange(0, 50)
-        else: 
-            graph.setXRange(-20, 30)
-        graph.disableAutoRange()
-        graph.showGrid(True, True, 1)
+import serial
+import argparse
+from itertools import count
+import datetime as dt
+import timeit
 
 
-    def __init__(self, *args, **kwargs):
-        super(AppDialog, self).__init__(*args, **kwargs)
-        self.derivative = [0,0,0]
-        self.chunkSize = 200
-        self.split = 100
-        uic.loadUi('apollo_gui.ui', self)
-        self.xAxis = np.arange(self.chunkSize)
-        plot(0, self.graphPressure, "P", self.xAxis)
-        plot(1, self.graphVolume, "V", self.xAxis)
-        self.derivative[0].setPen(pg.mkPen('fbcca7', width=2))
-        self.derivative[1].setPen(pg.mkPen('a3dade', width=2))
+class CustomWidget(pg.PlotWidget):
+    def __init__(self, index):
+        super().__init__()
+        self.index = index
+        self.serial_port = serial.Serial(args.serialport, baudrate=115200, timeout=0)
+        self.x = list(range(0,200))
+        self.y = [randint(0,8) for _ in range(200)]
+        self.setBackground('w')
+        pen = pg.mkPen(color=(255, 0, 0))
+        self.data_line =  self.plot(self.x, self.y, pen=pen)         
+        self.timer = QTimer()
+        self.timer.setInterval(5)
+        self.timer.timeout.connect(self.update_plot_data)
+        self.timer.start()
+
+    def filter_data_from_serial_port(self):
+        if self.serial_port.read() == b'D':
+            if self.serial_port.in_waiting > 19:
+                serial_line = b'D' + self.serial_port.read(19)
+                serial_data = serial_line.decode('utf-8').split(':')
+                print(serial_data)
+                return serial_data
+        else:
+            return []
+
+    def update_plot_data(self):
+        data = self.filter_data_from_serial_port()
+        self.x = self.x[1:]  # Remove the first y element.
+        self.x.append(self.x[-1] + 1)   # Add a new value 1 higher than the last.
+
+        self.y = self.y[1:]  # Remove the first 
+        if len(data) > 0:
+            self.y.append(float(data[1].split(',')[self.index]))
+        else:
+            self.y.append(0.0)  # Add a 0 value.
+
+        self.data_line.setData(self.x, self.y)
 
 
-    def update_graph(self, pres, flow):
+class MainWindow(QWidget):
+    
+    def __init__(self):
+        super().__init__()
 
-        self.derivative[0].setData(x=self.xAxis[:self.i+1], y=self.data1[:self.i+1,0])
-        self.derivative[1].setData(x=self.xAxis[:self.i+1], y=self.data1[:self.i+1,1])
-        
+        self.title = 'Apollo Ventilator App'
+        self.left = 100
+        self.top = 100
+        self.width = 720
+        self.height = 500
+        self.initUI()
 
-def main():
-    app = QtWidgets.QApplication(sys.argv)
-    app_dialog = AppDialog()
-    app_dialog.show()
-    timer = pg.QtCore.QTimer()
-    wrappedPlotUpdate= functools.partial(update_graph, main) #TODO: Why
-    timer.timeout.connect(update_graph)
-    timer.start(50)
-    sys.exit(app.exec_())
+    def initUI(self):
+        self.setWindowTitle(self.title)
+        self.setGeometry(self.left, self.top,self.width,self.height)
+        self.layout = QGridLayout(self)
+        self.unpg = CustomWidget(0)
+        self.otropg = CustomWidget(1)
+        self.layout.addWidget(self.unpg)
+        self.layout.addWidget(self.otropg)
+
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--serialport', nargs='?', default='/dev/ttyUSB0', type=str, help='Serial port name')
+    args = parser.parse_args()
     
+    app = QApplication(sys.argv) 
+    window = MainWindow()
+    window.show()
 
+    sys.exit(app.exec_())

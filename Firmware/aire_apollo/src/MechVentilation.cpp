@@ -30,7 +30,7 @@ void MechVentilation::update(void)
     {
         // @todo Alerta por sobrepresion
         this->hal->valveExsOpen();
-        this->hal->valveInsClose(); 
+        this->hal->valveInsClose();
         this->alarms->critical(12, "Presion máxima alcanzada");
     }
 
@@ -173,7 +173,7 @@ void MechVentilation::insuflationPost()
 void MechVentilation::exsufflationPre()
 {
     /** @todo Abrimos válvulas de salida */
-    this->hal->valveExsOpen(this->_cfgPresionPeep);
+    this->hal->setPressureExsTarget(this->_cfgPresionPeep);
     stateNext();
 }
 

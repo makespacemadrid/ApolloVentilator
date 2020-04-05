@@ -214,7 +214,7 @@ void ApolloHal::pidPressureInsCompute()
     this->statusPressureIns_ = 0;
   this->entryEV_->open(this->statusPressureIns_);
 
-  //Serial.println("pidPressureIns: current:" + String(this->currentPressureIns) + " Target:" + String(this->pressureInsTarget) + " Output:" + String(this->statusPressureIns));
+  Serial.println("pidPressureIns: current:" + String(this->currentPressureIns_) + " Target:" + String(this->pressureInsTarget_) + " Output:" + String(this->statusPressureIns_));
 }
 
 void ApolloHal::pidPressureExsCompute()
@@ -240,12 +240,10 @@ void ApolloHal::pidPressureExsCompute()
 
   this->pidPressureExs_.Compute();
 
-  if (this->statusPressureExs_ > 100)
-    this->statusPressureExs_ = 100;
-  if (this->statusPressureExs_ < 0)
-    this->statusPressureExs_ = 0;
+  if (this->statusPressureExs_ > 100) this->statusPressureExs_ = 100;
+  if (this->statusPressureExs_ < 0)   this->statusPressureExs_ = 0;
   this->exitEV_->open(this->statusPressureExs_);
-  //Serial.println("pidPressureExs: current:" + String(this->currentPressureExs) + " Target:" + String(this->pressureExsTarget) + " Output:" + String(this->statusPressureExs));
+  Serial.println("pidPressureExs: current:" + String(this->currentPressureExs_) + " Target:" + String(this->pressureExsTarget_) + " Output:" + String(this->statusPressureExs_));
 }
 
 void ApolloHal::pidFlowInsCompute()
@@ -271,10 +269,8 @@ void ApolloHal::pidFlowInsCompute()
 
   this->pidFlowIns_.Compute();
 
-  if (this->statusFlowIns_ > 100)
-    this->statusFlowIns_ = 100;
-  if (this->statusFlowIns_ < 0)
-    this->statusFlowIns_ = 0;
+  if (this->statusFlowIns_ > 100)  this->statusFlowIns_ = 100;
+  if (this->statusFlowIns_ < 0)    this->statusFlowIns_ = 0;
   this->entryEV_->open(this->statusFlowIns_);
-  //Serial.println("pidFlowIns: current:" + String(this->currentFlowIns) + " Target:" + String(this->flowInsTarget) + " Output:" + String(this->statusFlowIns));
+  Serial.println("pidFlowIns: current:" + String(this->currentFlowIns_) + " Target:" + String(this->flowInsTarget_) + " Output:" + String(this->statusFlowIns_));
 }

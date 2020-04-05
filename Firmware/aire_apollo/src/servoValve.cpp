@@ -14,9 +14,11 @@ bool servoValve::begin()
     return true;
 }
 
-void servoValve::open(uint8_t percent)
+void servoValve::open(double percent)
 {
-  if(_percent > 100) percent = 100;
+  if(percent > 100) percent = 100;
+  if(percent < 0)   percent = 0;
+
   _percent = percent;
   int val = map(percent, 0, 100, _minPos, _maxPos);     // scale it to use it with the servo (value between 0 and 180)
   _servo.write(val);

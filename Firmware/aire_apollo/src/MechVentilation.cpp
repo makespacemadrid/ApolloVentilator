@@ -25,11 +25,12 @@ MechVentilation::MechVentilation(
 
 void MechVentilation::update(void)
 {
-    this->hal->prepare();
+    this->hal->updateSensors();
     if (this->hal->getPresureIns(true) > DEFAULT_CMH20_MAX)
     {
         // @todo Alerta por sobrepresion
-        this->hal->valveInsClose();
+        this->hal->valveExsOpen();
+        this->hal->valveInsClose(); 
         this->alarms->critical(12, "Presion máxima alcanzada");
     }
 
@@ -57,7 +58,7 @@ void MechVentilation::update(void)
         this->exsufflationPost();
         break;
     }
-    this->hal->update();
+    this->hal->pidCompute();
 }
 
 void MechVentilation::_setState(State state)
@@ -120,15 +121,16 @@ void MechVentilation::wait()
 void MechVentilation::insuflationPre()
 {
     unsigned long now = millis();
-    this->lastExecution = now;
+    this->lastExecution = now; // Remapear la logica con void updateExecutionTime() y uint16_t timeSinceLastExecution() , asi dentro de esas funciones se puede gestionar el desbordamiento del contador (~47dias de ejecucion)
     /**
      *  @todo Decir a la válvula que se abra
     */
-    this->hal->intakeFlowSensor()->resetFlow();
+    this->hal->resetEntryFlow();
     this->hal->valveExsClose();
-    this->hal->valveInsOpen(this->_cfgPresionPico);
+    this->hal->setPressureInsTarget(this->_cfgPresionPico);
     this->stateNext();
 }
+
 void MechVentilation::insufaltionProcess()
 {
     //El proceso de insuflación está en marcha, esperamos al sensor de medida o tiempo de insuflación max
@@ -137,15 +139,13 @@ void MechVentilation::insufaltionProcess()
     switch (this->mode)
     {
     case Mode::Pressure:
-        this->hal->valveInsOpen(this->_cfgPresionPico);
+        this->hal->setPressureInsTarget(this->_cfgPresionPico);
         break;
     case Mode::Flow:
-#ifdef INTFLOWSENSOR
-        if (this->hal->intakeFlowSensor()->getFlow() >= this->_cfgmlTidalVolume)
+        if (this->hal->getEntryFlow() >= this->_cfgmlTidalVolume)
         {
             this->stateNext();
         }
-#endif
         break;
     }
     if ((now - this->lastExecution) >= (this->_cfgSecTimeInsufflation * 1000))
@@ -153,6 +153,7 @@ void MechVentilation::insufaltionProcess()
         this->stateNext();
     }
 }
+
 void MechVentilation::insuflationPost()
 {
     if (this->hal->getPresureExs(true) < this->_cfgPresionPico)
@@ -168,12 +169,14 @@ void MechVentilation::insuflationPost()
         this->stateNext();
     }
 }
+
 void MechVentilation::exsufflationPre()
 {
     /** @todo Abrimos válvulas de salida */
     this->hal->valveExsOpen(this->_cfgPresionPeep);
     stateNext();
 }
+
 void MechVentilation::exsufflationProcess()
 {
     unsigned long now = millis();
@@ -192,7 +195,7 @@ void MechVentilation::exsufflationProcess()
 }
 void MechVentilation::exsufflationPost()
 {
-    if (this->hal->getPresureExs(true) < (this->_cfgPresionPeep - 1) && !this->hal->getValveExsState())
+    if (this->hal->getPresureExs(true) < (this->_cfgPresionPeep - 1) && !this->hal->getExitValveStatus())
     {
         this->hal->valveExsClose();
         this->alarms->info(13, "Presión debajo de PEEP");
@@ -208,7 +211,7 @@ void MechVentilation::calculateCicle()
     this->_cfgSecTimeInsufflation = this->_cfgSecCiclo * this->_cfgPorcentajeInspiratorio / 100;
     this->_cfgSecTimeExsufflation = this->_cfgSecCiclo - this->_cfgSecTimeInsufflation;
 #ifdef DEBUG
-    Serial.println("_cfgSecCiclo " + String(this->_cfgSecCiclo, DEC));
+    Serial.println("_cfgSecCiclo "            + String(this->_cfgSecCiclo, DEC));
     Serial.println("_cfgSecTimeInsufflation " + String(this->_cfgSecTimeInsufflation, DEC));
     Serial.println("_cfgSecTimeExsufflation " + String(this->_cfgSecTimeExsufflation, DEC));
     Serial.flush();

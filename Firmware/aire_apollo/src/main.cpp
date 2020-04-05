@@ -1,20 +1,30 @@
 /***************************************************************************
-  This is a library for the BME280 humidity, temperature & pressure sensor
+Apollo firmware
 
-  Designed specifically to work with the Adafruit BME280 Breakout
-  ----> http://www.adafruit.com/products/2650
 
-  These sensors use I2C or SPI to communicate, 2 or 4 pins are required
-  to interface. The device's I2C address is either 0x76 or 0x77.
 
-  Adafruit invests time and resources providing this open source code,
-  please support Adafruit andopen-source hardware by purchasing products
-  from Adafruit!
+*Compatible Valves:
+-MUR servoValve (Maker Grade)
+-PWM capable Valves
+-cheap nonPWM Valves (not recommended)
 
-  Written by Limor Fried & Kevin Townsend for Adafruit Industries.
-  BSD license, all text above must be included in any redistribution
-  See the LICENSE file for details.
+*Compatible Flow sensors:
+-Interrupt based Flow sensor (use interrupt enabled pin and uncoment INTFLOWSENSOR)
+
+*Compatible Pressure Sensors:
+-BME280 (single one not recommended,no differential pressure!)
+-DUAL_BME280 (Maker Grade)
+-HoneywellTruStability (Medical Grade)
+
+
+
  ***************************************************************************/
+
+ #define DEBUG         //Activar mensajes debug
+ #define INTFLOWSENSOR //Activar solo para usar los sensores de flujo por interrupcion.(NO NECESARIO PARA EL RESTO DE SENSORES DE FLUJO)
+ #define LOCALCONTROLS // Display y encoders presentes.
+
+
 #include "../include/defaults.h"
 #include "Arduino.h"
 #include <Wire.h>
@@ -27,6 +37,8 @@
 #include "ApolloHal.h"
 #include "mksBME280.h"
 #include "cheapValve.h"
+#include "pwmValve.h"
+#include "servoValve.h"
 #include "MksmFlowSensor.h"
 #include "Comunications.h"
 #include "MechVentilation.h"
@@ -38,6 +50,13 @@ int rpm = DEFAULT_RPM;
 int vTidal = DEFAULT_MIN_VOLUMEN_TIDAL;
 int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
 
+
+
+uint16_t  logTimeCounter = 0;
+bool      sendLog        = false;
+
+
+
 ApolloHal *hal;
 ApolloConfiguration *configuration = new ApolloConfiguration();
 Comunications *com = new Comunications(configuration);
@@ -45,12 +64,15 @@ ApolloAlarms *alarms = new ApolloAlarms(com, PIN_BUZZER, true);
 MechVentilation *ventilation;
 
 #ifdef LOCALCONTROLS
-ApolloEncoder encoderRPM(PIN_ENC_RPM_DT, PIN_ENC_RPM_CLK, PIN_ENC_RPM_SW);
-ApolloEncoder encoderTidal(PIN_ENC_TIDAL_DT, PIN_ENC_TIDAL_CLK, PIN_ENC_TIDAL_SW);
-ApolloEncoder encoderPorcInspira(PIN_ENC_PCTINS_DT, PIN_ENC_PCTINS_CLK, PIN_ENC_PCTINS_SW);
-Display display = Display();
+  ApolloEncoder encoderRPM(PIN_ENC_RPM_DT, PIN_ENC_RPM_CLK, PIN_ENC_RPM_SW);
+  ApolloEncoder encoderTidal(PIN_ENC_TIDAL_DT, PIN_ENC_TIDAL_CLK, PIN_ENC_TIDAL_SW);
+  ApolloEncoder encoderPorcInspira(PIN_ENC_PCTINS_DT, PIN_ENC_PCTINS_CLK, PIN_ENC_PCTINS_SW);
+  Display display = Display();
 #endif
 
+
+//implementar en el ventilador ??
+/*
 int calculateResistance(int ppeak, int pplat)
 {
   return ppeak - pplat;
@@ -63,21 +85,24 @@ int calculateCompliance(int pplat, int peep)
   return pplat - peep;
 }
 
+*/
+
 void ISR1ms() //Esta funcion se ejecuta cada 1ms para gestionar sensores/actuadores!
 {             // OJO!!! no bloquear ni hacer nada muy costoso en tiempo!!!!!!
   hal->ISR1ms();
+  if(++logTimeCounter >= LOG_INTERVAL) {sendLog = true;logTimeCounter = 0;}
 }
 
 #ifdef INTFLOWSENSOR // Gestion de los sensores de flujo por interrupcion
-void flowIn()
-{
-  hal->intakeFlowSensor()->pulse();
-}
+  void flowIn()
+  {
+    hal->flowIn();
+  }
 
-void flowOut()
-{
-  hal->exitFlowSensor()->pulse();
-}
+  void flowOut()
+  {
+    hal->flowIn();
+  }
 #endif
 
 void setRampsPWMFreq()
@@ -107,18 +132,18 @@ void setRampsPWMFreq()
 
 void logData()
 {
-  String pressure(hal->pressuresSensor()->readCMH2O());
-  String intakeFlow(hal->intakeFlowSensor()->getFlow());
+  String pressure(hal->getPresureIns(false));
+  String intakeFlow(hal->getEntryFlow());
   //String intakeFlow(0);
   //  String exitFlow(hal->exitFlowSensor()->getFlow());
   String exitFlow(0);
-  String intakeInstantFlow(hal->intakeFlowSensor()->getInstantFlow());
+  String intakeInstantFlow(hal->getEntryInstantFlow());
   //String exitInstantFlow(hal->exitFlowSensor()->getInstantFlow());
   //String intakeInstantFlow(0);
   String exitInstantFlow(0);
   //  String intakeValve(hal->exitValve()->status());
-  String intakeValve(hal->intakeValve()->status());
-  String ExitValve(hal->exitValve()->status());
+  String intakeValve(hal->getEntryValveStatus());
+  String ExitValve(hal->getExitValveStatus());
 
   String data[] = {pressure, intakeInstantFlow, exitInstantFlow, intakeFlow, exitFlow, intakeValve, ExitValve};
   com->data(data, 7);
@@ -141,11 +166,11 @@ void setup()
   TRACE("CONFIG END");
 
   // Create hal layer with
-  ApolloFlowSensor *fInSensor = new MksmFlowSensor();
-  ApolloFlowSensor *fOutSensor = new MksmFlowSensor();
+  ApolloFlowSensor *fInSensor   = new MksmFlowSensor();
+  ApolloFlowSensor *fOutSensor  = new MksmFlowSensor();
   ApolloPressureSensor *pSensor = new mksBME280(BME280_ADDR);
-  ApolloValve *inValve = new cheapValve(ENTRY_EV_PIN);
-  ApolloValve *outValve = new cheapValve(EXIT_EV_PIN);
+  ApolloValve *inValve  = new servoValve(ENTRY_EV_PIN);
+  ApolloValve *outValve = new servoValve(EXIT_EV_PIN);
 
   hal = new ApolloHal(pSensor, fInSensor, fOutSensor, inValve, outValve, alarms);
 
@@ -203,12 +228,12 @@ void loop()
   //  checkLeak(volc, volExit);
   //  calculateCompliance(pplat, peep);
 
-  // envio de datos
 
-  //  if (millis() % LOG_INTERVAL == 0)
-  logData();
   // gestion del ventilador
   ventilation->update();
+  if (sendLog) {logData();sendLog = false;}
+  alarms->check();
+
 
 #ifdef LOCALCONTROLS
   if (encoderRPM.updateValue(&rpm))
@@ -235,5 +260,4 @@ void loop()
 #else
   com->serialRead();
 #endif
-  alarms->check();
 }

@@ -2,11 +2,10 @@
 #include <Arduino.h>
 #include "trace.h"
 #include <PID_v1.h>
-#include <PID_AutoTune_v0.h>
 
 ApolloHal::ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms)
 {
-  this->preSensor_ = preSensor;
+  this->entryPressureSensor_ = preSensor;
   this->entryFlowSensor_ = entryFlowSensor;
   this->exitFlowSensor_ = exitFlowSensor;
   this->entryEV_ = entryEV;
@@ -61,7 +60,7 @@ bool ApolloHal::begin()
   this->entryEV_->close();
   this->exitEV_->open();
   delay(3000);
-  if (!this->preSensor_->begin())
+  if (!this->entryPressureSensor_->begin())
   {
     TRACE("ERROR PRESION!");
     status = false;
@@ -76,86 +75,70 @@ void ApolloHal::ISR1ms()
   this->exitFlowSensor_->update();
   this->entryEV_->update();
   this->exitEV_->update();
-  this->preSensor_->update();
+  this->entryFlowSensor_->update();
 }
 
 void ApolloHal::setFlow(float flow, float pressure)
 {
 }
 
-// Get metric from pressure sensor in mBar
-float ApolloHal::getMetricPressureEntry()
-{
-  // preSensor MUST return value in mBar
-  return this->preSensor_->readMilibar();
-  ;
-}
 
 /**
  * Inspiration pressure
  * @param bool cache Return value of cache or not; Default false;
- * 
+ *
  */
 double ApolloHal::getPresureIns(bool cache)
 {
   if (cache)
   {
-    this->currentPressureIns_;
+    return this->currentPressureIns_;
   }
   else
   {
-    return this->pressuresSensor()->readCMH2O();
+    return this->entryPressureSensor_->readCMH2O();
   }
 }
 /**
  * Exsiration pressure
  * @param bool cache Return value of cache or not; Default false;
- * 
+ *
  */
 double ApolloHal::getPresureExs(bool cache)
 {
   if (cache)
   {
-    this->currentPressureExs_;
+    return this->currentPressureExs_;
   }
   else
   {
-    return this->pressuresSensor()->readCMH2O();
+    return this->entryPressureSensor_->readCMH2O();
   }
 }
 
-void ApolloHal::valveInsOpen(double pressureTarget)
+void ApolloHal::valveInsOpen(uint8_t percent)
 {
-  this->setPressureInsTarget(pressureTarget);
+  this->entryEV_->open(percent);
 }
+
 void ApolloHal::valveInsClose()
 {
   this->enablePressureIns_ = false;
   this->entryEV_->close();
 }
-void ApolloHal::valveExsOpen(double pressureTarget)
+
+void ApolloHal::valveExsOpen(uint8_t percent)
 {
-  this->setPressureExsTarget(pressureTarget);
+  this->exitEV_->open(percent);
 }
+
 void ApolloHal::valveExsClose()
 {
   this->enablePressureExs_ = false;
   this->exitEV_->close();
 }
 
-// Get metric from entry flow sensor
-float ApolloHal::getMetricVolumeEntry()
-{
-  return this->entryFlowSensor_->getInstantFlow();
-}
 
-// Get metric from pressure sensor in mBar
-float ApolloHal::getMetricVolumeExit()
-{
-  // preSensor MUST return value in mBar
-  return this->exitFlowSensor_->getInstantFlow();
-  ;
-}
 
 void ApolloHal::initializePidPressureIns()
 {
@@ -189,15 +172,15 @@ void ApolloHal::setFlowInsTarget(double flow)
   this->flowInsTarget_ = flow;
 }
 
-void ApolloHal::prepare()
+void ApolloHal::updateSensors()
 {
   this->currentPressureIns_ = this->getPresureIns(false);
   this->currentPressureExs_ = this->getPresureExs(false);
-  this->statusPressureIns_ = this->entryEV_->status();
-  this->statusPressureExs_ = this->exitEV_->status();
-  this->statusFlowIns_ = this->entryEV_->status();
+  this->statusPressureIns_  = this->entryEV_->status();
+  this->statusPressureExs_  = this->exitEV_->status();
+  this->statusFlowIns_      = this->entryEV_->status();
 }
-void ApolloHal::update()
+void ApolloHal::pidCompute()
 {
   this->pidPressureInsCompute();
   this->pidPressureExsCompute();

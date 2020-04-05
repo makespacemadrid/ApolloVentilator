@@ -4,3 +4,5 @@ metrics/__pycache__/*
 
 Firmware/aire_apollo/.vscode/c_cpp_properties.json
 Firmware/aire_apollo/.vscode/launch.json
+
+Firmware/aire_apollo/include/myhacks.h

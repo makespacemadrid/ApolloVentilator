@@ -11,51 +11,49 @@
 class ApolloHal
 {
 private:
-    ApolloPressureSensor *_preSensor;
-    ApolloFlowSensor *_entryFlowSensor;
-    ApolloFlowSensor *_exitFlowSensor;
-    ApolloValve *_entryEV;
-    ApolloValve *_exitEV;
+    ApolloPressureSensor *preSensor_;
+    ApolloFlowSensor *entryFlowSensor_;
+    ApolloFlowSensor *exitFlowSensor_;
+    ApolloValve *entryEV_;
+    ApolloValve *exitEV_;
 
-    ApolloAlarms *alarms;
+    ApolloAlarms *alarms_;
 
     void openEntryEV();
     void openExitEV();
 
-    double _targetPressure, _currentPressure, _inputValvePercent;
     //Define the aggressive and conservative Tuning Parameters
-    double _aggKp = 15, _aggKi = 0.0, _aggKd = 1;
-    double _consKp = 1, _consKi = 0.0, _consKd = 0.1;
+    double c_consKp = 1, c_consKi = 0.0, c_consKd = 0.1;
 
     //Cache pressure to prevent overload values of sensors
-    double currentPressureIns;
-    double currentPressureExp;
-    double currentFlowIns;
+    double currentPressureIns_;
+    double currentPressureExs_;
+    double currentFlowIns_;
 
-    double statusPressureIns;
-    double statusPressureExp;
-    double statusFlowIns;
+    double statusPressureIns_;
+    double statusPressureExs_;
+    double statusFlowIns_;
 
     //Targets of PID
-    double pressureInsTarget;
-    double pressureExpTarget;
-    double flowInsTarget;
+    double pressureInsTarget_;
+    double pressureExsTarget_;
+    double flowInsTarget_;
 
-    bool enableFlowIns = false;
-    bool enablePressureIns = false;
-    bool enablePressureExp = false;
+    bool enableFlowIns_ = false;
+    bool enablePressureIns_ = false;
+    bool enablePressureExs_ = false;
 
-    PID pidPressureIns = PID(&this->currentPressureIns, &this->statusPressureIns, &this->pressureInsTarget, _consKp, _consKi, _consKd, DIRECT);
-    PID pidPressureExp = PID(&this->currentPressureExp, &this->statusPressureExp, &this->pressureExpTarget, _consKp, _consKi, _consKd, DIRECT);
-    PID pidFlowIns = PID(&this->currentFlowIns, &this->statusFlowIns, &this->flowInsTarget, _consKp, _consKi, _consKd, DIRECT);
+    PID pidPressureIns_ = PID(&this->currentPressureIns_, &this->statusPressureIns_, &this->pressureInsTarget_, c_consKp, c_consKi, c_consKd, DIRECT);
+    PID pidPressureExs_ = PID(&this->currentPressureExs_, &this->statusPressureExs_, &this->pressureExsTarget_, c_consKp, c_consKi, c_consKd, DIRECT);
+    PID pidFlowIns_ = PID(&this->currentFlowIns_, &this->statusFlowIns_, &this->flowInsTarget_, c_consKp, c_consKi, c_consKd, DIRECT);
 
     void initializePidPressureIns();
-    void initializePidPressureExp();
+    void initializePidPressureExs();
     void initializePidFlowIns();
 
     void pidPressureInsCompute();
     void pidFlowInsCompute();
-    void pidPressureExpCompute();
+    void pidPressureExsCompute();
 
 public:
     ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms);
@@ -71,11 +69,11 @@ public:
 
     void ISR1ms(); //
 
-    ApolloPressureSensor *pressuresSensor() { return _preSensor; }
-    ApolloFlowSensor *intakeFlowSensor() { return _entryFlowSensor; }
-    ApolloFlowSensor *exitFlowSensor() { return _exitFlowSensor; }
-    ApolloValve *intakeValve() { return _entryEV; }
-    ApolloValve *exitValve() { return _exitEV; }
+    ApolloPressureSensor *pressuresSensor() { return preSensor_; }
+    ApolloFlowSensor *intakeFlowSensor() { return entryFlowSensor_; }
+    ApolloFlowSensor *exitFlowSensor() { return exitFlowSensor_; }
+    ApolloValve *intakeValve() { return entryEV_; }
+    ApolloValve *exitValve() { return exitEV_; }
 
     //Test only
     void valveInsOpen(double pressureTarget);
@@ -84,12 +82,12 @@ public:
     void valveExsClose();
 
     double getPresureIns(bool cache = false);
-    double getPresureExp(bool cache = false);
-    bool getValveExsState() { return this->_exitEV->status(); };
-    bool getValveInsState() { return this->_entryEV->status(); };
+    double getPresureExs(bool cache = false);
+    bool getValveExsState() { return this->exitEV_->status(); };
+    bool getValveInsState() { return this->entryEV_->status(); };
 
     void setPressureInsTarget(double pressure);
-    void setPressureExpTarget(double pressure);
+    void setPressureExsTarget(double pressure);
     void setFlowInsTarget(double flow);
 
     void prepare();

@@ -155,7 +155,7 @@ void MechVentilation::insufaltionProcess()
 }
 void MechVentilation::insuflationPost()
 {
-    if (this->hal->getPresureExp(true) < this->_cfgPresionPico)
+    if (this->hal->getPresureExs(true) < this->_cfgPresionPico)
     {
         this->hal->valveExsClose();
         this->alarms->info(14, "No llegamos a presión Pico");
@@ -192,7 +192,7 @@ void MechVentilation::exsufflationProcess()
 }
 void MechVentilation::exsufflationPost()
 {
-    if (this->hal->getPresureExp(true) < (this->_cfgPresionPeep - 1) && !this->hal->getValveExsState())
+    if (this->hal->getPresureExs(true) < (this->_cfgPresionPeep - 1) && !this->hal->getValveExsState())
     {
         this->hal->valveExsClose();
         this->alarms->info(13, "Presión debajo de PEEP");

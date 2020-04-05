@@ -2,11 +2,11 @@
 #define ENCODER_H
 
 #define LATCHSTATE 3
-#include "../lib/Encoder-1.4.1/Encoder.h"
-class ApolloEncoder : public Encoder
+#include "../../lib/Encoder-1.4.1/Encoder.h"
+class LocalEncoder : public Encoder
 {
 public:
-    ApolloEncoder(uint8_t pinDT, uint8_t pinCLK, uint8_t pinSW) : Encoder(pinDT, pinCLK)
+    LocalEncoder(uint8_t pinDT, uint8_t pinCLK, uint8_t pinSW) : Encoder(pinDT, pinCLK)
     {
         _pulsador = pinSW;
     };

@@ -3,7 +3,7 @@
 
 #include "../include/defaults.h"
 #include "Arduino.h"
-#include "Display.h"
+
 class ApolloConfiguration
 {
 public:

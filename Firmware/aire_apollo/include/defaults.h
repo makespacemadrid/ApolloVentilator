@@ -4,8 +4,8 @@
 #define LOG_INTERVAL 100 //milliseconds
 
 //------HardWare---------
-#define ENTRY_EV_PIN    11  //Valvula - Entrada
-#define EXIT_EV_PIN     6   //Valvula - Salida
+#define ENTRY_EV_PIN    6  //Valvula - Entrada
+#define EXIT_EV_PIN     11 //Valvula - Salida
 #define ENTRY_FLOW_PIN  3   //Sensor de Flujo - Entrada
 #define EXIT_FLOW_PIN   4   //Sendor de Flujo - Salida
 //#define PRESSURE_SENSOR_PIN      ??

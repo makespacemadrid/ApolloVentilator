@@ -30,8 +30,8 @@ public:
 
     double getPresureIns(bool cache = false);
     double getPresureExs(bool cache = false);
-    bool   getEntryValveStatus()  { return this->exitEV_->status(); };
-    bool   getExitValveStatus()   { return this->entryEV_->status(); };
+    uint8_t getEntryValveStatus()  { return this->exitEV_->status(); };
+    uint8_t getExitValveStatus()   { return this->entryEV_->status(); };
 
     double getEntryFlow()         { return this->entryFlowSensor_->getFlow();}
     double getEntryInstantFlow()  { return this->entryFlowSensor_->getInstantFlow();}

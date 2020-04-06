@@ -1,8 +1,22 @@
 #ifndef SubmarineNema17_H
 #define  SubmarineNema17_H
 
-#include<Arduino.h>
+#include <Arduino.h>
 #include "../ApolloValve.h"
+// this pin should connect to Ground when want to stop the motor
+#define STOPPER_PIN 4
+
+// Motor steps per revolution. Most steppers are 200 steps or 1.8 degrees/step
+#define MOTOR_STEPS 200
+#define RPM 120
+// Microstepping mode. If you hardwired it to save pins, set to the same value here.
+#define MICROSTEPS 16
+#define DIR 22
+#define STEP 23
+
+//#include "A4988.h"
+#include "BasicStepperDriver.h" // generic
+// BasicStepperDriver stepper(DIR, STEP);
 
 class SubmarineNema17 : public ApolloValve
 {
@@ -13,9 +27,9 @@ public:
   bool    begin();
   void    open(uint8_t percent = 100);
   void    close();
-  uint8_t status() {return _percent > 0;}
-
+  double  status() {return _percent > 0;}
   void    update(); //Required to move de steps
+  BasicStepperDriver stepper;
 
 
 protected:
@@ -32,7 +46,7 @@ protected:
   uint8_t stepNow = 0;
 
   bool lastDir;
-  bool lastStep;
+  int lastStep;
   unsigned long lastTime;
 
 };

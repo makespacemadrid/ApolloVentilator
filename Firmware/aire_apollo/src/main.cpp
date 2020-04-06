@@ -45,6 +45,8 @@ Apollo firmware
 #include "LocalControl/LocalEncoder.h"
 #include "LocalControl/LocalDisplay.h"
 #include "ApolloConfiguration.h"
+#include "Valve/SubmarineNema17.h"
+#include "Valve/LedTest.h"
 
 int rpm = DEFAULT_RPM;
 int vTidal = DEFAULT_MIN_VOLUMEN_TIDAL;
@@ -170,8 +172,8 @@ void setup()
   ApolloFlowSensor *fInSensor   = new MksmFlowSensor();
   ApolloFlowSensor *fOutSensor  = new MksmFlowSensor();
   ApolloPressureSensor *pSensor = new mksBME280(BME280_ADDR);
-  ApolloValve *inValve  = new servoValve(ENTRY_EV_PIN,3,120);
-  ApolloValve *outValve = new servoValve(EXIT_EV_PIN,0,120);
+  ApolloValve *inValve  = new SubmarineNema17(0,22,23);
+  ApolloValve *outValve = new LedTest(13);
 
   hal = new ApolloHal(pSensor, fInSensor, fOutSensor, inValve, outValve, alarms);
 

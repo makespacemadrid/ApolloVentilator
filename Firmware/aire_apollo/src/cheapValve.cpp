@@ -12,9 +12,10 @@ bool cheapValve::begin()
   return true;
 }
 
-void cheapValve::open(uint8_t percent)
+void cheapValve::open(double percent)
 {
   if(percent > 100) percent = 100;
+  if(percent < 0)   percent = 0;
 
   if(_openPercent == 0)//Si estabamos cerrados primero cargamos la bobina de la valvula
   {

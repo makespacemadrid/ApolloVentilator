@@ -8,9 +8,9 @@ class ApolloValve
         ApolloValve();
         ~ApolloValve();
         virtual bool    begin()                     {return true;}
-        virtual void    open(uint8_t percent = 100) {;}
+        virtual void    open(double percent = 100)  {;}
         virtual void    close()                     {;}
-        virtual uint8_t status()                    {return 0;}
+        virtual double  status()                    {return 0;}
         virtual void    update()                    {;}
     protected:
 };

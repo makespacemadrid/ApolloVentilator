@@ -10,10 +10,10 @@ public:
   cheapValve(uint8_t pin, uint16_t openDelay = 15 , uint16_t closeDelay = 10 , bool invertedLogic = false);
 
   bool begin();
-  void open(uint8_t percent = 100);
+  void open(double percent = 100);
   void close();
 
-  uint8_t status()      {return _openPercent;}
+  double status()      {return _openPercent;}
   void update();
 
 
@@ -26,7 +26,7 @@ protected:
 
   const uint8_t   _pin;
   const bool      _trueState;
-  uint8_t         _openPercent;
+  double         _openPercent;
   const uint16_t  _openDelayMS;
   const uint16_t  _closeDelayMS;
   uint16_t        _cycleTimeMS;

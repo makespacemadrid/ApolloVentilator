@@ -144,9 +144,10 @@ void logData()
   //  String intakeValve(hal->exitValve()->status());
   String intakeValve(hal->getEntryValveStatus());
   String ExitValve(hal->getExitValveStatus());
+  String Status(ventilation->getStatus());
 
-  String data[] = {pressure, intakeInstantFlow, exitInstantFlow, intakeFlow, exitFlow, intakeValve, ExitValve};
-  com->data(data, 7);
+  String data[] = {pressure, intakeInstantFlow, exitInstantFlow, intakeFlow, exitFlow, intakeValve, ExitValve,Status};
+  com->data(data, 8);
 }
 
 void setup()
@@ -169,8 +170,8 @@ void setup()
   ApolloFlowSensor *fInSensor   = new MksmFlowSensor();
   ApolloFlowSensor *fOutSensor  = new MksmFlowSensor();
   ApolloPressureSensor *pSensor = new mksBME280(BME280_ADDR);
-  ApolloValve *inValve  = new servoValve(ENTRY_EV_PIN);
-  ApolloValve *outValve = new servoValve(EXIT_EV_PIN);
+  ApolloValve *inValve  = new servoValve(ENTRY_EV_PIN,3,120);
+  ApolloValve *outValve = new servoValve(EXIT_EV_PIN,0,120);
 
   hal = new ApolloHal(pSensor, fInSensor, fOutSensor, inValve, outValve, alarms);
 

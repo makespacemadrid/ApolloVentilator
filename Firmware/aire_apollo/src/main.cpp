@@ -42,8 +42,8 @@ Apollo firmware
 #include "MksmFlowSensor.h"
 #include "Comunications.h"
 #include "MechVentilation.h"
-#include "ApolloEncoder.h"
-#include "Display.h"
+#include "LocalControl/LocalEncoder.h"
+#include "LocalControl/LocalDisplay.h"
 #include "ApolloConfiguration.h"
 
 int rpm = DEFAULT_RPM;
@@ -64,10 +64,10 @@ ApolloAlarms *alarms = new ApolloAlarms(com, PIN_BUZZER, true);
 MechVentilation *ventilation;
 
 #ifdef LOCALCONTROLS
-  ApolloEncoder encoderRPM(PIN_ENC_RPM_DT, PIN_ENC_RPM_CLK, PIN_ENC_RPM_SW);
-  ApolloEncoder encoderTidal(PIN_ENC_TIDAL_DT, PIN_ENC_TIDAL_CLK, PIN_ENC_TIDAL_SW);
-  ApolloEncoder encoderPorcInspira(PIN_ENC_PCTINS_DT, PIN_ENC_PCTINS_CLK, PIN_ENC_PCTINS_SW);
-  Display display = Display();
+  LocalEncoder encoderRPM(PIN_ENC_RPM_DT, PIN_ENC_RPM_CLK, PIN_ENC_RPM_SW);
+  LocalEncoder encoderTidal(PIN_ENC_TIDAL_DT, PIN_ENC_TIDAL_CLK, PIN_ENC_TIDAL_SW);
+  LocalEncoder encoderPorcInspira(PIN_ENC_PCTINS_DT, PIN_ENC_PCTINS_CLK, PIN_ENC_PCTINS_SW);
+  LocalDisplay display = LocalDisplay();
 #endif
 
 

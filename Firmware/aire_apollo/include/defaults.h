@@ -1,11 +1,11 @@
 #ifndef DEFAULTS_H
 #define DEFAULTS_H
 
-#define LOG_INTERVAL 100 //milliseconds
+#define LOG_INTERVAL 10 //milliseconds
 
 //------HardWare---------
-#define ENTRY_EV_PIN    6  //Valvula - Entrada
-#define EXIT_EV_PIN     11 //Valvula - Salida
+#define ENTRY_EV_PIN    6   //Valvula - Entrada
+#define EXIT_EV_PIN     11  //Valvula - Salida
 #define ENTRY_FLOW_PIN  3   //Sensor de Flujo - Entrada
 #define EXIT_FLOW_PIN   4   //Sendor de Flujo - Salida
 //#define PRESSURE_SENSOR_PIN      ??

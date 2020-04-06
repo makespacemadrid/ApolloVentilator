@@ -26,11 +26,12 @@ MechVentilation::MechVentilation(
 void MechVentilation::update(void)
 {
     this->hal->updateSensors();
+
     if (this->hal->getPresureIns(true) > DEFAULT_CMH20_MAX)
     {
         // @todo Alerta por sobrepresion
-        this->hal->valveExsOpen();
-        this->hal->valveInsClose();
+        //this->hal->valveExsOpen();
+        //this->hal->valveInsClose();
         this->alarms->critical(12, "Presion máxima alcanzada");
     }
 
@@ -58,6 +59,7 @@ void MechVentilation::update(void)
         this->exsufflationPost();
         break;
     }
+
     this->hal->pidCompute();
 }
 
@@ -105,11 +107,11 @@ void MechVentilation::wait()
     }
 
     //Detecta aspiración del paciente
-    if (this->hal->getPresureIns() <= this->_cfgCmh2oTriggerValue)
-    {
-        /** @todo Pendiente desarrollo */
-        stateNext();
-    }
+//    if (this->hal->getPresureIns() <= this->_cfgCmh2oTriggerValue)
+//    {
+//        /** @todo Pendiente desarrollo */
+//        stateNext();
+//    }
 
     //Se lanza por tiempo
     unsigned long now = millis();
@@ -118,6 +120,7 @@ void MechVentilation::wait()
         stateNext();
     }
 }
+
 void MechVentilation::insuflationPre()
 {
     unsigned long now = millis();
@@ -158,7 +161,7 @@ void MechVentilation::insuflationPost()
 {
     if (this->hal->getPresureExs(true) < this->_cfgPresionPico)
     {
-        this->hal->valveExsClose();
+        //this->hal->valveExsClose();
         this->alarms->info(14, "No llegamos a presión Pico");
     }
 
@@ -174,6 +177,7 @@ void MechVentilation::exsufflationPre()
 {
     /** @todo Abrimos válvulas de salida */
     this->hal->setPressureExsTarget(this->_cfgPresionPeep);
+    //this->hal->valveInsOpen(35);
     stateNext();
 }
 
@@ -186,18 +190,20 @@ void MechVentilation::exsufflationProcess()
     }
 
     //Detecta aspiración del paciente
+/*
     if (this->hal->getPresureIns(true) <= this->_cfgCmh2oTriggerValue)
     {
-        /** @todo Pendiente desarrollo */
+        // @todo Pendiente desarrollo
         _setState(State::InsuflationPre);
         this->alarms->info(99, "Aspiración del paciente");
     }
+*/
 }
 void MechVentilation::exsufflationPost()
 {
-    if (this->hal->getPresureExs(true) < (this->_cfgPresionPeep - 1) && !this->hal->getExitValveStatus())
+    if (this->hal->getPresureExs(true) < (this->_cfgPresionPeep - 1)) //) && !this->hal->getExitValveStatus())
     {
-        this->hal->valveExsClose();
+        //this->hal->valveExsClose();
         this->alarms->info(13, "Presión debajo de PEEP");
     }
     /** @todo Cerramos valvula de salida? */

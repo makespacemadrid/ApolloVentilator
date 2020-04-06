@@ -75,6 +75,7 @@ public:
      * @note This method must be called on the main loop.
      */
     void update(void);
+    State getStatus()  {return this->_currentState;};
 
 private:
     /** Initialization. */

@@ -3,7 +3,10 @@
 #include "trace.h"
 #include <PID_v1.h>
 
-ApolloHal::ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms)
+ApolloHal::ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms) :
+    pidPressureIns_ (&this->currentPressureIns_, &this->statusPressureIns_, &this->pressureInsTarget_, c_consKp, c_consKi, c_consKd, DIRECT),
+    pidPressureExs_ (&this->currentPressureExs_, &this->statusPressureExs_, &this->pressureExsTarget_, c_consKp, c_consKi, c_consKd, REVERSE),
+    pidFlowIns_     (&this->currentFlowIns_    , &this->statusFlowIns_    , &this->flowInsTarget_    , c_consKp, c_consKi, c_consKd, DIRECT)
 {
   this->entryPressureSensor_ = preSensor;
   this->entryFlowSensor_ = entryFlowSensor;
@@ -58,6 +61,7 @@ bool ApolloHal::begin()
   // Close Entry Valve and open exit valve and wait 3 sec to empty the pressure in the system
   // This it's neccesary to reset 0 the presure in the sensor
   this->entryEV_->close();
+  delay(2000);
   this->exitEV_->open();
   delay(3000);
   if (!this->entryPressureSensor_->begin())
@@ -193,8 +197,8 @@ void ApolloHal::pidPressureInsCompute()
   {
     return;
   }
-  float aggKp = 15, aggKi = 0.0, aggKd = 1;
-  float consKp = 1, consKi = 0.0, consKd = 0.1;
+  float aggKp   = 10  , aggKi  = 0.0, aggKd  = 1;
+  float consKp  = 5  ,  consKi = 0.0, consKd = 1;
 
   double gap = abs(this->pressureInsTarget_ - this->getPresureIns(true)); //distance away from setpoint
   if (gap < 5)
@@ -208,13 +212,12 @@ void ApolloHal::pidPressureInsCompute()
   }
   this->pidPressureIns_.Compute();
 
-  if (this->statusPressureIns_ > 100)
-    this->statusPressureIns_ = 100;
-  if (this->statusPressureIns_ < 0)
-    this->statusPressureIns_ = 0;
+  if (this->statusPressureIns_ > 100) this->statusPressureIns_ = 100;
+  if (this->statusPressureIns_ < 0)   this->statusPressureIns_ = 0;
+
   this->entryEV_->open(this->statusPressureIns_);
 
-  Serial.println("pidPressureIns: current:" + String(this->currentPressureIns_) + " Target:" + String(this->pressureInsTarget_) + " Output:" + String(this->statusPressureIns_));
+//  Serial.println("pidPressureIns: current:" + String(this->currentPressureIns_) + " Target:" + String(this->pressureInsTarget_) + " Output:" + String(this->statusPressureIns_));
 }
 
 void ApolloHal::pidPressureExsCompute()
@@ -224,11 +227,11 @@ void ApolloHal::pidPressureExsCompute()
     return;
   }
 
-  float aggKp = 15, aggKi = 0.0, aggKd = 1;
-  float consKp = 1, consKi = 0.0, consKd = 0.1;
+  float aggKp = 5    , aggKi = 0.0 , aggKd = 0;
+  float consKp = 1, consKi = 0.0, consKd = 0;
 
   double gap = abs(this->pressureExsTarget_ - this->getPresureExs(true)); //distance away from setpoint
-  if (gap < 5)
+  if (gap < 10)
   { //we're close to setpoint, use conservative tuning parameters
     this->pidPressureExs_.SetTunings(consKp, consKi, consKd);
   }
@@ -243,7 +246,7 @@ void ApolloHal::pidPressureExsCompute()
   if (this->statusPressureExs_ > 100) this->statusPressureExs_ = 100;
   if (this->statusPressureExs_ < 0)   this->statusPressureExs_ = 0;
   this->exitEV_->open(this->statusPressureExs_);
-  Serial.println("pidPressureExs: current:" + String(this->currentPressureExs_) + " Target:" + String(this->pressureExsTarget_) + " Output:" + String(this->statusPressureExs_));
+//  Serial.println("pidPressureExs: current:" + String(this->currentPressureExs_) + " Target:" + String(this->pressureExsTarget_) + " Output:" + String(this->statusPressureExs_));
 }
 
 void ApolloHal::pidFlowInsCompute()
@@ -253,11 +256,11 @@ void ApolloHal::pidFlowInsCompute()
     return;
   }
 
-  float aggKp = 15, aggKi = 0.0, aggKd = 1;
-  float consKp = 1, consKi = 0.0, consKd = 0.1;
+  float aggKp =  5  , aggKi = 0.0, aggKd = 0;
+  float consKp = 1  , consKi = 0.0,consKd = 0;
 
   double gap = abs(this->flowInsTarget_ - this->getPresureIns(true)); //distance away from setpoint
-  if (gap < 5)
+  if (gap < 10)
   { //we're close to setpoint, use conservative tuning parameters
     this->pidFlowIns_.SetTunings(consKp, consKi, consKd);
   }
@@ -272,5 +275,5 @@ void ApolloHal::pidFlowInsCompute()
   if (this->statusFlowIns_ > 100)  this->statusFlowIns_ = 100;
   if (this->statusFlowIns_ < 0)    this->statusFlowIns_ = 0;
   this->entryEV_->open(this->statusFlowIns_);
-  Serial.println("pidFlowIns: current:" + String(this->currentFlowIns_) + " Target:" + String(this->flowInsTarget_) + " Output:" + String(this->statusFlowIns_));
+//  Serial.println("pidFlowIns: current:" + String(this->currentFlowIns_) + " Target:" + String(this->flowInsTarget_) + " Output:" + String(this->statusFlowIns_));
 }

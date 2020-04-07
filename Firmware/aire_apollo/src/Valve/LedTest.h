@@ -11,15 +11,15 @@ public:
 
   LedTest(uint8_t pin_);
   bool    begin();
-  void    open(uint8_t percent = 100);
+  void    open(double percent = 100);
   void    close();
-  double  status() {return _percent > 0;}
+  double  status() {return this->percent;}
   void    update(); //Required to move de steps
 
 
 protected:
 
-  uint8_t _percent;
+  double percent;
   uint8_t pin;
 
   uint8_t stepEnd;

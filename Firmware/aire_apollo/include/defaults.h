@@ -25,6 +25,8 @@
 #define PIN_ENC_TIDAL_DT  39
 #define PIN_ENC_TIDAL_CLK 41
 #define PIN_ENC_TIDAL_SW  0
+// Pause button
+#define PIN_PAUSE 99
 
 // Valores por defecto
 #define DEFAULT_ESTATURA 170 // cm

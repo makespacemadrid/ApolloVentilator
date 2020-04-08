@@ -64,6 +64,9 @@ public:
         return ((int)(round(pesoIdeal * mlByKgWeight)));
     }
 
+    void toggleReady();
+    bool getReady(){return this->ready;};
+
 private:
     int weight;
     int height;

@@ -105,19 +105,26 @@ void MechVentilation::wait()
     {
         this->configurationUpdate();
     }
-
     //Detecta aspiración del paciente
-//    if (this->hal->getPresureIns() <= this->_cfgCmh2oTriggerValue)
-//    {
-//        /** @todo Pendiente desarrollo */
-//        stateNext();
-//    }
-
-    //Se lanza por tiempo
-    unsigned long now = millis();
-    if ((this->lastExecution + this->_cfgSecCiclo) < now)
+    if (this->hal->getPresureIns() <= this->_cfgCmh2oTriggerValue)
     {
+        /** @todo Pendiente desarrollo */
         stateNext();
+    }
+    unsigned long now = millis();
+    switch (this->mode)
+    {
+    case Mode::Pressure:
+    case Mode::Flow:
+        //Se lanza por tiempo
+        if ((this->lastExecution + this->_cfgSecCiclo) < now)
+        {
+            stateNext();
+        }
+        break;
+    case Mode::Pause :
+        return;
+    break;
     }
 }
 
@@ -150,6 +157,8 @@ void MechVentilation::insufaltionProcess()
             this->stateNext();
         }
         break;
+    default:
+    break;
     }
     if ((now - this->lastExecution) >= (this->_cfgSecTimeInsufflation * 1000))
     {
@@ -226,6 +235,15 @@ void MechVentilation::calculateCicle()
 
 void MechVentilation::configurationUpdate()
 {
+    if(!this->configuration->getReady()){
+        this->lastMode = this->mode;
+        this->mode = Mode::Pause;
+    }
+    if(this->configuration->getReady()){
+        Mode tmp = this->lastMode;
+        this->lastMode = this->mode;
+        this->mode = tmp;
+    }
     this->_cfgmlTidalVolume = this->configuration->getMlTidalVolumen();
     this->_cfgPorcentajeInspiratorio = this->configuration->getPorcentajeInspiratorio();
     this->_cfgRpm = String(this->configuration->getRpm()).toInt();

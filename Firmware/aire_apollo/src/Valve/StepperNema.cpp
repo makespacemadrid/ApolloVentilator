@@ -1,6 +1,6 @@
 #include "StepperNema.h"
 
-StepperNema::StepperNema(uint8_t pinEna_,uint8_t pinDir_,uint8_t pinPul_,uint8_t pinFcIni_ ,uint8_t pinFcEnd_):stepper(200, pinDir, pinPul)
+StepperNema::StepperNema(uint8_t pinEna_,uint8_t pinDir_,uint8_t pinPul_,uint8_t pinFcIni_ ,uint8_t pinFcEnd_,int stepsMax_,int offset_):stepper(MOTOR_STEPS, pinDir, pinPul)
 {
   this->pinEna = pinEna_;
   this->pinDir = pinDir_;
@@ -8,6 +8,7 @@ StepperNema::StepperNema(uint8_t pinEna_,uint8_t pinDir_,uint8_t pinPul_,uint8_t
 
   this->pinFcIni = pinFcIni_;
   this->pinFcEnd = pinFcEnd_;
+  this->stepsMax = stepsMax_;
 
 }
 
@@ -23,30 +24,39 @@ bool StepperNema::begin()
     pinMode(this->pinFcIni, INPUT_PULLUP);
     while(digitalRead(this->pinFcIni) != HIGH){
       //Desplazamos el stepper al inicio
-      this->stepper.move(this->stepsMax);
+      this->stepper.move(-99999999);
     }
-
   }
+
   if(this->pinFcEnd != 0){
     pinMode(this->pinFcEnd, INPUT_PULLUP);
   }
 
+  return true;
+}
+bool StepperNema::calibrate()
+{
   if(this->pinFcIni != 0 && this->pinFcEnd != 0){
+    while(digitalRead(this->pinFcIni) != HIGH){
+      //Desplazamos el stepper al inicio
+      this->stepper.move(-99999999);
+    }
+    this->lastStep = 0;
     while(digitalRead(this->pinFcIni) != HIGH){
       //Desplazamos el stepper al final para autocalibrado
       this->stepper.move(9999999);
+      this->lastStep++;
     }
-    this->stepsMax= this->lastStep;
+    this->stepsMax = this->lastStep;
   }
   return true;
 }
-
 void StepperNema::open(double percent)
 {
     if(percent > 100) percent = 100;
     if(percent < 0) percent = 0;
     this->percent = percent;
-    this->stepDestination = this->stepsMax * ((int)percent / 100);
+    this->stepDestination = (this->stepsMax - this->offset) * ((int)percent / 100);
     int mover = this->stepDestination - this->lastStep;
      if(mover>0){
         this->lastDir=1; //derechas
@@ -54,12 +64,12 @@ void StepperNema::open(double percent)
         this->lastDir=0; //izquierdas
       }    
     this->stepper.startMove(mover);
-      Serial.println("Stepper "+String(mover)+" "+String(this->stepDestination)+" "+String(this->lastStep)+" "+String(percent));
+    Serial.println("Stepper "+String(mover)+" "+String(this->stepDestination)+" "+String(this->lastStep)+" "+String(percent));
 }
 
 void StepperNema::close()
 {
-  this->open(0);
+  this->open(this->offset);
 }
 
 void StepperNema::update(){
@@ -79,5 +89,5 @@ unsigned wait_time_micros = stepper.nextAction();
       }
     }
   //Serial.println(String(this->stepDestination)+","+String(this->stepNow)+","+String(this->lastDir)+","+String(this->lastStep));
-return;
+  return;
 }

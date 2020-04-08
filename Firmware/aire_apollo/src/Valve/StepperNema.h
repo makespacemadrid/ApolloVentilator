@@ -21,12 +21,13 @@ class StepperNema : public ApolloValve
 
 public:
 
-  StepperNema(uint8_t pinEna_,uint8_t pinDir_,uint8_t pinPul_,uint8_t pinFcIni_ = 0,uint8_t pinFcEnd_ = 0);
+  StepperNema(uint8_t pinEna_,uint8_t pinDir_,uint8_t pinPul_,uint8_t pinFcIni_ = 0,uint8_t pinFcEnd_ = 0, int stepsMax_=0, int offset_=0);
   bool    begin();
   void    open(double percent = 100);
   void    close();
   double  status() {return this->percent;}
   void    update(); //Required to move de steps
+  bool    calibrate();
   BasicStepperDriver stepper;
 
 
@@ -48,6 +49,7 @@ protected:
   bool lastDir;
   int lastStep;
   int stepDestination;
+  int offset = 0; // Offset steps 
 
 };
 

@@ -1,7 +1,7 @@
 #ifndef DEFAULTS_H
 #define DEFAULTS_H
 
-#define LOG_INTERVAL 10 //milliseconds
+#define LOG_INTERVAL 25 //milliseconds
 
 //------HardWare---------
 #define ENTRY_EV_PIN    6   //Valvula - Entrada

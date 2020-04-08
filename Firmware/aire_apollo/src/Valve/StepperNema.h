@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include "../ApolloValve.h"
-
+#include "A4988.h"
 // Motor steps per revolution. Most steppers are 200 steps or 1.8 degrees/step
 #define MOTOR_STEPS 200
 #define RPM 900
@@ -21,14 +21,14 @@ class StepperNema : public ApolloValve
 
 public:
 
-  StepperNema(uint8_t pinEna_,uint8_t pinDir_,uint8_t pinPul_,uint8_t pinFcIni_ = 0,uint8_t pinFcEnd_ = 0, int stepsMax_=0, int offset_=0);
+  StepperNema(uint8_t pinEna_,uint8_t pinDir_,uint8_t pinPul_,uint8_t pinFcIni_ = 0,uint8_t pinFcEnd_ = 0, int stepsMax_=0, int startPos_=0);
   bool    begin();
   void    open(double percent = 100);
   void    close();
   double  status() {return this->percent;}
   void    update(); //Required to move de steps
   bool    calibrate();
-  BasicStepperDriver stepper;
+  A4988   stepper;
 
 
 protected:
@@ -49,7 +49,7 @@ protected:
   bool lastDir;
   int lastStep;
   int stepDestination;
-  int offset = 0; // Offset steps 
+  int startPos = 0; // Offset steps
 
 };
 

@@ -21,7 +21,7 @@ Apollo firmware
  ***************************************************************************/
 
  #define DEBUG         //Activar mensajes debug
- #define INTFLOWSENSOR //Activar solo para usar los sensores de flujo por interrupcion.(NO NECESARIO PARA EL RESTO DE SENSORES DE FLUJO)
+ //#define INTFLOWSENSOR //Activar solo para usar los sensores de flujo por interrupcion.(NO NECESARIO PARA EL RESTO DE SENSORES DE FLUJO)
  #define LOCALCONTROLS // Display y encoders presentes.
 
 
@@ -172,8 +172,11 @@ void setup()
   ApolloFlowSensor *fInSensor   = new MksmFlowSensor();
   ApolloFlowSensor *fOutSensor  = new MksmFlowSensor();
   ApolloPressureSensor *pSensor = new mksBME280(BME280_ADDR);
-  ApolloValve *inValve  = new StepperNema(0,22,23);
-  ApolloValve *outValve = new LedTest(13);
+
+//El penultimo valor es cuantos pasos hay desde el final de carrera hasta apretar del todo el boton.
+//El ultimo valor es cuantos pasos hay desde el final de carrera hasta que empiezas a apretar el boton.
+  ApolloValve *inValve  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,0,0,2500,20);
+  ApolloValve *outValve = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,0,0,2500,20);
 
   hal = new ApolloHal(pSensor, fInSensor, fOutSensor, inValve, outValve, alarms);
 

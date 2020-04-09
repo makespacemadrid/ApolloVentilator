@@ -12,9 +12,10 @@ bool    pwmValve::begin()
   return true;
 }
 
-void    pwmValve::open(uint8_t percent)
+void    pwmValve::open(double percent)
 {
-    if(percent > 100) percent = 100;
+  if(percent > 100) percent = 100;
+  if(percent < 0)   percent = 0;
     _percent = percent;
     uint8_t output = 255 * (percent/100.0);
     analogWrite(_pin,output);

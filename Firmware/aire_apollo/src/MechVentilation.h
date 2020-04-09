@@ -39,7 +39,8 @@ enum Trigger
 enum Mode
 {
     Pressure = 0,
-    Flow = 1
+    Flow = 1,
+    Pause = 99
 };
 
 /**
@@ -75,6 +76,7 @@ public:
      * @note This method must be called on the main loop.
      */
     void update(void);
+    State getStatus()  {return this->_currentState;};
 
 private:
     /** Initialization. */
@@ -101,7 +103,7 @@ private:
     int _cfgPorcentajeInspiratorio;
 
     /** Pression trigger value in litres per minute. */
-    float _cfgCmh2oTriggerValue;
+    double _cfgCmh2oTriggerValue;
     /**  Ciclo time in seconds. */
     float _cfgSecCiclo;
     /**  Insufflation time in seconds. */
@@ -109,13 +111,13 @@ private:
     /* Exsufflation time in seconds. */
     float _cfgSecTimeExsufflation;
     /* Presion peep (presión mínima en pulmones a la salida). CMH2O */
-    float _cfgPresionPeep;
+    double _cfgPresionPeep;
     /* Presión pico de insuflación CMH2O */
-    float _cfgPresionPico;
+    double _cfgPresionPico;
     /* Presión meseta de insuflación CMH2O */
-    float _cfgPresionMeseta;
+    double _cfgPresionMeseta;
     /* Presión Máxima de seguridad de insuflación CMH2O */
-    float _cfgPresionMax;
+    double _cfgPresionMax;
 
     /** Current state. */
     State _currentState;
@@ -127,6 +129,7 @@ private:
     float _secTimeoutExsufflation;
 
     Mode mode = Mode::Pressure;
+    Mode lastMode = Mode::Pressure;
 
     unsigned long lastExecution = 0;
 

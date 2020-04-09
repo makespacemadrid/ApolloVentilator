@@ -1,15 +1,25 @@
 #include "ApolloHal.h"
 #include <Arduino.h>
 #include "trace.h"
+#include <AutoPID.h>
 
-ApolloHal::ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms)
+ApolloHal::ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms) :
+//    pidPressureIns_ (&this->currentPressureIns_, &this->statusPressureIns_, &this->pressureInsTarget_, c_consKp, c_consKi, c_consKd, DIRECT),
+//    pidPressureExs_ (&this->currentPressureExs_, &this->statusPressureExs_, &this->pressureExsTarget_, c_consKp, c_consKi, c_consKd, REVERSE),
+//    pidFlowIns_     (&this->currentFlowIns_    , &this->statusFlowIns_    , &this->flowInsTarget_    , c_consKp, c_consKi, c_consKd, DIRECT)
+pidPressureIns_ (&this->currentPressureIns_, &this->pressureInsTarget_, &this->statusPressureIns_,0,100, c_consKp, c_consKi, c_consKd),
+pidPressureExs_ (&this->currentPressureExs_, &this->pressureExsTarget_, &this->statusPressureExs_,0,100, c_consKp, c_consKi, c_consKd),
+pidFlowIns_     (&this->currentFlowIns_    , &this->flowInsTarget_    , &this->statusFlowIns_    ,0,100, c_consKp, c_consKi, c_consKd)
 {
-  _preSensor = preSensor;
-  _entryFlowSensor = entryFlowSensor;
-  _exitFlowSensor = exitFlowSensor;
-  _entryEV = entryEV;
-  _exitEV = exitEV;
-  alarms = alarms;
+  this->entryPressureSensor_ = preSensor;
+  this->entryFlowSensor_ = entryFlowSensor;
+  this->exitFlowSensor_ = exitFlowSensor;
+  this->entryEV_ = entryEV;
+  this->exitEV_ = exitEV;
+  this->alarms_ = alarms;
+  this->initializePidFlowIns();
+  this->initializePidPressureIns();
+  this->initializePidPressureExs();
 }
 
 ApolloHal::~ApolloHal()
@@ -27,25 +37,25 @@ bool ApolloHal::begin()
 
   bool status = true;
 
-  if (!_entryFlowSensor->begin())
+  if (!this->entryFlowSensor_->begin())
   {
     TRACE("ERROR FLOW-IN!");
     status = false;
   }
 
-  if (!_exitFlowSensor->begin())
+  if (!this->exitFlowSensor_->begin())
   {
     TRACE("ERROR FLOW-OUT");
     status = false;
   }
 
-  if (!_entryEV->begin())
+  if (!this->entryEV_->begin())
   {
     TRACE("ERROR VALVE-IN");
     status = false;
   }
 
-  if (!_exitEV->begin())
+  if (!this->exitEV_->begin())
   {
     TRACE("ERROR VALVE-OUT");
     status = false;
@@ -53,10 +63,12 @@ bool ApolloHal::begin()
   TRACE("VERIFY PRESION!");
   // Close Entry Valve and open exit valve and wait 3 sec to empty the pressure in the system
   // This it's neccesary to reset 0 the presure in the sensor
-  _entryEV->close();
-  _exitEV->open();
+  this->entryEV_->close();
+  delay(1000);
+  this->exitEV_->open();
   delay(3000);
-  if (!_preSensor->begin())
+
+  if (!this->entryPressureSensor_->begin())
   {
     TRACE("ERROR PRESION!");
     status = false;
@@ -67,77 +79,210 @@ bool ApolloHal::begin()
 
 void ApolloHal::ISR1ms()
 {
-  _entryFlowSensor->update();
-  _exitFlowSensor->update();
-  _entryEV->update();
-  _exitEV->update();
-  _preSensor->update();
+  this->entryFlowSensor_->update();
+  this->exitFlowSensor_->update();
+  this->entryEV_->update();
+  this->exitEV_->update();
+  this->entryFlowSensor_->update();
 }
 
 void ApolloHal::setFlow(float flow, float pressure)
 {
 }
 
-// Get metric from pressure sensor in mBar
-float ApolloHal::getMetricPressureEntry()
+
+/**
+ * Inspiration pressure
+ * @param bool cache Return value of cache or not; Default false;
+ *
+ */
+double ApolloHal::getPresureIns(bool cache)
 {
-  // preSensor MUST return value in mBar
-  return _preSensor->readMilibar();
-  ;
+  if (cache)
+  {
+    return this->currentPressureIns_;
+  }
+  else
+  {
+    return this->entryPressureSensor_->readCMH2O();
+  }
+}
+/**
+ * Exsiration pressure
+ * @param bool cache Return value of cache or not; Default false;
+ *
+ */
+double ApolloHal::getPresureExs(bool cache)
+{
+  if (cache)
+  {
+    return this->currentPressureExs_;
+  }
+  else
+  {
+    return this->entryPressureSensor_->readCMH2O();
+  }
 }
 
-int ApolloHal::getPresureIns()
+void ApolloHal::valveInsOpen(uint8_t percent)
 {
-  return this->pressuresSensor()->readCMH2O();
-}
-int ApolloHal::getPresureExp()
-{
-  return this->pressuresSensor()->readCMH2O();
+  this->entryEV_->open(percent);
 }
 
-void ApolloHal::valveInsOpen()
-{
-  _entryEV->open();
-  valveInsState = true;
-}
 void ApolloHal::valveInsClose()
 {
-  _entryEV->close();
-  valveInsState = false;
+  this->enablePressureIns_ = false;
+  this->entryEV_->close();
 }
-void ApolloHal::valveExsOpen()
+
+void ApolloHal::valveExsOpen(uint8_t percent)
 {
-  _exitEV->open();
-  valveExsState = true;
+  this->exitEV_->open(percent);
 }
+
 void ApolloHal::valveExsClose()
 {
-  _exitEV->close();
-  valveExsState = false;
+  this->enablePressureExs_ = false;
+  this->exitEV_->close();
 }
 
-// Get metric from entry flow sensor
-float ApolloHal::getMetricVolumeEntry()
+
+
+void ApolloHal::initializePidPressureIns()
 {
-  return _entryFlowSensor->getInstantFlow();
+//  this->pidPressureIns_.SetTunings(this->c_consKp, this->c_consKi, this->c_consKd);
+//  this->pidPressureIns_.SetMode(AUTOMATIC);
+//  pidPressureIns_.setBangBang(25);
+  pidPressureIns_.setTimeStep(2);
+}
+void ApolloHal::initializePidPressureExs()
+{
+//  this->pidPressureExs_.SetTunings(c_consKp, this->c_consKi, this->c_consKd);
+//  this->pidPressureExs_.SetMode(AUTOMATIC);
+  //pidPressureExs_.setBangBang(25);
+  pidPressureExs_.setTimeStep(2);
+}
+void ApolloHal::initializePidFlowIns()
+{
+//  this->pidFlowIns_.SetTunings(this->c_consKp, this->c_consKi, this->c_consKd);
+//  this->pidFlowIns_.SetMode(AUTOMATIC);
 }
 
-// Get metric from pressure sensor in mBar
-float ApolloHal::getMetricVolumeExit()
+void ApolloHal::setPressureInsTarget(double pressure)
 {
-  // preSensor MUST return value in mBar
-  return _exitFlowSensor->getInstantFlow();
-  ;
+  this->enablePressureIns_ = true;
+  this->pressureInsTarget_ = pressure;
+}
+void ApolloHal::setPressureExsTarget(double pressure)
+{
+  this->enablePressureExs_ = true;
+  this->pressureExsTarget_ = pressure;
+}
+void ApolloHal::setFlowInsTarget(double flow)
+{
+  this->enableFlowIns_ = true;
+  this->flowInsTarget_ = flow;
 }
 
-void ApolloHal::beginInspiration()
+void ApolloHal::updateSensors()
 {
-  _entryEV->open();
-  _exitEV->close();
+  this->currentPressureIns_ = this->getPresureIns(false);
+  this->currentPressureExs_ = this->getPresureExs(false);
+  this->statusPressureIns_  = this->entryEV_->status();
+  this->statusPressureExs_  = (100-this->exitEV_->status()); //OJO esto tiene que cuadrar con el pid compute!!
+  this->statusFlowIns_      = this->entryEV_->status();
+}
+void ApolloHal::pidCompute()
+{
+  this->pidPressureInsCompute();
+  this->pidPressureExsCompute();
+  this->pidFlowInsCompute();
 }
 
-void ApolloHal::beginEspiration()
+void ApolloHal::pidPressureInsCompute()
 {
-  _entryEV->close();
-  _exitEV->open();
+  if (!this->enablePressureIns_)
+  {
+    return;
+  }
+//  float aggKp   = 2  , aggKi  = 0.00 , aggKd  = 0.5;
+//  float consKp  = 2  ,  consKi = 0.00, consKd = 0.5;
+
+//  double gap = abs(this->pressureInsTarget_ - this->getPresureIns(true)); //distance away from setpoint
+//  if (gap < 5)
+//  { //we're close to setpoint, use conservative tuning parameters
+//    this->pidPressureIns_.SetTunings(consKp, consKi, consKd);
+//  }
+//  else
+//  {
+    //we're far from setpoint, use aggressive tuning parameters
+//    this->pidPressureIns_.SetTunings(aggKp, aggKi, aggKd);
+//  }
+//  this->pidPressureIns_.Compute();
+  pidPressureIns_.run();
+
+  if (this->statusPressureIns_ > 100) this->statusPressureIns_ = 100;
+  if (this->statusPressureIns_ < 0)   this->statusPressureIns_ = 0;
+
+  this->entryEV_->open(this->statusPressureIns_);
+
+//  Serial.println("pidPressureIns: current:" + String(this->currentPressureIns_) + " Target:" + String(this->pressureInsTarget_) + " Output:" + String(this->statusPressureIns_));
+}
+
+void ApolloHal::pidPressureExsCompute()
+{
+  if (!this->enablePressureExs_)
+  {
+    return;
+  }
+
+  float aggKp = 5    , aggKi = 0.0 , aggKd = 0;
+  float consKp = 2, consKi = 0.0, consKd = 0;
+
+//  double gap = abs(this->pressureExsTarget_ - this->getPresureExs(true)); //distance away from setpoint
+//  if (gap < 10)
+//  { //we're close to setpoint, use conservative tuning parameters
+//    this->pidPressureExs_.SetTunings(consKp, consKi, consKd);
+//  }
+//  else
+//  {
+    //we're far from setpoint, use aggressive tuning parameters
+//    this->pidPressureExs_.SetTunings(aggKp, aggKi, aggKd);
+//  }
+
+//  this->pidPressureExs_.Compute();
+  pidPressureExs_.run();
+  if (this->statusPressureExs_ > 100) this->statusPressureExs_ = 100;
+  if (this->statusPressureExs_ < 0)   this->statusPressureExs_ = 0;
+  this->exitEV_->open(100-this->statusPressureExs_); //OJO esto tiene que cuadrar con el update sensors!!!
+//  Serial.println("pidPressureExs: current:" + String(this->currentPressureExs_) + " Target:" + String(this->pressureExsTarget_) + " Output:" + String(this->statusPressureExs_));
+}
+
+void ApolloHal::pidFlowInsCompute()
+{
+  if (!this->enableFlowIns_)
+  {
+    return;
+  }
+
+//  float aggKp =  5  , aggKi = 0.0, aggKd = 0;
+//  float consKp = 1  , consKi = 0.0,consKd = 0;
+
+//  double gap = abs(this->flowInsTarget_ - this->getPresureIns(true)); //distance away from setpoint
+//  if (gap < 10)
+//  { //we're close to setpoint, use conservative tuning parameters
+//    this->pidFlowIns_.SetTunings(consKp, consKi, consKd);
+//  }
+//  else
+//  {
+//    //we're far from setpoint, use aggressive tuning parameters
+//    this->pidFlowIns_.SetTunings(aggKp, aggKi, aggKd);
+//  }
+
+//  this->pidFlowIns_.Compute();
+  this->pidFlowIns_.run();
+  if (this->statusFlowIns_ > 100)  this->statusFlowIns_ = 100;
+  if (this->statusFlowIns_ < 0)    this->statusFlowIns_ = 0;
+  this->entryEV_->open(this->statusFlowIns_);
+//  Serial.println("pidFlowIns: current:" + String(this->currentFlowIns_) + " Target:" + String(this->flowInsTarget_) + " Output:" + String(this->statusFlowIns_));
 }

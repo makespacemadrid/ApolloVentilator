@@ -1,8 +1,8 @@
-#include "Display.h"
+#include "LocalDisplay.h"
 #include "Arduino.h"
-#include "../include/defaults.h"
+#include "../../include/defaults.h"
 
-Display::Display()
+LocalDisplay::LocalDisplay()
 {
   //   this->_Flecha[] = {
   //       B00000,
@@ -26,13 +26,13 @@ Display::Display()
 }
 
 /**
- * @brief Escribe en una linea de la Display un mensaje.
+ * @brief Escribe en una linea de la LocalDisplay un mensaje.
  *
  * @param line línea donde se escribe, puede ser 0 o 1
  * @param message mensaje a escribir (max. 16 caracteres)
  * @param offsetLeft posicion inicial desde la que se empieza a escribit
  */
-void Display::writeLine(int line, String message, int offsetLeft)
+void LocalDisplay::writeLine(int line, String message, int offsetLeft)
 {
   lcd.setCursor(0, line);
   lcd.print("");
@@ -41,14 +41,14 @@ void Display::writeLine(int line, String message, int offsetLeft)
 }
 
 /**
- * @brief Deja la Display en blanco, sin caracteres.
+ * @brief Deja el Display en blanco, sin caracteres.
  */
-void Display::clear()
+void LocalDisplay::clear()
 {
   lcd.clear();
 }
 
-void Display::init()
+void LocalDisplay::init()
 {
 #ifdef LCD_DIR
   lcd.init();

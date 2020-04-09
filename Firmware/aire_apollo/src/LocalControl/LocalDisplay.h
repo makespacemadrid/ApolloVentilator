@@ -4,10 +4,10 @@
 #include "../include/defaults.h"
 #include "../lib/LiquidCrystal_I2C/LiquidCrystal_I2C.h"
 
-class Display
+class LocalDisplay
 {
 public:
-  Display();
+  LocalDisplay();
   void writeLine(int line, String message = "", int offsetLeft = 0);
   void clear();
   void init();

@@ -1,17 +1,17 @@
-#include "ApolloEncoder.h"
+#include "LocalEncoder.h"
 #include "Arduino.h"
-// ApolloEncoder::ApolloEncoder(uint8_t pin1, uint8_t pin2)
+// LocalEncoder::LocalEncoder(uint8_t pin1, uint8_t pin2)
 // {
 // }
 /**
  * @brief Modifica un valor dicotómico entre 0 y 1.
  *
- * Cuando se gira el Encoder1, el valor se pasa de 0 a 1 y
+ * Cuando se gira el LocalEncoder1, el valor se pasa de 0 a 1 y
  * de 1 a 0 cada vez que se mueve el dial.
  *
  * @param valor valor a actualizar
  */
-bool ApolloEncoder::swapValue(int *valor)
+bool LocalEncoder::swapValue(int *valor)
 {
   switch (move())
   {
@@ -26,7 +26,7 @@ bool ApolloEncoder::swapValue(int *valor)
   }
 }
 
-bool ApolloEncoder::swapValue(bool *valor)
+bool LocalEncoder::swapValue(bool *valor)
 {
   switch (move())
   {
@@ -41,7 +41,7 @@ bool ApolloEncoder::swapValue(bool *valor)
   }
 }
 
-int ApolloEncoder::move()
+int LocalEncoder::move()
 {
   long newval = read();
   // Giramos horario (Subimos en el menu)
@@ -67,7 +67,7 @@ int ApolloEncoder::move()
  * @param valor valor a actualizar
  * @param delta incremento, por defecto: 1
  */
-bool ApolloEncoder::updateValue(int *valor, int delta)
+bool LocalEncoder::updateValue(int *valor, int delta)
 {
   switch (move())
   {
@@ -87,7 +87,7 @@ bool ApolloEncoder::updateValue(int *valor, int delta)
   }
 }
 
-bool ApolloEncoder::updateValue(float *valor, float delta)
+bool LocalEncoder::updateValue(float *valor, float delta)
 {
   switch (move())
   {
@@ -108,12 +108,12 @@ bool ApolloEncoder::updateValue(float *valor, float delta)
 }
 
 /**
- * @brief Lee la señal emitida al pulsar el Encoder1
+ * @brief Lee la señal emitida al pulsar el LocalEncoder1
  *
  * @return true cuando se pulsa
  * @return false si no se ha pulsado
  */
-bool ApolloEncoder::readButton()
+bool LocalEncoder::readButton()
 {
   if (digitalRead(_pulsador) != 1)
   {

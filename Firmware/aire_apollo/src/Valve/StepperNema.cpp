@@ -1,7 +1,7 @@
 #include "StepperNema.h"
 #include "trace.h"
 StepperNema::StepperNema(uint8_t pinEna_,uint8_t pinDir_,uint8_t pinPul_,uint8_t pinFcIni_ ,uint8_t pinFcEnd_,int stepsMax_,int startPos_):
-  stepper(MOTOR_STEPS, pinDir_, pinPul_,pinEna_)
+  stepper(MOTOR_STEPS, pinDir_, pinPul_, pinEna_)
 {
   this->pinEna = pinEna_;
   this->pinDir = pinDir_;
@@ -9,7 +9,9 @@ StepperNema::StepperNema(uint8_t pinEna_,uint8_t pinDir_,uint8_t pinPul_,uint8_t
 
   this->pinFcIni = pinFcIni_;
   this->pinFcEnd = pinFcEnd_;
-  this->stepsMax = stepsMax_;
+  if(stepsMax_ >0){
+    this->stepsMax = stepsMax_;
+  }
   this->startPos = startPos_;
 
 }
@@ -85,13 +87,13 @@ void StepperNema::update(){
   }
 
 unsigned wait_time_micros = stepper.nextAction();
-    if(wait_time_micros > 100){
+    if(wait_time_micros > 1){
       if(this->lastDir){
         this->lastStep++;
       }else{
         this->lastStep--;
       }
     }
-  //Serial.println(String(this->stepDestination)+","+String(this->stepNow)+","+String(this->lastDir)+","+String(this->lastStep));
+  //Serial.println("stepper->"+String(this->stepDestination)+","+String(this->lastDir)+","+String(this->lastStep));
   return;
 }

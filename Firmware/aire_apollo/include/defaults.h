@@ -8,6 +8,18 @@
 #define EXIT_EV_PIN     11  //Valvula - Salida
 #define ENTRY_FLOW_PIN  3   //Sensor de Flujo - Entrada
 #define EXIT_FLOW_PIN   4   //Sendor de Flujo - Salida
+//Sttepers (if needed)
+  //RAMPS_X STEPER y ENDSTOP X_MIN
+#define STEPER1_ENABLE  38
+#define STEPER1_DIR     A1
+#define STEPER1_STEP    A0
+#define STEPER1_ENDSTOP  3
+  //RAMPS_Y STEPER y ENDSTOP Y_MIN
+#define STEPER2_ENABLE  A2
+#define STEPER2_DIR     A7
+#define STEPER2_STEP    A6
+#define STEPER2_ENDSTOP 14
+
 //#define PRESSURE_SENSOR_PIN      ??
 //-------I2C--------
 #define BME280_ADDR 0x76

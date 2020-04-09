@@ -21,7 +21,7 @@ Apollo firmware
  ***************************************************************************/
 
  #define DEBUG         //Activar mensajes debug
- #define INTFLOWSENSOR //Activar solo para usar los sensores de flujo por interrupcion.(NO NECESARIO PARA EL RESTO DE SENSORES DE FLUJO)
+ //#define INTFLOWSENSOR //Activar solo para usar los sensores de flujo por interrupcion.(NO NECESARIO PARA EL RESTO DE SENSORES DE FLUJO)
  #define LOCALCONTROLS // Display y encoders presentes.
 
 
@@ -35,16 +35,20 @@ Apollo firmware
 
 #include "trace.h"
 #include "ApolloHal.h"
-#include "Sensor/Pressure/mksBME280diff.h"
-#include "cheapValve.h"
-#include "pwmValve.h"
-#include "servoValve.h"
-#include "MksmFlowSensor.h"
+
+#include "Sensor/Pressure/mksBME280.h"
+#include "Valve/cheapValve.h"
+#include "Valve/pwmValve.h"
+#include "Valve/servoValve.h"
+#include "Sensor/FlowSensor/MksmFlowSensor.h"
 #include "Comunications.h"
 #include "MechVentilation.h"
 #include "LocalControl/LocalEncoder.h"
 #include "LocalControl/LocalDisplay.h"
 #include "ApolloConfiguration.h"
+#include "Valve/StepperNema.h"
+#include "Valve/LedTest.h"
+#include "Sensor/Pressure/AnalogLinearPressure.h"
 
 int rpm = DEFAULT_RPM;
 int vTidal = DEFAULT_MIN_VOLUMEN_TIDAL;
@@ -169,9 +173,13 @@ void setup()
   // Create hal layer with
   ApolloFlowSensor *fInSensor   = new MksmFlowSensor();
   ApolloFlowSensor *fOutSensor  = new MksmFlowSensor();
-  ApolloPressureSensor *pSensor = new mksBME280diff(BME280_ADDR,BME280_ADDR_OFFSET);
-  ApolloValve *inValve  = new servoValve(ENTRY_EV_PIN,3,120);
-  ApolloValve *outValve = new servoValve(EXIT_EV_PIN,0,120);
+  ApolloPressureSensor *pSensor = new mksBME280(BME280_ADDR);
+
+//El penultimo valor es cuantos pasos hay desde el final de carrera hasta apretar del todo el boton.
+//El ultimo valor es cuantos pasos hay desde el final de carrera hasta que empiezas a apretar el boton.
+  ApolloValve *inValve  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,0,0,2500,20);
+  ApolloValve *outValve = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,0,0,2500,20);
+
 
   hal = new ApolloHal(pSensor, fInSensor, fOutSensor, inValve, outValve, alarms);
 

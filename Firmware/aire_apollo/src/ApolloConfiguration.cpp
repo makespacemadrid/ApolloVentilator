@@ -16,6 +16,7 @@ bool ApolloConfiguration::begin()
         unsigned long act = millis();
         if ((act - waitTime) > init)
         {
+            this->ready = true;
             break;
         }
         //Esperamos a recibir confguración o X tiempo
@@ -57,6 +58,7 @@ bool ApolloConfiguration::parseConfig(String *strings)
     Serial.println(String(strings[5]).toInt());
     Serial.println(String(strings[6]).toFloat());
     Serial.println(String(strings[7]).toFloat());
+    Serial.println(String(strings[8]).toInt());
 
     this->setRpm(String(strings[1]).toFloat());
     this->setTidalVolume(String(strings[2]).toFloat());
@@ -65,6 +67,9 @@ bool ApolloConfiguration::parseConfig(String *strings)
     this->setSexo(String(strings[5]).toInt());
     this->setWeight(String(strings[6]).toFloat());
     this->setHeight(String(strings[7]).toFloat());
+    if(String(strings[8]).toInt()){
+        this->toggleReady();
+    }
     Serial.println("RPM->" + String(this->rpm));
     Serial.println("TidalVol>" + String(this->mlTidalVolume));
     Serial.println("isnp>" + String(this->porcentajeInspiratorio));
@@ -72,6 +77,7 @@ bool ApolloConfiguration::parseConfig(String *strings)
     Serial.println("sexo>" + String(this->sexo));
     Serial.println("wigth>" + String(this->weight));
     Serial.println("height>" + String(this->height));
+    Serial.println("Ready>" + String(this->ready));
     Serial.flush();
 
     return true;
@@ -153,4 +159,8 @@ String ApolloConfiguration::getConfig()
     params[6] = this->getWeight();
 
     return params;
+}
+
+void ApolloConfiguration::toggleReady(){
+    this->ready = !this->ready;
 }

@@ -39,7 +39,8 @@ enum Trigger
 enum Mode
 {
     Pressure = 0,
-    Flow = 1
+    Flow = 1,
+    Pause = 99
 };
 
 /**
@@ -128,6 +129,7 @@ private:
     float _secTimeoutExsufflation;
 
     Mode mode = Mode::Pressure;
+    Mode lastMode = Mode::Pressure;
 
     unsigned long lastExecution = 0;
 

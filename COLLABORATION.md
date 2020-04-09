@@ -46,6 +46,16 @@ Changelog
 
 - En la PR, si se utiliza la opción de Squash y --no-ff se puede mergear el commit sin añadir commits de merge al historico.
 
+**Formato de estilos**
+- Utilizar this para acceder a las propiedades de los objetos y _ al final de cada propiedad
+- Variables de entrada en los setter diferentes
+- Valvles Entry y Exit
+- Insufflate - Exsufflate
+- http://manual.gromacs.org/documentation/5.1-current/dev-manual/naming.html#common-guidelines-for-c-and-c-code
+
 4. Documentación
 
 - Una vez cerrada la issue, añadir la info de interes a la wiki o referenciar a la issue si no hay tiempo.
+
+
+

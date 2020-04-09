@@ -23,6 +23,7 @@
 //#define PRESSURE_SENSOR_PIN      ??
 //-------I2C--------
 #define BME280_ADDR 0x76
+#define BME280_ADDR_OFFSET 0x77
 #define LCD_DIR     0x27 //I2C Address Display
 // ---- Encoders ----
 //RPM

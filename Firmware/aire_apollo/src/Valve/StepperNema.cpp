@@ -85,13 +85,13 @@ void StepperNema::update(){
   }
 
 unsigned wait_time_micros = stepper.nextAction();
-    if(wait_time_micros > 100){
+    if(wait_time_micros > 0){
       if(this->lastDir){
         this->lastStep++;
       }else{
         this->lastStep--;
       }
     }
-  //Serial.println(String(this->stepDestination)+","+String(this->stepNow)+","+String(this->lastDir)+","+String(this->lastStep));
+//  Serial.println(String(this->stepDestination)+","+","+String(this->lastDir)+","+String(this->lastStep));
   return;
 }

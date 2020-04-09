@@ -3,14 +3,14 @@
 
 #include <Arduino.h>
 #include "Valve/ApolloValve.h"
-#include "A4988.h"
+#include "DRV8825.h"
 // Motor steps per revolution. Most steppers are 200 steps or 1.8 degrees/step
-#define MOTOR_STEPS 200
+#define MOTOR_STEPS 20
 #define RPM 400
 // Microstepping mode. If you hardwired it to save pins, set to the same value here.
-#define MICROSTEPS 16
+#define MICROSTEPS 16  // Ojo funciona hasta a 32 (TODO:Verificar)
 
-#include "A4988.h"
+#include "DRV8825.h"
 // #include "DRV8825.h"
 // #include "DRV8880.h"
 //#include "BasicStepperDriver.h" // generic

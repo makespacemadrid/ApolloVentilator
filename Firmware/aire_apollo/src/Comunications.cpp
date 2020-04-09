@@ -69,4 +69,9 @@ bool Comunications::serialRead()
         this->send(config->getConfig());
         return false;
     }
+    #ifdef LOCALCONTROLS
+    if(digitalRead(PIN_PAUSE) == HIGH){
+        this->config->toggleReady();
+    }
+    #endif
 }

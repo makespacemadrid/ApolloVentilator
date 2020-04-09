@@ -2,18 +2,18 @@
 #define  StepperNema_H
 
 #include <Arduino.h>
-#include "../ApolloValve.h"
+#include "Valve/ApolloValve.h"
 #include "A4988.h"
 // Motor steps per revolution. Most steppers are 200 steps or 1.8 degrees/step
 #define MOTOR_STEPS 200
-#define RPM 900
+#define RPM 400
 // Microstepping mode. If you hardwired it to save pins, set to the same value here.
 #define MICROSTEPS 16
 
-//#include "A4988.h"
+#include "A4988.h"
 // #include "DRV8825.h"
 // #include "DRV8880.h"
-#include "BasicStepperDriver.h" // generic
+//#include "BasicStepperDriver.h" // generic
 // BasicStepperDriver stepper(DIR, STEP);
 
 class StepperNema : public ApolloValve
@@ -47,8 +47,8 @@ protected:
   double percent = 0;
 
   bool lastDir;
-  int lastStep;
-  int stepDestination;
+  int lastStep = 0;
+  int stepDestination = 0;
   int startPos = 0; // Offset steps
 
 };

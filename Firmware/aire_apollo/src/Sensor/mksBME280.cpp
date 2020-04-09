@@ -1,5 +1,5 @@
 
-#include <mksBME280.h>
+#include <Sensor/mksBME280.h>
 
 #include <Arduino.h>
 #include <Wire.h>

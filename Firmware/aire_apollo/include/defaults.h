@@ -1,7 +1,7 @@
 #ifndef DEFAULTS_H
 #define DEFAULTS_H
 
-#define LOG_INTERVAL 10 //milliseconds
+#define LOG_INTERVAL 25 //milliseconds
 
 //------HardWare---------
 #define ENTRY_EV_PIN    6   //Valvula - Entrada
@@ -37,6 +37,8 @@
 #define PIN_ENC_TIDAL_DT  39
 #define PIN_ENC_TIDAL_CLK 41
 #define PIN_ENC_TIDAL_SW  0
+// Pause button
+#define PIN_PAUSE 99
 
 // Valores por defecto
 #define DEFAULT_ESTATURA 170 // cm

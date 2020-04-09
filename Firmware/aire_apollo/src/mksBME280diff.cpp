@@ -10,7 +10,7 @@
  * @brief Construct a new Apollo BME diffrential object
  *
  */
-mksBME280diff::mksBME280diff(uint8_t addr) : _addr(addr) 
+mksBME280diff::mksBME280diff(uint8_t addr,uint8_t addr_offset) : _addr(addr), _addrOffset(addr_offset)
 {
 
 }

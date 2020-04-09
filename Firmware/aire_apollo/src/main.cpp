@@ -29,7 +29,7 @@
 
 #include "trace.h"
 #include "ApolloHal.h"
-#include "mksBME280.h"
+#include "mksBME280diff.h"
 #include "cheapValve.h"
 #include "MksmFlowSensor.h"
 #include "Comunications.h"
@@ -149,7 +149,7 @@ void setup()
   // Create hal layer with
   ApolloFlowSensor *fInSensor = new MksmFlowSensor();
   ApolloFlowSensor *fOutSensor = new MksmFlowSensor();
-  ApolloPressureSensor *pSensor = new mksBME280(BME280_ADDR);
+  ApolloPressureSensor *pSensor = new mksBME280diff(BME280_ADDR,BME280_ADDR_OFFSET);
   ApolloValve *inValve = new cheapValve(ENTRY_EV_PIN);
   ApolloValve *outValve = new cheapValve(EXIT_EV_PIN);
 

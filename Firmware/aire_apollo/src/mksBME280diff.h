@@ -11,7 +11,7 @@
 class mksBME280diff : public ApolloPressureSensor
 {
 public:
-    mksBME280diff(uint8_t addr = 0x76);
+    mksBME280diff(uint8_t addr = 0x76,uint8_t addr_offset = 0x77);
     ~mksBME280diff();
 
     bool begin();

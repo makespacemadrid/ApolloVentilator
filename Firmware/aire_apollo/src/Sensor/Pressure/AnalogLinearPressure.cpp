@@ -6,15 +6,15 @@ AnalogLinearPressure::AnalogLinearPressure(uint8_t pin_, int min_, int max_){
     this->max = max_;
 }
 
-bool AnalogLinear::begin(){
+bool AnalogLinearPressure::begin(){
     pinMode(this->pin, INPUT);
     return true;
 }
 
-float AnalogLinear::readPascal(){
+float AnalogLinearPressure::readPascal(){
     return this->readBar() * 100000;
 }
 
-float AnalogLinear::readBar(){
+float AnalogLinearPressure::readBar(){
     return (analogRead(this->pin) / (this->max - this->min))*1023;
 }

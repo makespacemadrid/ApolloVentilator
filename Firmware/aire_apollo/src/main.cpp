@@ -35,11 +35,11 @@ Apollo firmware
 
 #include "trace.h"
 #include "ApolloHal.h"
-#include "Sensor/mksBME280.h"
+#include "Sensor/Pressure/mksBME280.h"
 #include "Valve/cheapValve.h"
 #include "Valve/pwmValve.h"
 #include "Valve/servoValve.h"
-#include "Sensor/MksmFlowSensor.h"
+#include "Sensor/FlowSensor/MksmFlowSensor.h"
 #include "Comunications.h"
 #include "MechVentilation.h"
 #include "LocalControl/LocalEncoder.h"
@@ -47,6 +47,7 @@ Apollo firmware
 #include "ApolloConfiguration.h"
 #include "Valve/StepperNema.h"
 #include "Valve/LedTest.h"
+#include "Sensor/Pressure/AnalogLinearPressure.h"
 
 int rpm = DEFAULT_RPM;
 int vTidal = DEFAULT_MIN_VOLUMEN_TIDAL;

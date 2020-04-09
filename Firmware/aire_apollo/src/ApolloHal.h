@@ -1,8 +1,8 @@
 #ifndef APOLLO_HALL_H
 #define APOLLO_HALL_H
 
-#include "Sensor/ApolloFlowSensor.h"
-#include "Sensor/ApolloPressureSensor.h"
+#include "Sensor/FlowSensor/ApolloFlowSensor.h"
+#include "Sensor/Pressure/ApolloPressureSensor.h"
 #include "Valve/ApolloValve.h"
 #include "ApolloAlarms.h"
 #include <AutoPID.h>

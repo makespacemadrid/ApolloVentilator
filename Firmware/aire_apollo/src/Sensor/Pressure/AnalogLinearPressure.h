@@ -1,7 +1,7 @@
 #ifndef ANALOG_LINEAR_PRESSURE_SENSOR_H
 #define ANALOG_LINEAR_PRESSURE_SENSOR_H
 
-#include "Sensor/ApolloPressureSensor.h"
+#include "Sensor/Pressure/ApolloPressureSensor.h"
 #include <Arduino.h>
 
 class AnalogLinearPressure : public ApolloPressureSensor

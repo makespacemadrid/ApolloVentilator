@@ -35,7 +35,7 @@ Apollo firmware
 
 #include "trace.h"
 #include "ApolloHal.h"
-#include "mksBME280.h"
+#include "Sensor/Pressure/mksBME280diff.h"
 #include "cheapValve.h"
 #include "pwmValve.h"
 #include "servoValve.h"
@@ -169,7 +169,7 @@ void setup()
   // Create hal layer with
   ApolloFlowSensor *fInSensor   = new MksmFlowSensor();
   ApolloFlowSensor *fOutSensor  = new MksmFlowSensor();
-  ApolloPressureSensor *pSensor = new mksBME280(BME280_ADDR);
+  ApolloPressureSensor *pSensor = new mksBME280diff(BME280_ADDR,BME280_ADDR_OFFSET);
   ApolloValve *inValve  = new servoValve(ENTRY_EV_PIN,3,120);
   ApolloValve *outValve = new servoValve(EXIT_EV_PIN,0,120);
 

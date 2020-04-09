@@ -1,6 +1,6 @@
 #include "ApolloAlarms.h"
 
-ApolloAlarms::ApolloAlarms(Comunications *com, uint8_t pin_buzzer, bool invert = false)
+ApolloAlarms::ApolloAlarms(Comunications *com, uint8_t pin_buzzer, bool invert)
 {
     this->com = com;
     this->pin_buzzer = pin_buzzer;
@@ -52,7 +52,7 @@ void ApolloAlarms::critical(int errn, String msg)
     }
 };
 
-void ApolloAlarms::beep(unsigned long time, int times = 1, unsigned long timeWait = 0)
+void ApolloAlarms::beep(unsigned long time, int times, unsigned long timeWait)
 {
     if (this->cicle)
     {

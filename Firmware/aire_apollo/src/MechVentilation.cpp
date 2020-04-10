@@ -197,7 +197,18 @@ void MechVentilation::exsufflationProcess()
     {
         stateNext();
     }
-
+/*
+    if(this->hal->getPresureIns() > this->_cfgPresionPeep)
+    {
+      this->hal->setPressureExsTarget(this->_cfgPresionPeep);
+      this->hal->valveInsClose();
+    }
+    else
+    {
+      this->hal->setPressureInsTarget(this->_cfgPresionPeep);
+      this->hal->valveExsClose();
+    }
+*/
     //Detecta aspiración del paciente
 /*
     if (this->hal->getPresureIns(true) <= this->_cfgCmh2oTriggerValue)

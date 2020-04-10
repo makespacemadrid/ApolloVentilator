@@ -5,8 +5,8 @@
 #include "Valve/ApolloValve.h"
 #include "DRV8825.h"
 // Motor steps per revolution. Most steppers are 200 steps or 1.8 degrees/step
-#define MOTOR_STEPS 20
-#define RPM 400
+#define MOTOR_STEPS 200
+#define RPM 50
 // Microstepping mode. If you hardwired it to save pins, set to the same value here.
 #define MICROSTEPS 16  // Ojo funciona hasta a 32 (TODO:Verificar)
 
@@ -43,7 +43,7 @@ protected:
   uint8_t stepEnd;
   uint8_t pinFcIni = 0;
   uint8_t pinFcEnd = 0;
-  double percent = .0;
+  double percent = 0.0;
 
   bool lastDir;
   int lastStep = 0;

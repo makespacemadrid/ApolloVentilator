@@ -153,14 +153,16 @@ void ApolloHal::initializePidPressureIns()
 //  this->pidPressureIns_.SetTunings(this->c_consKp, this->c_consKi, this->c_consKd);
 //  this->pidPressureIns_.SetMode(AUTOMATIC);
 //  pidPressureIns_.setBangBang(25);
-  pidPressureIns_.setTimeStep(2);
+  this->pidPressureIns_.setTimeStep(2);
+  this->pidPressureIns_.setOutputRange(0.0, 100.0);
 }
 void ApolloHal::initializePidPressureExs()
 {
 //  this->pidPressureExs_.SetTunings(c_consKp, this->c_consKi, this->c_consKd);
 //  this->pidPressureExs_.SetMode(AUTOMATIC);
   //pidPressureExs_.setBangBang(25);
-  pidPressureExs_.setTimeStep(2);
+  this->pidPressureExs_.setTimeStep(2);
+  //this->pidPressureIns_.setOutputRange(0.0, 100.0);
 }
 void ApolloHal::initializePidFlowIns()
 {
@@ -176,7 +178,7 @@ void ApolloHal::setPressureInsTarget(double pressure)
 void ApolloHal::setPressureExsTarget(double pressure)
 {
   this->enablePressureExs_ = true;
-  this->pressureExsTarget_ = pressure;
+  this->pressureExsTarget_ = -pressure;
 }
 void ApolloHal::setFlowInsTarget(double flow)
 {
@@ -187,10 +189,11 @@ void ApolloHal::setFlowInsTarget(double flow)
 void ApolloHal::updateSensors()
 {
   this->currentPressureIns_ = this->getPresureIns(false);
-  this->currentPressureExs_ = this->getPresureExs(false);
-  this->statusPressureIns_  = this->entryEV_->status();
-  this->statusPressureExs_  = (100-this->exitEV_->status()); //OJO esto tiene que cuadrar con el pid compute!!
-  this->statusFlowIns_      = this->entryEV_->status();
+  this->currentPressureExs_ = -this->getPresureExs(false);
+  this->statusPressureIns_  = this->getEntryValveStatus();
+  this->statusPressureExs_  = this->getExitValveStatus(); //OJO esto tiene que cuadrar con el pid compute!!
+  this->statusFlowIns_      = this->getEntryFlow();
+  //Serial.println(this->statusPressureExs_);
 }
 void ApolloHal::pidCompute()
 {
@@ -219,11 +222,9 @@ void ApolloHal::pidPressureInsCompute()
 //    this->pidPressureIns_.SetTunings(aggKp, aggKi, aggKd);
 //  }
 //  this->pidPressureIns_.Compute();
-  pidPressureIns_.run();
+  this->pidPressureIns_.run();
 
-  if (this->statusPressureIns_ > 100) this->statusPressureIns_ = 100;
-  if (this->statusPressureIns_ < 0)   this->statusPressureIns_ = 0;
-
+  constrain(this->statusPressureIns_,.0,100.0);
   this->entryEV_->open(this->statusPressureIns_);
 
 //  Serial.println("pidPressureIns: current:" + String(this->currentPressureIns_) + " Target:" + String(this->pressureInsTarget_) + " Output:" + String(this->statusPressureIns_));
@@ -236,8 +237,8 @@ void ApolloHal::pidPressureExsCompute()
     return;
   }
 
-  float aggKp = 5    , aggKi = 0.0 , aggKd = 0;
-  float consKp = 2, consKi = 0.0, consKd = 0;
+  // float aggKp = 5    , aggKi = 0.0 , aggKd = 0;
+  // float consKp = 2, consKi = 0.0, consKd = 0;
 
 //  double gap = abs(this->pressureExsTarget_ - this->getPresureExs(true)); //distance away from setpoint
 //  if (gap < 10)
@@ -251,11 +252,12 @@ void ApolloHal::pidPressureExsCompute()
 //  }
 
 //  this->pidPressureExs_.Compute();
-  pidPressureExs_.run();
-  if (this->statusPressureExs_ > 100) this->statusPressureExs_ = 100;
-  if (this->statusPressureExs_ < 0)   this->statusPressureExs_ = 0;
-  this->exitEV_->open(100-this->statusPressureExs_); //OJO esto tiene que cuadrar con el update sensors!!!
-//  Serial.println("pidPressureExs: current:" + String(this->currentPressureExs_) + " Target:" + String(this->pressureExsTarget_) + " Output:" + String(this->statusPressureExs_));
+  //Serial.println("pidPressureExs1: current:" + String(this->currentPressureExs_) + " Target:" + String(this->pressureExsTarget_) + " Output:" + String(100-this->statusPressureExs_));
+  this->pidPressureExs_.run();
+  constrain(this->statusPressureExs_,.0,100.0);
+  //Serial.println("pidPressureExs2: current:" + String(this->currentPressureExs_) + " Target:" + String(this->pressureExsTarget_) + " Output:" + String(100-this->statusPressureExs_));
+  this->exitEV_->open(this->statusPressureExs_); //OJO esto tiene que cuadrar con el update sensors!!!
+
 }
 
 void ApolloHal::pidFlowInsCompute()
@@ -281,8 +283,7 @@ void ApolloHal::pidFlowInsCompute()
 
 //  this->pidFlowIns_.Compute();
   this->pidFlowIns_.run();
-  if (this->statusFlowIns_ > 100)  this->statusFlowIns_ = 100;
-  if (this->statusFlowIns_ < 0)    this->statusFlowIns_ = 0;
+  constrain(this->statusFlowIns_,.0,100.0);
   this->entryEV_->open(this->statusFlowIns_);
 //  Serial.println("pidFlowIns: current:" + String(this->currentFlowIns_) + " Target:" + String(this->flowInsTarget_) + " Output:" + String(this->statusFlowIns_));
 }

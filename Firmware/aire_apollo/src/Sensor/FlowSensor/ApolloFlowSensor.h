@@ -1,6 +1,7 @@
 #ifndef APOLLO_FLOW_SENSOR_H
 #define APOLLO_FLOW_SENSOR_H
 
+#include "../../../include/defaults.h"
 #include "Arduino.h"
 
 class ApolloFlowSensor

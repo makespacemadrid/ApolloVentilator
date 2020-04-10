@@ -1,6 +1,7 @@
 #ifndef APOLLO_PRESSURE_SENSOR_H
 #define APOLLO_PRESSURE_SENSOR_H
 
+#include "../../../include/defaults.h"
 
 // This class MUST be derived
 //MUST implement readPascal() for your sensor!!!

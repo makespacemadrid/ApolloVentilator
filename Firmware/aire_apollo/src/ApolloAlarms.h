@@ -33,7 +33,7 @@ private:
     int history[];
     Comunications *com;
     void beep(unsigned long time, int times = 1, unsigned long timeWait = 0);
-    StateAlarm state;
+    StateAlarm state = StateAlarm::Silent;
     uint8_t pin_buzzer;
     bool invert; //Buzzer de las narices al revés.
 

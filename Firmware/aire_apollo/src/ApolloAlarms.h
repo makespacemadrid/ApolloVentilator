@@ -38,10 +38,10 @@ private:
     bool invert; //Buzzer de las narices al revés.
 
     unsigned long tini = 0;
-    unsigned long time;
-    unsigned long timeWait;
+    unsigned long time = 0;
+    unsigned long timeWait = 0;
     int loop = 0;
-    int loopFin;
+    int loopFin = 0;
     bool action = true;
     bool cicle = false;
     void sound();

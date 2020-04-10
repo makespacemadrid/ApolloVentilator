@@ -23,13 +23,12 @@ public:
 
   StepperNema(uint8_t pinEna_,uint8_t pinDir_,uint8_t pinPul_,uint8_t pinFcIni_ = 0,uint8_t pinFcEnd_ = 0, int stepsMax_=0, int startPos_=0);
   bool    begin();
-  void    open(double percent = 100);
+  void    open(double percent = 100.0);
   void    close();
   double  status() {return this->percent;}
   void    update(); //Required to move de steps
   bool    calibrate();
   A4988   stepper;
-
 
 protected:
 
@@ -44,7 +43,7 @@ protected:
   uint8_t stepEnd;
   uint8_t pinFcIni = 0;
   uint8_t pinFcEnd = 0;
-  double percent = 0;
+  double percent = .0;
 
   bool lastDir;
   int lastStep = 0;

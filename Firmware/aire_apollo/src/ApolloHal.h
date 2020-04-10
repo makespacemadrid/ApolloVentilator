@@ -1,6 +1,7 @@
 #ifndef APOLLO_HALL_H
 #define APOLLO_HALL_H
 
+#include "../include/defaults.h"
 #include "Sensor/FlowSensor/ApolloFlowSensor.h"
 #include "Sensor/Pressure/ApolloPressureSensor.h"
 #include "Valve/ApolloValve.h"
@@ -30,8 +31,8 @@ public:
 
     double getPresureIns(bool cache = false);
     double getPresureExs(bool cache = false);
-    uint8_t getEntryValveStatus()  { return this->entryEV_->status(); };
-    uint8_t getExitValveStatus()   { return this->exitEV_->status(); };
+    double getEntryValveStatus()  { return this->entryEV_->status(); };
+    double getExitValveStatus()   { return this->exitEV_->status(); };
 
     double getEntryFlow()         { return this->entryFlowSensor_->getFlow();}
     double getEntryInstantFlow()  { return this->entryFlowSensor_->getInstantFlow();}

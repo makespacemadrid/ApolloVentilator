@@ -6,8 +6,8 @@
 #include "Sensor/Pressure/ApolloPressureSensor.h"
 #include "Valve/ApolloValve.h"
 #include "ApolloAlarms.h"
-#include <AutoPID.h>
-
+//#include <AutoPID.h>
+#include <PID_v1.h>
 class ApolloHal
 {
 
@@ -71,7 +71,7 @@ public:
       void openExitEV();
 
       //Define the aggressive and conservative Tuning Parameters
-      double c_consKp = 0.5, c_consKi = 0.0, c_consKd = 0.0;
+      double c_consKp = 5, c_consKi = 3, c_consKd = 1;
 
       //Cache pressure to prevent overload values of sensors
       double currentPressureIns_;
@@ -91,9 +91,9 @@ public:
       bool enablePressureIns_ = false;
       bool enablePressureExs_ = false;
 
-      AutoPID pidPressureIns_;// = PID(&this->currentPressureIns_, &this->statusPressureIns_, &this->pressureInsTarget_, c_consKp, c_consKi, c_consKd, DIRECT);
-      AutoPID pidPressureExs_;// = PID(&this->currentPressureExs_, &this->statusPressureExs_, &this->pressureExsTarget_, c_consKp, c_consKi, c_consKd, REVERSE);
-      AutoPID pidFlowIns_;    // = PID(&this->currentFlowIns_    , &this->statusFlowIns_    , &this->flowInsTarget_    , c_consKp, c_consKi, c_consKd, DIRECT);
+      PID pidPressureIns_;// = PID(&this->currentPressureIns_, &this->statusPressureIns_, &this->pressureInsTarget_, c_consKp, c_consKi, c_consKd, DIRECT);
+      PID pidPressureExs_;// = PID(&this->currentPressureExs_, &this->statusPressureExs_, &this->pressureExsTarget_, c_consKp, c_consKi, c_consKd, REVERSE);
+      PID pidFlowIns_;    // = PID(&this->currentFlowIns_    , &this->statusFlowIns_    , &this->flowInsTarget_    , c_consKp, c_consKi, c_consKd, DIRECT);
 
       void initializePidPressureIns();
       void initializePidPressureExs();

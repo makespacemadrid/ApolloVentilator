@@ -67,6 +67,7 @@ void StepperNema::open(double percent)
         this->lastDir=0; //izquierdas
       }
     this->stepper.startMove(mover);
+
     //Serial.println("Stepper "+String(mover)+" "+String(this->stepDestination)+" "+String(this->lastStep)+" "+String(percent));
 }
 

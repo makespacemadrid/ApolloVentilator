@@ -69,12 +69,15 @@ void StepperNema::open(double percent)
         this->lastDir=0; //izquierdas
       }
     this->stepper.startMove(mover);
-    Serial.println("Stepper "+String(mover)+" "+String(this->stepDestination)+" "+String(this->lastStep)+" "+String(percent));
+
+//
+//    Serial.println("POLLAS!");
+    Serial.println("Stepper " +String(mover)+" "+String(this->stepDestination)+" "+String(this->lastStep)+" "+String(percent));
 }
 
 void StepperNema::close()
 {
-  this->open(this->startPos);
+  this->open(0);
 }
 
 void StepperNema::update(){

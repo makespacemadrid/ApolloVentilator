@@ -55,13 +55,13 @@ public:
         { // Varón
             peso0 = 50.0;
         }
-        else if (sexo == 1)
+        else// if (sexo == 1)
         { // Mujer
             peso0 = 45.5;
         }
         pesoIdeal = peso0 + 0.91 * (estatura - 152.4); // en kg
 
-        return ((int)(round(pesoIdeal * mlByKgWeight)));
+        return int((round(pesoIdeal * mlByKgWeight)));
     }
 
     void toggleReady();

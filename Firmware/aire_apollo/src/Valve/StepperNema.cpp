@@ -28,7 +28,9 @@ bool StepperNema::begin()
     pinMode(this->pinFcIni, INPUT_PULLUP);
     while(digitalRead(this->pinFcIni) != LOW){//OJO! NC/NO?
       //Desplazamos el stepper al inicio
-      this->stepper.move(-99999999);//limitarlo a maxsteps?
+      this->stepper.move(-1);//limitarlo a maxsteps?
+
+      //10 segundos
     }
     this->stepper.move(startPos);
   }

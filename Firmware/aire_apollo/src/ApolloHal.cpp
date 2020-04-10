@@ -1,7 +1,6 @@
 #include "ApolloHal.h"
 #include <Arduino.h>
 #include "trace.h"
-#include <AutoPID.h>
 
 ApolloHal::ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms) :
     pidPressureIns_ (&this->currentPressureIns_, &this->statusPressureIns_, &this->pressureInsTarget_, c_consKp, c_consKi, c_consKd, DIRECT),

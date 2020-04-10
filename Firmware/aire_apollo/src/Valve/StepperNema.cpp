@@ -44,14 +44,14 @@ bool StepperNema::begin()
 bool StepperNema::calibrate()
 {
   if(this->pinFcIni != 0 && this->pinFcEnd != 0){
-    while(digitalRead(this->pinFcIni) != HIGH){
+    while(digitalRead(this->pinFcIni) != LOW){
       //Desplazamos el stepper al inicio
-      this->stepper.move(-99999999);
+      this->stepper.move(-1);
     }
     this->lastStep = 0;
-    while(digitalRead(this->pinFcIni) != HIGH){
+    while(digitalRead(this->pinFcIni) != LOW){
       //Desplazamos el stepper al final para autocalibrado
-      this->stepper.move(9999999);
+      this->stepper.move(1);
       this->lastStep++;
     }
     this->stepsMax = this->lastStep;
@@ -79,11 +79,11 @@ void StepperNema::close()
 }
 
 void StepperNema::update(){
-  if(this->pinFcIni != 0 && digitalRead(this->pinFcIni) == HIGH){
+  if(this->pinFcIni != 0 && digitalRead(this->pinFcIni) == LOW && !this->lastDir){
     stepper.stop();
   }
 
-  if(this->pinFcEnd != 0 && digitalRead(this->pinFcEnd) == HIGH){
+  if(this->pinFcEnd != 0 && digitalRead(this->pinFcEnd) == LOW && this->lastDir){
     stepper.stop();
   }
 

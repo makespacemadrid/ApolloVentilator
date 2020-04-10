@@ -1,7 +1,6 @@
-.pio
+.pio/*
 .clang_complete
 .gcc-flags.json
-.vscode
-.vs
+.vscode/*
+.vs/*
 platformio.ini
-.vscode

@@ -74,4 +74,5 @@ bool Comunications::serialRead()
         this->config->toggleReady();
     }
     #endif
+    return false;
 }

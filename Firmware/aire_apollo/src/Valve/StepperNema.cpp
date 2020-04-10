@@ -58,10 +58,8 @@ bool StepperNema::calibrate()
 }
 void StepperNema::open(double percent)
 {
-    if(percent > 100) percent = 100;
-    if(percent < 0) percent = 0;
-    this->percent = percent;
-    this->stepDestination = (this->stepsMax - this->startPos) * (int(percent) / 100);
+    this->percent = constrain(percent,.0,100.0);
+    this->stepDestination = (this->stepsMax * (int(percent) / 100))+this->startPos;
     int mover = this->stepDestination - this->lastStep;
      if(mover>0){
         this->lastDir=1; //derechas
@@ -69,12 +67,13 @@ void StepperNema::open(double percent)
         this->lastDir=0; //izquierdas
       }
     this->stepper.startMove(mover);
-    Serial.println("Stepper "+String(mover)+" "+String(this->stepDestination)+" "+String(this->lastStep)+" "+String(percent));
+
+    //Serial.println("Stepper "+String(mover)+" "+String(this->stepDestination)+" "+String(this->lastStep)+" "+String(percent));
 }
 
 void StepperNema::close()
 {
-  this->open(this->startPos);
+  this->open(0);
 }
 
 void StepperNema::update(){

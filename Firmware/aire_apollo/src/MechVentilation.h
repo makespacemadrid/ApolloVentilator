@@ -9,8 +9,8 @@
 #ifndef INC_MECHANICAL_VENTILATION_H
 #define INC_MECHANICAL_VENTILATION_H
 
+#include "../include/defaults.h"
 #include <inttypes.h>
-#include "defaults.h"
 #include "ApolloHal.h"
 #include "ApolloConfiguration.h"
 #include "ApolloAlarms.h"

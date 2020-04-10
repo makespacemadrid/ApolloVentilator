@@ -1,5 +1,7 @@
 #ifndef APOLLO_VALVE_H
 #define APOLLO_VALVE_H
+
+#include "../../include/defaults.h"
 #include<Arduino.h>
 
 class ApolloValve

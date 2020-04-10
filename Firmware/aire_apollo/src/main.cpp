@@ -175,9 +175,12 @@ void setup()
   ApolloFlowSensor *fOutSensor  = new MksmFlowSensor();
   ApolloPressureSensor *pSensor = new mksBME280(BME280_ADDR);
 
+//  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,3,100);
+//  ApolloValve* outValve = new servoValve(EXIT_EV_PIN,3,100);
+
 //El penultimo valor es cuantos pasos hay desde el final de carrera hasta apretar del todo el boton.
 //El ultimo valor es cuantos pasos hay desde el final de carrera hasta que empiezas a apretar el boton.
-  ApolloValve *inValve  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,0,0,2500,20);
+  ApolloValve *inValve  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,STEPER1_ENDSTOP,0,6000,20);
   ApolloValve *outValve = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,0,0,2500,20);
 
 

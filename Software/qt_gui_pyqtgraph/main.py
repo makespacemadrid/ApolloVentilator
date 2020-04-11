@@ -19,15 +19,15 @@ import functools
 
 
 def process_data(plot1, plot2, plot3, plot4):
+    debug = wrapper_text.readline()
     try:
-        debug = wrapper_text.readline()
-        print(debug, type(debug))
+        print('What we read from buffer > ', debug, type(debug))
         data = debug.split(':')
-        print(len(data), data)
+        print("Split goes ok ",len(data), data)
         print(wrapper_text.readline(), type(wrapper_text.readline()))
         print(data[1].split(',')[0])
     except:
-        print(debug)
+        print('Error ', sys.exc_info()[0], debug)
 
     # plot1.update_plot_data(data[1].split(',')[0])
     # plot2.update_plot_data(data[1].split(',')[1])
@@ -35,7 +35,7 @@ def process_data(plot1, plot2, plot3, plot4):
     # plot4.update_plot_data(data[1].split(',')[3])
 
 
-def plot_graphs():
+def plot_graphs(plot1,plot2,plot3,plot4):
     plot1.plot_graph()
     plot2.plot_graph()
     plot3.plot_graph()
@@ -97,11 +97,10 @@ if __name__ == "__main__":
 
     timer_plot = QTimer()
     timer_plot.setInterval(2)
-    timer_plot.timeout.connect(plot_graphs)
+    plot_process = functools.partial(plot_graphs,plot1=unpg, plot2=otropg, plot3=yotro,plot4=otrouanmortaim)
+    timer_plot.timeout.connect(plot_process)
     timer_plot.start()
 
-
-    
     window.show()
 
     sys.exit(app.exec_())

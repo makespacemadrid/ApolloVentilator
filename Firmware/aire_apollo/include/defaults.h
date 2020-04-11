@@ -66,7 +66,7 @@
 #define DEFAULT_POR_FIO2 90
 
 #define PIN_BUZZER 53
-
+#define NO_PIN 0
 #if __has_include("myhacks.h")
 # include "myhacks.h"
 #endif

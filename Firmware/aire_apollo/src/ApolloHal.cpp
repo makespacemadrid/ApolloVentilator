@@ -194,6 +194,8 @@ void ApolloHal::updateSensors()
 //  this->statusPressureExs_  = (100-this->exitEV_->status()); //OJO esto tiene que cuadrar con el pid compute!!
   this->statusPressureExs_  = this->exitEV_->status();
   //Serial.println(this->statusPressureExs_);
+  //this->entryEV_->update();
+  //this->exitEV_->update();
 }
 void ApolloHal::pidCompute()
 {

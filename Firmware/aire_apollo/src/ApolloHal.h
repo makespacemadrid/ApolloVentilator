@@ -45,6 +45,7 @@ public:
     void updateSensors();
     void pidCompute();
     void ISR1ms(); //
+
   #ifdef INTFLOWSENSOR // Gestion de los sensores de flujo por interrupcion
     void flowIn()
     {

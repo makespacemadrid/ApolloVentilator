@@ -4,9 +4,11 @@ Apollo firmware
 
 
 *Compatible Valves:
--MUR servoValve (Maker Grade)
--PWM capable Valves
 -cheap nonPWM Valves (not recommended)
+-MUR servoValve (Maker Grade)
+-PWM capable Valves (Depending on the valve could be Medical grade)
+-Nema based pinch valve     (Maker && Medical grade)
+.Nema based scuba regulator (Maker && Medical grade)
 
 *Compatible Flow sensors:
 -Interrupt based Flow sensor (use interrupt enabled pin and uncoment INTFLOWSENSOR)
@@ -20,53 +22,57 @@ Apollo firmware
 
  ***************************************************************************/
 
- #define DEBUG         //Activar mensajes debug
- //#define INTFLOWSENSOR //Activar solo para usar los sensores de flujo por interrupcion.(NO NECESARIO PARA EL RESTO DE SENSORES DE FLUJO)
- #define LOCALCONTROLS // Display y encoders presentes.
+ #define DEBUG         //Activar mensajes debug - Algo pasa con el TRACE()
+// #define INTFLOWSENSOR //Activar solo para usar los sensores de flujo por interrupcion.(NO NECESARIO PARA EL RESTO DE SENSORES DE FLUJO)
+// #define LOCALCONTROLS // Display y encoders presentes.
 
 
 #include "../include/defaults.h"
+#include "trace.h"
+
+//Arduino libraries
 #include "Arduino.h"
 #include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
-#include <MsTimer2.h>
+#include <FlexiTimer2.h>
 
-#include "trace.h"
+//Apollo clases
 #include "ApolloHal.h"
+#include "Comunications.h"
+#include "MechVentilation.h"
+#include "ApolloConfiguration.h"
+//Interfaces
 
-#include "Sensor/Pressure/mksBME280.h"
+//Sensors
 #include "Valve/cheapValve.h"
 #include "Valve/pwmValve.h"
 #include "Valve/servoValve.h"
-#include "Sensor/FlowSensor/MksmFlowSensor.h"
-#include "Comunications.h"
-#include "MechVentilation.h"
-#include "LocalControl/LocalEncoder.h"
-#include "LocalControl/LocalDisplay.h"
-#include "ApolloConfiguration.h"
 #include "Valve/StepperNema.h"
 #include "Valve/LedTest.h"
+#include "Sensor/FlowSensor/MksmFlowSensor.h"
+#include "Sensor/Pressure/mksBME280.h"
 #include "Sensor/Pressure/AnalogLinearPressure.h"
 #include "Sensor/Pressure/DummyPressure.h"
+#include "LocalControl/LocalEncoder.h"
+#include "LocalControl/LocalDisplay.h"
 
-int rpm = DEFAULT_RPM;
-int vTidal = DEFAULT_MIN_VOLUMEN_TIDAL;
+
+int rpm     = DEFAULT_RPM;
+int vTidal  = DEFAULT_MIN_VOLUMEN_TIDAL;
 int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
-
 
 
 uint16_t  logTimeCounter = 0;
 bool      sendLog        = false;
 
-
-
-ApolloHal *hal;
+ApolloHal           *hal;
+MechVentilation     *ventilation;
 ApolloConfiguration *configuration = new ApolloConfiguration();
-Comunications *com = new Comunications(configuration);
-ApolloAlarms *alarms = new ApolloAlarms(com, PIN_BUZZER, true);
-MechVentilation *ventilation;
+Comunications       *com           = new Comunications(configuration);
+ApolloAlarms        *alarms        = new ApolloAlarms(com, PIN_BUZZER, true);
+
 
 #ifdef LOCALCONTROLS
   LocalEncoder encoderRPM(PIN_ENC_RPM_DT, PIN_ENC_RPM_CLK, PIN_ENC_RPM_SW);
@@ -92,10 +98,21 @@ int calculateCompliance(int pplat, int peep)
 
 */
 
+uint16_t c1 = 0;
+uint16_t c2 = 0;
+
 void ISR1ms() //Esta funcion se ejecuta cada 1ms para gestionar sensores/actuadores!
 {             // OJO!!! no bloquear ni hacer nada muy costoso en tiempo!!!!!!
+  c1++;
   hal->ISR1ms();
   if(++logTimeCounter >= LOG_INTERVAL) {sendLog = true;logTimeCounter = 0;}
+}
+
+void ISRHighFreq()//interrupcion cada 100 microsegundos
+{ //Aqui si que no se puede hacer casi nada o el programa petara por todas partes!
+  //En principio usar solo para la gestion de los steppers
+  hal->ISR1ms();
+  c2++;
 }
 
 #ifdef INTFLOWSENSOR // Gestion de los sensores de flujo por interrupcion
@@ -111,7 +128,7 @@ void ISR1ms() //Esta funcion se ejecuta cada 1ms para gestionar sensores/actuado
 #endif
 
 void setRampsPWMFreq()
-{
+{//UNTESTED!
   /*
   timer 0 (controls pin 13, 4);
   timer 1 (controls pin 12, 11);
@@ -172,17 +189,22 @@ void setup()
   TRACE("CONFIG END");
 
   // Create hal layer with
-  ApolloFlowSensor *fInSensor   = new MksmFlowSensor();
-  ApolloFlowSensor *fOutSensor  = new MksmFlowSensor();
-  ApolloPressureSensor *pSensor = new DummyPressure();
+  ApolloFlowSensor     *fInSensor   = new MksmFlowSensor();
+  ApolloFlowSensor     *fOutSensor  = new MksmFlowSensor();
+  ApolloPressureSensor *pSensor     = new DummyPressure();
 
 //  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,3,100);
 //  ApolloValve* outValve = new servoValve(EXIT_EV_PIN,3,100);
 
 //El penultimo valor es cuantos pasos hay desde el final de carrera hasta apretar del todo el boton.
 //El ultimo valor es cuantos pasos hay desde el final de carrera hasta que empiezas a apretar el boton.
-  ApolloValve *inValve  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,STEPER1_ENDSTOP,0,2900,0);
-  ApolloValve *outValve = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,STEPER2_ENDSTOP,0,2900,0);
+  StepperNema *inStepper  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,STEPER1_ENDSTOP,NO_PIN,12000,8500,5400);
+  StepperNema *outStepper = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,NO_PIN,NO_PIN,2900,0);
+  inStepper->setMinEndStopPressedState(HIGH);
+  outStepper->setMinEndStopPressedState(LOW);
+
+  ApolloValve *inValve  = inStepper;
+  ApolloValve *outValve = outStepper;
 
 
   hal = new ApolloHal(pSensor, fInSensor, fOutSensor, inValve, outValve, alarms);
@@ -210,8 +232,9 @@ void setup()
 #endif
 
   //ISRs
-  MsTimer2::set(1, ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
-  MsTimer2::start();
+  FlexiTimer2::set(10, 1.0/10000,ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
+//  FlexiTimer2::set(1 , 1.0/10000,ISRHighFreq); // Interrupcion de 1ms para el manejo de sensores/actuadores.
+  FlexiTimer2::start();
 
 #ifdef INTFLOWSENSOR
   attachInterrupt(digitalPinToInterrupt(ENTRY_FLOW_PIN), flowIn, RISING);
@@ -273,4 +296,6 @@ void loop()
 #else
   com->serialRead();
 #endif
+//delay(10);
+//Serial.println("c1:"+String(c1)+"c2 "+String(c2));
 }

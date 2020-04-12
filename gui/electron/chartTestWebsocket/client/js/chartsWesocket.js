@@ -1,101 +1,54 @@
+"use strict"; 
+
  $(function(){
- 	$(document).ready(function() {
-		function addDataToChart(chart,data){
-        	chart.data.labels.push('');
-                chart.data.datasets[0].data.push(data);
-                if(chart.data.labels.length > 100) {
-                    chart.data.labels.shift();
-                    chart.data.datasets[0].data.shift();
-                }
-                chart.update();
-            };
+    $(document).ready(function() {
+  
+        let pressureChartC  = 'pressureChartC';
+        let flowChartC      = 'flowChartC';
 
-            let ctx = document.getElementById('flowChart').getContext('2d');
+        var trace1 = { x: [], y: [], mode: 'lines', name: 'pressure', line:{color :'#1EB7FF'}, hoverinfo:'skip'};
+        var trace2 = { x: [], y: [], mode: 'lines', name: 'flow', line:{color:'#1EB7FF'}, hoverinfo:'skip' };
 
-            let chartOptions = {
-                    animation: { duration: 1 },       
-                    hover: { animationDuration: 0 },
-                    responsiveAnimationDuration: 0,
-                    tooltips:  { enabled: false },
-                    hover:     { animationDuration: 0 },
-                    scales:    { y: { type: 'linear',min: -50, max: 100 } },
-                    legend:    { display: false },
-                    title:     { display: false, text: '' },
-                    responsive: true,
-                    elements: { line: { tension: 0 }, point:{radius:0}},
-                    scales: {
-                        xAxes: [{
-                            gridLines: {
-                                display: true,
-                                drawBorder: true,
-                                drawOnChartArea: false,
-                            },
-                            display: true,
-                                scaleLabel: {
-                                display: false,
-                                labelString: ''
-                            }
-                        }],
-                        yAxes: [{
-                            gridLines: {
-                                display: true,
-                                drawBorder: true,
-                                drawOnChartArea: false,
-                            },
-                            display: true,
-                            label: {
-                                display: false,
-                                labelString: ''
-                            }
-                        }]
-                    }
-                };
+        var layout   = { xaxis: { tickformat: ':%S' }, margin: { l: 50, r: 0, b: 20, t: 0, pad: 0 }};
+        var settings = { displayModeBar: false, responsive: true, displaylogo: false };
+
+        var dataC1     = [ trace1 ];
+        var dataC2     = [ trace2 ];
+
+        window.setInterval(function(){
+            Plotly.newPlot(pressureChartC, dataC1, layout, settings); 
+            Plotly.newPlot(flowChartC, dataC2, layout, settings); 
+        }, 80);
 
 
-                let flowChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['0'],
-                        datasets: [{
-                            data: [],
-                            backgroundColor: [ 'rgba(255, 255, 255, 0.2)' ],
-                            borderColor: [ '#1EB7FF' ],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: chartOptions
-                });
+        let socket = io.connect('http://localhost:8081');                    
 
+        socket.on('serialPortData', function (data) {
 
-            ctx = document.getElementById('pressureChart').getContext('2d');
+            let rawCommand = data.data.split(':');
+            let commandID  = rawCommand[0];
 
-            let pressureChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['0'],
-                    datasets: [{
-                        data: [],
-                            backgroundColor: [ 'rgba(255, 255, 255, 0.2)' ],
-                            borderColor: [ '#1EB7FF' ],
-                            borderWidth: 1
-                    }]
-                },
-                options: chartOptions
-            });
+            if (commandID === 'DATA'){
+                let ventilatorData = rawCommand[1].split(',');
 
-            var socket = io.connect('http://localhost:8081');
-              socket.on('serialPortData', function (data) {
-                let rawCommand = data.data.split(':');
-                let commandID  = rawCommand[0];
-                if ( commandID === 'DATA'){
-                     let ventilatorData = rawCommand[1].split(',');
-                     if (ventilatorData.length > 2){
+                if (ventilatorData.length > 2){
 
-                        let flow      = parseFloat(ventilatorData[0]);
-                        let pressure  = parseFloat(ventilatorData[1]);
+                        //{pressure,intakeInstantFlow,exitInstantFlow,intakeFlow,exitFlow,intakeValve,ExitValve}
+                        
+                        let pressure           = parseFloat(ventilatorData[0]);
+                        let intakeInstantFlow  = parseFloat(ventilatorData[1]);
 
-                        addDataToChart(flowChart,flow);
-                        addDataToChart(pressureChart,pressure);
+                        var now = new Date();
+
+                        trace1.x.push(now);trace1.y.push(pressure);
+                        trace2.x.push(now);trace2.y.push(intakeInstantFlow);
+                        
+                        if(trace1.x.length > 200) {
+                            trace1.x.shift();trace1.y.shift();
+                            trace2.x.shift();trace2.y.shift();
+                         //   trace4.x.shift();trace4.y.shift();
+                        }
+
                      }
                 }
           });

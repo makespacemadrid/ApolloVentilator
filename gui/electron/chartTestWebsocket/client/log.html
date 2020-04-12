@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+    <title>Respirator - log</title>
+
+    <link rel="stylesheet" href="css/all.css">
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/charts.css">
+
+    <script src="js/jquery.js"></script>
+    <script src="js/fontawesome.min.js"></script>
+
+    <script src="js/plotly-latest.min.js" charset="utf-8"></script>
+    <script src="socket.io/socket.io.js" charset="utf-8"></script>
+    <script src="js/chartsWesocketLogP.js" charset="utf-8"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container">
+        <!-- header s -->
+        <div class="row">
+            <div class="col-xl-12 mt-3">
+                <div class="d-flex flex-column flex-md-row mb-md-0">
+                    <!-- breadcrumb s -->
+                    <nav aria-label="breadcrumb" class="mr-auto d-flex align-items-center">
+                        <ol class="breadcrumb bg-none pl-0">
+                            <li class="breadcrumb-item">
+                                <a href="#">
+                                    <i class="fa fa-fw fa-home"></i>
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a href="/">Ventilators</a>
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">Log</li>
+                        </ol>
+                    </nav>
+                    <!-- breadcrumb e -->
+                </div>
+                <h1 class="display-5 mb-4">Debug</h1>
+            </div>                                         
+        </div>
+        <!-- header e -->
+
+        <div class="row">
+            <!-- pressure card s --> 
+            <div class="col-xl-12 col-md-12">
+              <div class="card mb-3 bl-primary bl-2">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <h5>Pressure</h5>
+                        <div class="pr-0 pt-0 ml-auto">
+                              <span class="badge badge-primary">cmH2O</span>
+                        </div>
+                    </div>
+                    <div class="card-text">  
+                          <div id="pressureChartC"  class='chart-h'></div>
+                    </div>
+                </div>
+              </div>
+            </div>
+            <!-- pressure card e --> 
+            <!-- pressure card s --> 
+            <div class="col-xl-12 col-md-12">
+              <div class="card mb-3 bl-primary bl-2">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <h5>Valve</h5>
+                        <div class="pr-0 pt-0 ml-auto">
+                            <span class="badge badge-primary"></span>
+                        </div>
+                    </div>
+                    <div class="card-text">  
+                          <div id="valveChartC" class='chart-h'></div>
+                    </div>
+                </div>
+              </div>
+            </div>
+            <!-- pressure card e --> 
+            <!-- flow card s -->         
+             <div class="col-xl-12 col-md-12">
+              <div class="card mb-3 bl-primary bl-2">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <h5>Flow</h5>
+                        <div class="pr-0 pt-0 ml-auto">
+                              <span class="badge badge-primary">L/min</span>
+                        </div>
+                    </div>
+                    <div class="card-text">    
+                        <div id="flowChartC"  class='chart-h'></div>
+                    </div>
+                </div>
+              </div>
+            </div> 
+            <!-- flow card e --> 
+        </div>
+    </div>
+</body>
+</html>

@@ -6,10 +6,10 @@
 #include "DRV8825.h"
 // Motor steps per revolution. Most steppers are 200 steps or 1.8 degrees/step
 #define MOTOR_STEPS 200
-#define RPM 100
+#define RPM 1
 // Acceleration and deceleration values are always in FULL steps / s^2
-#define MOTOR_ACCEL 9000
-#define MOTOR_DECEL 9000
+#define MOTOR_ACCEL 3000
+#define MOTOR_DECEL 6000
 // Microstepping mode. If you hardwired it to save pins, set to the same value here.
 #define MICROSTEPS 16  // Ojo funciona hasta a 16 (TODO:Verificar)
 
@@ -23,7 +23,7 @@ class StepperNema : public ApolloValve
 
 public:
 
-  StepperNema(uint8_t pin_Enable,uint8_t pinDir_,uint8_t pinStep_,uint8_t pinMinEndStop_ = 0,uint8_t pinMaxEndStop_ = 0, int closePos_=0, int startPos_=0,uint16_t stepsPerRevolution_ = 200);
+  StepperNema(uint8_t pin_Enable,uint8_t pinDir_,uint8_t pinStep_,uint8_t pinMinEndStop_ = 0,uint8_t pinMaxEndStop_ = 0, int closePos_=0, int startPos_=0,uint16_t stepsPerRevolution_ = 200, uint16_t maxRpm_ = RPM, uint8_t microsteps_ = MICROSTEPS);
   bool    begin();
   void    open(double percent = 100.0);
   void    close();
@@ -55,12 +55,16 @@ protected:
   uint8_t stepEnd;
   uint8_t pinFcIni = 0;
   uint8_t pinFcEnd = 0;
-  double percent = 0.0;
+  double  percent = 0.0;
 
-  bool lastDir;
-  int32_t lastStep = 0;
-  int32_t stepDestination = 0;
-  uint32_t startPos = 0; // Offset steps
+  bool lastDir      = 0;
+  int32_t lastStep  = 0;
+  uint32_t nextActionTime;
+
+  int32_t  stepDestination = 0;
+  uint32_t startPos        = 0; // Offset steps
+  uint16_t maxRPM;
+  uint8_t microsteps;
 
   bool minEndStopPressedState  = LOW;
   bool maxEndStopPressedState  = LOW;

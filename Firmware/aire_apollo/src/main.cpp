@@ -52,6 +52,7 @@ Apollo firmware
 #include "Valve/StepperNema.h"
 #include "Valve/LedTest.h"
 #include "Sensor/FlowSensor/MksmFlowSensor.h"
+#include "Sensor/FlowSensor/Sfm3000FlowSensor.h"
 #include "Sensor/Pressure/mksBME280.h"
 #include "Sensor/Pressure/AnalogLinearPressure.h"
 #include "Sensor/Pressure/DummyPressure.h"
@@ -101,18 +102,26 @@ int calculateCompliance(int pplat, int peep)
 uint16_t c1 = 0;
 uint16_t c2 = 0;
 
+void updateSensors();
+void handleValves();
+void logData();
+void readSerial();
+void updateVentilator();
+
+
+
 void ISR1ms() //Esta funcion se ejecuta cada 1ms para gestionar sensores/actuadores!
 {             // OJO!!! no bloquear ni hacer nada muy costoso en tiempo!!!!!!
-  c1++;
+//  c1++;
   hal->ISR1ms();
-  if(++logTimeCounter >= LOG_INTERVAL) {sendLog = true;logTimeCounter = 0;}
+  if(++logTimeCounter >= LOG_INTERVAL*10) {sendLog = true;logTimeCounter = 0;}
 }
 
 void ISRHighFreq()//interrupcion cada 100 microsegundos
 { //Aqui si que no se puede hacer casi nada o el programa petara por todas partes!
   //En principio usar solo para la gestion de los steppers
   hal->ISR1ms();
-  c2++;
+//  c2++;
 }
 
 #ifdef INTFLOWSENSOR // Gestion de los sensores de flujo por interrupcion
@@ -172,6 +181,7 @@ void logData()
   com->data(data, 8);
 }
 
+
 void setup()
 {
   Serial.begin(115200);
@@ -189,8 +199,9 @@ void setup()
   TRACE("CONFIG END");
 
   // Create hal layer with
-  ApolloFlowSensor     *fInSensor   = new MksmFlowSensor();
+  ApolloFlowSensor     *fInSensor   = new Sfm3000FlowSensor();
   ApolloFlowSensor     *fOutSensor  = new MksmFlowSensor();
+//  ApolloPressureSensor *pSensor     = new DummyPressure();
   ApolloPressureSensor *pSensor     = new DummyPressure();
 
 //  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,3,100);
@@ -198,7 +209,7 @@ void setup()
 
 //El penultimo valor es cuantos pasos hay desde el final de carrera hasta apretar del todo el boton.
 //El ultimo valor es cuantos pasos hay desde el final de carrera hasta que empiezas a apretar el boton.
-  StepperNema *inStepper  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,STEPER1_ENDSTOP,NO_PIN,12000,8500,5400);
+  StepperNema *inStepper  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,STEPER1_ENDSTOP,NO_PIN,2000,1500,5400,8,8);
   StepperNema *outStepper = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,NO_PIN,NO_PIN,2900,0);
   inStepper->setMinEndStopPressedState(HIGH);
   outStepper->setMinEndStopPressedState(LOW);
@@ -225,16 +236,18 @@ void setup()
 #ifdef LOCALCONTROLS
   display.init();
   display.clear();
-  display.writeLine(0, "RPM: " + String(configuration->getRpm()));
-  display.writeLine(1, "Vol Tidal: " + String(configuration->getMlTidalVolumen()));
+  display.writeLine(0, "RPM: "        + String(configuration->getRpm()));
+  display.writeLine(1, "Vol Tidal: "  + String(configuration->getMlTidalVolumen()));
   display.writeLine(2, "Press PEEP: " + String(configuration->getPressionPeep()));
-  display.writeLine(3, "% Insp: " + String(configuration->getPorcentajeInspiratorio()));
+  display.writeLine(3, "% Insp: "     + String(configuration->getPorcentajeInspiratorio()));
 #endif
 
   //ISRs
-  FlexiTimer2::set(10, 1.0/10000,ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
+  FlexiTimer2::set(1, 1.0/10000,ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
 //  FlexiTimer2::set(1 , 1.0/10000,ISRHighFreq); // Interrupcion de 1ms para el manejo de sensores/actuadores.
   FlexiTimer2::start();
+
+
 
 #ifdef INTFLOWSENSOR
   attachInterrupt(digitalPinToInterrupt(ENTRY_FLOW_PIN), flowIn, RISING);
@@ -245,6 +258,7 @@ void setup()
 
 void loop()
 {
+
 
   //Comprobacion de alarmas
 
@@ -289,13 +303,13 @@ void loop()
   }
   if (com->serialRead())
   {
-    display.writeLine(0, "RPM: " + String(configuration->getRpm()));
-    display.writeLine(1, "Vol Tidal: " + String(configuration->getMlTidalVolumen()));
-    display.writeLine(3, "% Insp: " + String(configuration->getPorcentajeInspiratorio()));
+    display.writeLine(0, "RPM: "        + String(configuration->getRpm()));
+    display.writeLine(1, "Vol Tidal: "  + String(configuration->getMlTidalVolumen()));
+    display.writeLine(3, "% Insp: "     + String(configuration->getPorcentajeInspiratorio()));
   }
 #else
   com->serialRead();
 #endif
-//delay(10);
-//Serial.println("c1:"+String(c1)+"c2 "+String(c2));
+
+
 }

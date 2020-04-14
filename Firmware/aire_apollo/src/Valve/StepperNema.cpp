@@ -1,6 +1,6 @@
 #include "StepperNema.h"
 #include "trace.h"
-StepperNema::StepperNema(uint8_t pinEnable_,uint8_t pinDir_,uint8_t pinStep_,uint8_t pinMinEndStop_ ,uint8_t pinMaxEndStop_ , int closePos_, int startPos_,uint16_t stepsPerRevolution_):
+StepperNema::StepperNema(uint8_t pinEnable_,uint8_t pinDir_,uint8_t pinStep_,uint8_t pinMinEndStop_ ,uint8_t pinMaxEndStop_ , int closePos_, int startPos_, uint16_t stepsPerRevolution_ ,uint16_t maxRpm_, uint8_t microsteps_) :
   stepper(stepsPerRevolution_, pinDir_, pinStep_, pinEnable_)
 {
   this->pinEna = pinEnable_;
@@ -9,6 +9,9 @@ StepperNema::StepperNema(uint8_t pinEnable_,uint8_t pinDir_,uint8_t pinStep_,uin
 
   this->pinFcIni = pinMinEndStop_;
   this->pinFcEnd = pinMaxEndStop_;
+
+  this->maxRPM     = maxRpm_;
+  this->microsteps = microsteps_;
 
   if(closePos_ >0){
     this->stepsMax = closePos_;
@@ -121,12 +124,12 @@ bool StepperNema::home()
 
 bool StepperNema::begin()
 {
-    this->stepper.begin(RPM, MICROSTEPS);
+    this->stepper.begin(this->maxRPM,this->microsteps);
     TRACE("Inicio Nema"+String(this->pinDir)+" "+String(this->pinPul));
     // if using enable/disable on ENABLE pin (active LOW) instead of SLEEP uncomment next line
     this->stepper.setEnableActiveState(LOW);
     this->stepper.enable();
-    //stepper.setSpeedProfile(stepper.LINEAR_SPEED, MOTOR_ACCEL, MOTOR_DECEL); //Probar bien antes de activar
+    stepper.setSpeedProfile(stepper.LINEAR_SPEED, MOTOR_ACCEL, MOTOR_DECEL); //Probar bien antes de activar
 
     if(this->pinFcEnd > 0) pinMode(this->pinFcEnd,INPUT_PULLUP);
     if(this->pinFcIni > 0)
@@ -156,7 +159,7 @@ bool StepperNema::begin()
       TRACE("Stepper Homing error!");
       return false;
     }
-    stepper.move(startPos); // Diria que esto ya esta sucediendo en otra parte, lo dejo comentado hasta que pueda revisarlo
+    stepper.move(startPos); // Diria que esto ya esta sucediendo en otra parte tambien, revisar
     lastStep = startPos;
     return true;
 }
@@ -190,9 +193,9 @@ void StepperNema::open(double percent)
         this->lastDir=0; //izquierdas
       }
 
-    //this->stepper.startMove(mover); // Mientras se resuelve el problema de la velocidad movemos bloqueando
-    this->lastStep += mover;
-    this->stepper.move(mover);
+    this->stepper.startMove(mover); // Mientras se resuelve el problema de la velocidad movemos bloqueando
+    //this->lastStep += mover;
+    //this->stepper.move(mover);
     //Serial.println("Stepper "+String(mover)+" "+String(this->stepDestination)+" "+String(this->lastStep)+" "+String(percent));
 }
 
@@ -202,6 +205,7 @@ void StepperNema::close()
 }
 
 void StepperNema::update(){
+/*
   if(this->pinFcIni != 0 && isMinEndStopPressed() && !this->lastDir){
     stepper.stop();
   }
@@ -209,14 +213,17 @@ void StepperNema::update(){
   if(this->pinFcEnd != 0 && isMaxEndStopPressed() && this->lastDir){
     stepper.stop();
   }
+*/
 
-  unsigned wait_time_micros = stepper.nextAction();
-    if(wait_time_micros > 0){
-      if(this->lastDir){
-        this->lastStep++;
-      }else{
-        this->lastStep--;
-      }
-    }
+  //if(nextActionTime - millis() > 30) return;
+/*
+  nextActionTime = stepper.nextAction()+millis();
+  if(this->lastDir){
+    this->lastStep++;
+  }else{
+    this->lastStep--;
+  }
+*/
+
   //Serial.println("stepper->"+String(this->stepDestination)+","+String(this->lastDir)+","+String(this->lastStep));
 }

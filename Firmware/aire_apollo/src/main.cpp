@@ -22,7 +22,7 @@ Apollo firmware
 
  ***************************************************************************/
 
- #define DEBUG         //Activar mensajes debug - Algo pasa con el TRACE()
+//#define DEBUG         //Activar mensajes debug - Algo pasa con el TRACE()
 // #define INTFLOWSENSOR //Activar solo para usar los sensores de flujo por interrupcion.(NO NECESARIO PARA EL RESTO DE SENSORES DE FLUJO)
 // #define LOCALCONTROLS // Display y encoders presentes.
 
@@ -36,7 +36,7 @@ Apollo firmware
 #include <SPI.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
-#include <FlexiTimer2.h>
+#include <MsTimer2.h>
 
 //Apollo clases
 #include "ApolloHal.h"
@@ -114,15 +114,17 @@ void ISR1ms() //Esta funcion se ejecuta cada 1ms para gestionar sensores/actuado
 {             // OJO!!! no bloquear ni hacer nada muy costoso en tiempo!!!!!!
 //  c1++;
   hal->ISR1ms();
-  if(++logTimeCounter >= LOG_INTERVAL*10) {sendLog = true;logTimeCounter = 0;}
+  if(++logTimeCounter >= LOG_INTERVAL) {sendLog = true;logTimeCounter = 0;}
 }
 
+/*
 void ISRHighFreq()//interrupcion cada 100 microsegundos
 { //Aqui si que no se puede hacer casi nada o el programa petara por todas partes!
   //En principio usar solo para la gestion de los steppers
   hal->ISR1ms();
 //  c2++;
 }
+*/
 
 #ifdef INTFLOWSENSOR // Gestion de los sensores de flujo por interrupcion
   void flowIn()
@@ -201,16 +203,16 @@ void setup()
   // Create hal layer with
   ApolloFlowSensor     *fInSensor   = new Sfm3000FlowSensor();
   ApolloFlowSensor     *fOutSensor  = new MksmFlowSensor();
-//  ApolloPressureSensor *pSensor     = new DummyPressure();
   ApolloPressureSensor *pSensor     = new DummyPressure();
+//  ApolloPressureSensor *pSensor     = new mksBME280();
 
 //  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,3,100);
 //  ApolloValve* outValve = new servoValve(EXIT_EV_PIN,3,100);
 
 //El penultimo valor es cuantos pasos hay desde el final de carrera hasta apretar del todo el boton.
 //El ultimo valor es cuantos pasos hay desde el final de carrera hasta que empiezas a apretar el boton.
-  StepperNema *inStepper  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,STEPER1_ENDSTOP,NO_PIN,2000,1500,5400,8,8);
-  StepperNema *outStepper = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,NO_PIN,NO_PIN,2900,0);
+  StepperNema *inStepper  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,STEPER1_ENDSTOP,NO_PIN,2500,1500,5400,1,8);
+  StepperNema *outStepper = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,NO_PIN,NO_PIN,1000,0);
   inStepper->setMinEndStopPressedState(HIGH);
   outStepper->setMinEndStopPressedState(LOW);
 
@@ -243,10 +245,11 @@ void setup()
 #endif
 
   //ISRs
-  FlexiTimer2::set(1, 1.0/10000,ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
+//  FlexiTimer2::set(1, 1.0/1000,ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
 //  FlexiTimer2::set(1 , 1.0/10000,ISRHighFreq); // Interrupcion de 1ms para el manejo de sensores/actuadores.
-  FlexiTimer2::start();
-
+//  FlexiTimer2::start();
+//  MsTimer2::set(10, ISR1ms); // 500ms period
+//  MsTimer2::start();
 
 
 #ifdef INTFLOWSENSOR
@@ -258,7 +261,8 @@ void setup()
 
 void loop()
 {
-
+  Serial.println("loop!");
+  Serial.flush();
 
   //Comprobacion de alarmas
 
@@ -280,11 +284,12 @@ void loop()
 
 
   // gestion del ventilador
-  ventilation->update();
+//  ventilation->update();
   if (sendLog) {logData();sendLog = false;}
   alarms->check();
 
 
+/*
 #ifdef LOCALCONTROLS
   if (encoderRPM.updateValue(&rpm))
   {
@@ -311,5 +316,6 @@ void loop()
   com->serialRead();
 #endif
 
-
+*/
+delay(10);
 }

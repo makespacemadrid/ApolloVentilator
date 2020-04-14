@@ -35,9 +35,10 @@ public:
     struct Profile {
         Mode mode = CONSTANT_SPEED;
         short accel = 1000;     // acceleration [steps/s^2]
-        short decel = 1000;     // deceleration [steps/s^2]    
+        short decel = 1000;     // deceleration [steps/s^2]
     };
-    static inline void delayMicros(unsigned long delay_us, unsigned long start_us = 0){
+    static inline bool delayMicros(unsigned long delay_us, unsigned long start_us = 0){
+        if(micros() - start_us < delay_us) {return false;}
         if (delay_us){
             if (!start_us){
                 start_us = micros();
@@ -48,6 +49,7 @@ public:
             // See https://www.gammon.com.au/millis
             while (micros() - start_us < delay_us);
         }
+        return true;
     }
 
 private:

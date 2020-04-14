@@ -129,7 +129,7 @@ bool StepperNema::begin()
     // if using enable/disable on ENABLE pin (active LOW) instead of SLEEP uncomment next line
     this->stepper.setEnableActiveState(LOW);
     this->stepper.enable();
-    stepper.setSpeedProfile(stepper.LINEAR_SPEED, MOTOR_ACCEL, MOTOR_DECEL); //Probar bien antes de activar
+    //stepper.setSpeedProfile(stepper.LINEAR_SPEED, MOTOR_ACCEL, MOTOR_DECEL); //Probar bien antes de activar
 
     if(this->pinFcEnd > 0) pinMode(this->pinFcEnd,INPUT_PULLUP);
     if(this->pinFcIni > 0)
@@ -159,8 +159,6 @@ bool StepperNema::begin()
       TRACE("Stepper Homing error!");
       return false;
     }
-    stepper.move(startPos); // Diria que esto ya esta sucediendo en otra parte tambien, revisar
-    lastStep = startPos;
     return true;
 }
 
@@ -184,19 +182,23 @@ bool StepperNema::calibrate()
 
 void StepperNema::open(double percent)
 {
+//    noInterrupts();
+    //this->stepper.stop();
     this->percent = constrain(percent,0.0,100.0);
-    this->stepDestination = (this->stepsMax * (percent / 100))+this->startPos;
-    int mover = this->stepDestination - this->lastStep;
+//    this->stepDestination = (this->stepsMax * (percent / 100))+this->startPos;
+    this->stepDestination = map(this->percent,0,100,startPos,stepsMax);
+    int32_t mover = this->stepDestination - this->lastStep;
      if(mover>0){
         this->lastDir=1; //derechas
       }else{
         this->lastDir=0; //izquierdas
       }
 
-    this->stepper.startMove(mover); // Mientras se resuelve el problema de la velocidad movemos bloqueando
-    //this->lastStep += mover;
-    //this->stepper.move(mover);
-    //Serial.println("Stepper "+String(mover)+" "+String(this->stepDestination)+" "+String(this->lastStep)+" "+String(percent));
+    //this->stepper.startMove(mover); // Mientras se resuelve el problema de la velocidad movemos bloqueando
+    this->lastStep += mover;
+    this->stepper.move(mover);
+    Serial.println("Stepper "+String(mover)+" "+String(this->stepDestination)+" "+String(this->lastStep)+" "+String(percent));
+//    interrupts();
 }
 
 void StepperNema::close()
@@ -216,14 +218,18 @@ void StepperNema::update(){
 */
 
   //if(nextActionTime - millis() > 30) return;
-/*
-  nextActionTime = stepper.nextAction()+millis();
-  if(this->lastDir){
-    this->lastStep++;
-  }else{
-    this->lastStep--;
+  if(stepper.nextAction() == -1)
+  {
+    return;
   }
-*/
 
-  //Serial.println("stepper->"+String(this->stepDestination)+","+String(this->lastDir)+","+String(this->lastStep));
+  else
+  {
+    if(this->lastDir){
+      this->lastStep++;
+    }else{
+      this->lastStep--;
+    }
+  }
+//  Serial.println("stepper->"+String(this->stepDestination)+","+String(this->lastDir)+","+String(this->lastStep));
 }

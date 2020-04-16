@@ -1,32 +1,25 @@
 #include "StepperNema.h"
 #include "trace.h"
-StepperNema::StepperNema(uint8_t pinEnable_,uint8_t pinDir_,uint8_t pinStep_,uint8_t pinMinEndStop_ ,uint8_t pinMaxEndStop_ , int closePos_, int startPos_, uint16_t stepsPerRevolution_ ,uint16_t maxRpm_, uint8_t microsteps_) :
-  stepper(stepsPerRevolution_, pinDir_, pinStep_, pinEnable_)
+StepperNema::StepperNema(uint8_t pinEnable_,uint8_t pinDir_,uint8_t pinStep_,uint8_t pinMinEndStop_ ,uint8_t pinMaxEndStop_ , int closePos_, int openPos_, uint16_t stepsPerRevolution_ ,uint16_t maxRpm_, uint8_t microsteps_) :
+  pinMinEndstop(pinMinEndStop_), pinMaxEndstop(pinMaxEndStop_),
+  openPos(openPos_), closePos(closePos_), maxRPM(maxRpm_), microSteps(microsteps_),
+  stepMotor(stepsPerRevolution_, pinDir_, pinStep_, pinEnable_,-1,-1,-1)
+
 {
-  this->pinEna = pinEnable_;
-  this->pinDir = pinDir_;
-  this->pinPul = pinStep_;
-
-  this->pinFcIni = pinMinEndStop_;
-  this->pinFcEnd = pinMaxEndStop_;
-
-  this->maxRPM     = maxRpm_;
-  this->microsteps = microsteps_;
-
-  if(closePos_ >0){
-    this->stepsMax = closePos_;
-  }
-  this->startPos = startPos_;
-
+  if(openPos > closePos)
+    this->stepsMax = openPos*1.1;
+  else
+    this->stepsMax = closePos*1.1;
 }
 
 bool StepperNema::moveAwayMinEndStop()
 {
   int counter = 0;
-  while(counter < stepsMax*0.1)
+  while(counter < stepsMax * 0.1)
   {
-    stepper.move(1);
+    stepMotor.move(1);
     counter++;
+    delay(1);
   }
 
   if(isMinEndStopPressed())
@@ -40,11 +33,13 @@ bool StepperNema::moveAwayMinEndStop()
 bool StepperNema::moveTowardsMinEndStop()
 {
   int counter = 0;
-  while(!isMinEndStopPressed() && counter < stepsMax*1.10)
+  while(!isMinEndStopPressed() && counter < stepsMax)
   {
-    stepper.move(-1);
+    stepMotor.move(-1);
     counter++;
+    delay(1);
   }
+
   if(!isMinEndStopPressed())
   {
       TRACE("Cannot hit min endstop!");
@@ -56,10 +51,11 @@ bool StepperNema::moveTowardsMinEndStop()
 uint16_t StepperNema::countStepsToHome()
 {
   uint16_t count = 0;
-  while(!isMinEndStopPressed() && count < stepsMax*1.10)
+  while(!isMinEndStopPressed() && count < stepsMax)
   {
-    stepper.move(-1);
+    stepMotor.move(-1);
     count++;
+    delay(1);
   }
   return count;
 }
@@ -67,7 +63,7 @@ uint16_t StepperNema::countStepsToHome()
 bool StepperNema::home()
 {
   Serial.print("HOMING....");
-  if(this->pinFcIni <= 0)
+  if(this->pinMinEndstop <= 0)
   {
     Serial.println("No endStop!");
     return true; //Nothing to do here, si no hay final de carrera le damos hacia el 0 unos segundos para que choque?
@@ -122,83 +118,132 @@ bool StepperNema::home()
 
 }
 
+double StepperNema::status()
+{
+  double p = 0;
+//  if(openPos > closePos)
+    p = map(this->lastPos,closePos,openPos,0,100);
+//  else
+//    p = map(this->lastPos,openPos,closePos,0,100);
+    return p;
+} // Revisar la logica de inversion de movimiento!
+
+bool StepperNema::test()
+{
+  uint32_t maxPos;
+  uint32_t minPos;
+  if(openPos > closePos)
+  {
+    maxPos = openPos;
+    minPos = maxPos;
+  }
+  else
+  {
+    maxPos = closePos;
+    minPos = openPos;
+  }
+
+  stepMotor.move(maxPos);
+  stepMotor.move(-maxPos);
+  stepMotor.move(maxPos);
+  stepMotor.move(-maxPos);
+  stepMotor.move(maxPos);
+  stepMotor.move(-maxPos);
+  stepMotor.move(maxPos);
+  stepMotor.move(-maxPos);
+  stepMotor.move(maxPos);
+
+
+  uint32_t stepsBackToHome = countStepsToHome();
+  Serial.println("STEPS: "+String(maxPos) + " BACK: " + String(stepsBackToHome));
+  int32_t d = maxPos-stepsBackToHome;
+  uint32_t difference = abs(d);
+  uint32_t maxError = stepsMax * MAX_STEPPER_ERROR;
+  Serial.println("diff: "+String(difference) + " max: " + String(maxError));
+
+  if(difference > maxError)
+  {
+    Serial.println("UNRELIABLE STEPPER");
+    return false;
+  }
+  else return true;
+
+}
+
 bool StepperNema::begin()
 {
-    this->stepper.begin(this->maxRPM,this->microsteps);
-    TRACE("Inicio Nema"+String(this->pinDir)+" "+String(this->pinPul));
+    this->stepMotor.begin(this->maxRPM,this->microSteps);
+    TRACE("Nema- MaxRPM  maxrpm:" + String(maxRPM) + " microsteps:" + String(microSteps));
     // if using enable/disable on ENABLE pin (active LOW) instead of SLEEP uncomment next line
-    this->stepper.setEnableActiveState(LOW);
-    this->stepper.enable();
-    //stepper.setSpeedProfile(stepper.LINEAR_SPEED, MOTOR_ACCEL, MOTOR_DECEL); //Probar bien antes de activar
+    this->stepMotor.setEnableActiveState(LOW);
+    this->stepMotor.enable();
+    stepMotor.setSpeedProfile(stepMotor.LINEAR_SPEED, MOTOR_ACCEL, MOTOR_DECEL); //Probar bien antes de activar
 
-    if(this->pinFcEnd > 0) pinMode(this->pinFcEnd,INPUT_PULLUP);
-    if(this->pinFcIni > 0)
-      pinMode(this->pinFcIni,INPUT_PULLUP);
+    if(this->pinMaxEndstop  > 0) pinMode(this->pinMaxEndstop,INPUT_PULLUP);
+    if(this->pinMinEndstop  > 0)
+      pinMode(this->pinMinEndstop,INPUT_PULLUP);
     else
       return true; //Si no hay final de carrera de minimo no hacemos nada mas.
 
     if(home())
     {//Comprobacion del mecanismo. Desde el final de carrera hasta la posicion maxima ida y vuelta
     //Los pasos para ir y para volver deben de ser (casi) los mismo o el mecanismo no esta bien
-      stepper.move(stepsMax);
-      uint32_t stepsBackToHome = countStepsToHome();
-      Serial.println("STEPS: "+String(stepsMax) + " BACK: " + String(stepsBackToHome));
-      int32_t d = stepsMax-stepsBackToHome;
-      uint32_t difference = abs(d);
-      uint32_t maxError = stepsMax * 0.01;
-      Serial.println("diff: "+String(difference) + " max: " + String(maxError));
-
-      if(difference > maxError)
-      {
-        Serial.println("UNRELIABLE STEPPER");
-        return false;
-      }
+      //return true;
+      return test();
     }
     else
     {
       TRACE("Stepper Homing error!");
       return false;
     }
-    return true;
 }
 
 bool StepperNema::calibrate()
 {
+  /*
   if(this->pinFcIni != 0 && this->pinFcEnd != 0){
     while(digitalRead(this->pinFcIni) != LOW){
       //Desplazamos el stepper al inicio
-      this->stepper.move(-1);
+      this->stepMotor.move(-1);
     }
     this->lastStep = 0;
     while(digitalRead(this->pinFcIni) != LOW){
       //Desplazamos el stepper al final para autocalibrado
-      this->stepper.move(1);
+      this->stepMotor.move(1);
       this->lastStep++;
     }
     this->stepsMax = this->lastStep;
   }
+*/
   return true;
 }
 
-void StepperNema::open(double percent)
+void StepperNema::open(double openPercent)
 {
-//    noInterrupts();
-    //this->stepper.stop();
-    this->percent = constrain(percent,0.0,100.0);
+//
+    blockUpdate = true;
+//    this->stepMotor.stop();
+//    Serial.println("NEMA-OPEN");Serial.flush();
+    this->percent = constrain(openPercent,0.0,100.0);
 //    this->stepDestination = (this->stepsMax * (percent / 100))+this->startPos;
-    this->stepDestination = map(this->percent,0,100,startPos,stepsMax);
-    int32_t mover = this->stepDestination - this->lastStep;
+//    Serial.println("NEMA-PERCENT"+String(percent));Serial.flush();
+//    if(openPos > closePos)
+      this->stepDestination = map(this->percent,0,100,closePos,openPos);
+//    else
+//      this->stepDestination = map(this->percent,0,100,closePos,openPos);
+//    Serial.println("NEMA-DESTINATION:"+String(stepDestination));Serial.flush();
+     int32_t mover = this->stepDestination - this->lastPos;
      if(mover>0){
         this->lastDir=1; //derechas
       }else{
         this->lastDir=0; //izquierdas
       }
-
-    //this->stepper.startMove(mover); // Mientras se resuelve el problema de la velocidad movemos bloqueando
-    this->lastStep += mover;
-    this->stepper.move(mover);
-    Serial.println("Stepper "+String(mover)+" "+String(this->stepDestination)+" "+String(this->lastStep)+" "+String(percent));
-//    interrupts();
+//    Serial.println("NEMA-MOVER:"+String(mover));Serial.flush();
+    this->stepMotor.startMove(mover);
+//    Serial.println("Stepper "+String(mover)+" "+String(this->stepDestination)+" "+String(this->lastPos)+" "+String(percent));
+//    this->stepMotor.move(mover);
+//    lastPos = stepDestination;
+    blockUpdate = false;
 }
 
 void StepperNema::close()
@@ -206,30 +251,55 @@ void StepperNema::close()
   this->open(0);
 }
 
+void    StepperNema::waitOpen(double openPercent)
+{
+  blockUpdate = true;
+  this->percent = constrain(openPercent,0.0,100.0);
+  this->stepDestination = map(this->percent,0,100,closePos,openPos);
+  int32_t mover = this->stepDestination - this->lastPos;
+  if(mover>0){
+    this->lastDir=1; //derechas
+  }else{
+    this->lastDir=0; //izquierdas
+  }
+  this->stepMotor.move(mover);
+  lastPos = stepDestination;
+  blockUpdate = false;
+}
+
+void    StepperNema::waitClose()
+{
+  waitOpen(0);
+}
+
 void StepperNema::update(){
 /*
   if(this->pinFcIni != 0 && isMinEndStopPressed() && !this->lastDir){
-    stepper.stop();
+    stepMotor.stop();
   }
 
   if(this->pinFcEnd != 0 && isMaxEndStopPressed() && this->lastDir){
-    stepper.stop();
+    stepMotor.stop();
   }
 */
 
   //if(nextActionTime - millis() > 30) return;
-  if(stepper.nextAction() == -1)
+  if(blockUpdate) return;
+  //Serial.println("UPDATE STTEPER");Serial.flush();
+  blockUpdate = true;
+  interrupts();//WTF! Sin esto se bloquea por que sin interrupciones no funciona delay y la clase del stepper llama a un delay si todavia no es tiempo de dar un paso.
+  if(stepMotor.nextAction() < 1)
   {
     return;
   }
-
   else
   {
     if(this->lastDir){
-      this->lastStep++;
+      this->lastPos++;
     }else{
-      this->lastStep--;
+      this->lastPos--;
     }
   }
+  blockUpdate = false;
 //  Serial.println("stepper->"+String(this->stepDestination)+","+String(this->lastDir)+","+String(this->lastStep));
 }

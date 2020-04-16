@@ -6,10 +6,10 @@
 #include "DRV8825.h"
 // Motor steps per revolution. Most steppers are 200 steps or 1.8 degrees/step
 #define MOTOR_STEPS 200
-#define RPM 1
+#define RPM         200
 // Acceleration and deceleration values are always in FULL steps / s^2
-#define MOTOR_ACCEL 3000
-#define MOTOR_DECEL 6000
+#define MOTOR_ACCEL 12000
+#define MOTOR_DECEL 8000
 // Microstepping mode. If you hardwired it to save pins, set to the same value here.
 #define MICROSTEPS 16  // Ojo funciona hasta a 16 (TODO:Verificar)
 
@@ -27,7 +27,9 @@ public:
   bool    begin();
   void    open(double percent = 100.0);
   void    close();
-  double  status() {return this->percent;}
+  void    waitOpen(double percent = 100);
+  void    waitClose();
+  double  status();
   void    update(); //Required to move de steps
   bool    calibrate();
 
@@ -39,37 +41,40 @@ protected:
   bool      moveAwayMinEndStop();
   bool      moveTowardsMinEndStop();
   bool      home(); //Reemplaza calibrate?
+  bool      test();
   uint16_t  countStepsToHome();
-  bool      isMinEndStopPressed(){return digitalRead(pinFcIni) == minEndStopPressedState;}
-  bool      isMaxEndStopPressed(){return digitalRead(pinFcEnd) == maxEndStopPressedState;}
+  bool      isMinEndStopPressed(){return digitalRead(pinMinEndstop) == minEndStopPressedState;}
+  bool      isMaxEndStopPressed(){return digitalRead(pinMaxEndstop) == maxEndStopPressedState;}
   bool      isGoingForward()     {return lastDir == true;}
 
   // Numero de pasos de apertura máxima del motor
   // A mayor apertura necesaria, hay que aumentar la velocidad bajando los microsteps
   // Configurar con los pasos necesarios para llegar al final del elemento que se quiera presionar, pulsar o rotar
-  uint32_t stepsMax = MOTOR_STEPS*MICROSTEPS;
 
-  uint8_t pinEna;
-  uint8_t pinDir;
-  uint8_t pinPul;
-  uint8_t stepEnd;
-  uint8_t pinFcIni = 0;
-  uint8_t pinFcEnd = 0;
-  double  percent = 0.0;
+//  uint8_t pinEna; // No son necesarios pues ya los almacena la libreria del stepper
+//  uint8_t pinDir;
+//  uint8_t pinPul;
 
-  bool lastDir      = 0;
-  int32_t lastStep  = 0;
-  uint32_t nextActionTime;
+const   uint8_t pinMinEndstop = 0;
+const   uint8_t pinMaxEndstop = 0;
+        double  percent = 0.0;
 
-  int32_t  stepDestination = 0;
-  uint32_t startPos        = 0; // Offset steps
-  uint16_t maxRPM;
-  uint8_t microsteps;
+        bool    blockUpdate = false;
+        bool    lastDir     = 0;
+        int32_t lastPos     = 0;
+//  uint32_t nextActionTime;
+
+        int32_t  stepDestination = 0;
+const   uint32_t openPos  = 0; // Offset steps
+const   uint32_t closePos  = 0;
+        uint32_t stepsMax  = MOTOR_STEPS*MICROSTEPS;
+const   uint16_t maxRPM;
+const   uint8_t  microSteps;
 
   bool minEndStopPressedState  = LOW;
   bool maxEndStopPressedState  = LOW;
 
-  DRV8825  stepper;
+  DRV8825 stepMotor;
 };
 
 #endif

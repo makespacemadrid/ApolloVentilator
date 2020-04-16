@@ -22,7 +22,7 @@ Apollo firmware
 
  ***************************************************************************/
 
-//#define DEBUG         //Activar mensajes debug - Algo pasa con el TRACE()
+// #define DEBUG         //Activar mensajes debug - Algo pasa con el TRACE()
 // #define INTFLOWSENSOR //Activar solo para usar los sensores de flujo por interrupcion.(NO NECESARIO PARA EL RESTO DE SENSORES DE FLUJO)
 // #define LOCALCONTROLS // Display y encoders presentes.
 
@@ -36,7 +36,7 @@ Apollo firmware
 #include <SPI.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
-#include <MsTimer2.h>
+#include <FlexiTimer2.h>
 
 //Apollo clases
 #include "ApolloHal.h"
@@ -48,11 +48,12 @@ Apollo firmware
 //Sensors
 #include "Valve/cheapValve.h"
 #include "Valve/pwmValve.h"
-#include "Valve/servoValve.h"
 #include "Valve/StepperNema.h"
+#include "Valve/servoValve.h"
 #include "Valve/LedTest.h"
 #include "Sensor/FlowSensor/MksmFlowSensor.h"
 #include "Sensor/FlowSensor/Sfm3000FlowSensor.h"
+#include "Sensor/FlowSensor/SoftSfm3000FlowSensor.h"
 #include "Sensor/Pressure/mksBME280.h"
 #include "Sensor/Pressure/AnalogLinearPressure.h"
 #include "Sensor/Pressure/DummyPressure.h"
@@ -64,11 +65,11 @@ int rpm     = DEFAULT_RPM;
 int vTidal  = DEFAULT_MIN_VOLUMEN_TIDAL;
 int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
 
+//REVISAR EL TEMA DEL VOLATILE EN LAS INTERRUPCIONES!
+volatile  uint16_t  logTimeCounter = 0;
+volatile  bool      sendLog        = false;
+ApolloHal  *hal;
 
-uint16_t  logTimeCounter = 0;
-bool      sendLog        = false;
-
-ApolloHal           *hal;
 MechVentilation     *ventilation;
 ApolloConfiguration *configuration = new ApolloConfiguration();
 Comunications       *com           = new Comunications(configuration);
@@ -99,22 +100,14 @@ int calculateCompliance(int pplat, int peep)
 
 */
 
-uint16_t c1 = 0;
-uint16_t c2 = 0;
 
-void updateSensors();
-void handleValves();
-void logData();
-void readSerial();
-void updateVentilator();
-
-
-
-void ISR1ms() //Esta funcion se ejecuta cada 1ms para gestionar sensores/actuadores!
+void ISR1ms() //Esta funcion se ejecuta cada 0.1ms para gestionar sensores/actuadores!
 {             // OJO!!! no bloquear ni hacer nada muy costoso en tiempo!!!!!!
 //  c1++;
+  //FlexiTimer2::stop();
   hal->ISR1ms();
-  if(++logTimeCounter >= LOG_INTERVAL) {sendLog = true;logTimeCounter = 0;}
+  if(++logTimeCounter >= LOG_INTERVAL*10) {sendLog = true;logTimeCounter = 0;}
+  //FlexiTimer2::start();
 }
 
 /*
@@ -154,25 +147,26 @@ void setRampsPWMFreq()
     prescaler = 5 ---> PWM frequency is 30 Hz
     prescaler = 6 ---> PWM frequency is <20 Hz
 
-  */
+
   int myEraser = 7;      // this is 111 in binary and is used as an eraser
   TCCR2B &= ~myEraser;   // this operation (AND plus NOT),  set the three bits in TCCR2B to 0
   int myPrescaler = 3;   // this could be a number in [1 , 6]. In this case, 3 corresponds in binary to 011.
   TCCR2B |= myPrescaler; //this operation (OR), replaces the last three bits in TCCR2B with our new value 011
+*/
 }
 
 /// Porgram Begin
 
 void logData()
 {
-  String pressure(hal->getPresureIns(false));
-  String intakeFlow(hal->getEntryFlow());
-  //String intakeFlow(0);
+  String pressure(hal->getPresureIns());
+  //String intakeFlow(hal->getEntryFlow());
+  String intakeFlow(0);
   //  String exitFlow(hal->exitFlowSensor()->getFlow());
   String exitFlow(0);
-  String intakeInstantFlow(hal->getEntryInstantFlow());
+  //String intakeInstantFlow(hal->getEntryInstantFlow());
   //String exitInstantFlow(hal->exitFlowSensor()->getInstantFlow());
-  //String intakeInstantFlow(0);
+  String intakeInstantFlow(0);
   String exitInstantFlow(0);
   //  String intakeValve(hal->exitValve()->status());
   String intakeValve(hal->getEntryValveStatus());
@@ -203,16 +197,16 @@ void setup()
   // Create hal layer with
   ApolloFlowSensor     *fInSensor   = new Sfm3000FlowSensor();
   ApolloFlowSensor     *fOutSensor  = new MksmFlowSensor();
-  ApolloPressureSensor *pSensor     = new DummyPressure();
-//  ApolloPressureSensor *pSensor     = new mksBME280();
+//  ApolloPressureSensor *pSensor     = new DummyPressure();
+  ApolloPressureSensor *pSensor     = new mksBME280();
 
 //  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,3,100);
 //  ApolloValve* outValve = new servoValve(EXIT_EV_PIN,3,100);
 
-//El penultimo valor es cuantos pasos hay desde el final de carrera hasta apretar del todo el boton.
-//El ultimo valor es cuantos pasos hay desde el final de carrera hasta que empiezas a apretar el boton.
-  StepperNema *inStepper  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,STEPER1_ENDSTOP,NO_PIN,2500,1500,5400,1,8);
-  StepperNema *outStepper = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,NO_PIN,NO_PIN,1000,0);
+
+// ENABLE, DIR; STEP, MIN_ENDSTOP, MAX_ENDSTOP, CLOSE_POS,OPEN_POS, STEPS_REVOLUTION, MAX_RPM, MICROSTEPS
+  StepperNema *inStepper  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,STEPER1_ENDSTOP,NO_PIN,1050,800,5400,10,8);
+  StepperNema *outStepper = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,STEPER2_ENDSTOP,NO_PIN,1000,100,200,200,8);
   inStepper->setMinEndStopPressedState(HIGH);
   outStepper->setMinEndStopPressedState(LOW);
 
@@ -244,12 +238,6 @@ void setup()
   display.writeLine(3, "% Insp: "     + String(configuration->getPorcentajeInspiratorio()));
 #endif
 
-  //ISRs
-//  FlexiTimer2::set(1, 1.0/1000,ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
-//  FlexiTimer2::set(1 , 1.0/10000,ISRHighFreq); // Interrupcion de 1ms para el manejo de sensores/actuadores.
-//  FlexiTimer2::start();
-//  MsTimer2::set(10, ISR1ms); // 500ms period
-//  MsTimer2::start();
 
 
 #ifdef INTFLOWSENSOR
@@ -257,12 +245,24 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(EXIT_FLOW_PIN), flowOut, RISING);
 #endif
   TRACE("SETUP COMPLETED!");
+
+  //ISRs
+//  FlexiTimer2::set(1, 1.0/1000,ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
+  FlexiTimer2::set(1 , 1.0/10000,ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
+  FlexiTimer2::start();
+//  MsTimer2::set(1, ISR1ms); // 500ms period
+//  MsTimer2::start();
 }
+
+
+uint32_t tim = 0;
+bool a = 0;
+bool b = 0;
+
 
 void loop()
 {
-  Serial.println("loop!");
-  Serial.flush();
+  //Serial.println("loop!"+String(tim)); Serial.flush();delay(10);
 
   //Comprobacion de alarmas
 
@@ -284,10 +284,30 @@ void loop()
 
 
   // gestion del ventilador
-//  ventilation->update();
+  ventilation->update();
   if (sendLog) {logData();sendLog = false;}
   alarms->check();
-
+/*
+  tim++;
+  if(tim>500 && a == false)
+  {
+    Serial.println("OPEN");Serial.flush();
+    a=true;
+    hal->valveInsOpen(90);
+  }
+  else if(tim>1000 && b == false)
+  {
+    Serial.println("CLOSE");Serial.flush();
+    b=true;
+    hal->valveInsClose();
+    //hal->valveInsClose();
+  }
+  else if(tim>1500)
+  {
+    a=false,b=false;
+    tim = 0;
+  }
+*/
 
 /*
 #ifdef LOCALCONTROLS

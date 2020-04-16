@@ -9,11 +9,13 @@ class ApolloValve
     public:
         ApolloValve();
         ~ApolloValve();
-        virtual bool    begin()                     {return true;}
-        virtual void    open(double percent = 100)  {;}
-        virtual void    close()                     {;}
-        virtual double  status()                    {return 0;}
-        virtual void    update()                    {;}
+        virtual bool    begin()                         {return true;}
+        virtual void    open(double percent = 100)      {;}
+        virtual void    close()                         {;}
+        virtual void    waitOpen(double percent = 100)  {open(percent);}
+        virtual void    waitClose()                     {close();}
+        virtual double  status()                        {return 0;}
+        virtual void    update()                        {;}
     protected:
 };
 

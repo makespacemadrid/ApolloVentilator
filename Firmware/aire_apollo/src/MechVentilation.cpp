@@ -25,6 +25,7 @@ MechVentilation::MechVentilation(
 
 void MechVentilation::update(void)
 {
+
     this->hal->updateSensors();
 
     if (this->hal->getPresureIns(true) > DEFAULT_CMH20_MAX)
@@ -61,6 +62,7 @@ void MechVentilation::update(void)
     }
 
     this->hal->pidCompute();
+
 }
 
 void MechVentilation::_setState(State state)

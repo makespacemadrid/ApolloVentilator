@@ -25,20 +25,19 @@ class Sfm3000FlowSensor : public ApolloFlowSensor
         float getInstantFlow();
         void resetFlow();
         void update();
-        void pulse();
 
     protected:
         uint8_t       _addr;
         uint8_t       _data[3];
         uint16_t      _scaleFactor;
         uint16_t      _flowOffset;
-  
+
         uint8_t       _samplingMS;
-        uint16_t      _volSinceReset;               // This value represent number of ml provided to the patient since last cycle reset
+        float         _volSinceReset;               // This value represent number of ml provided to the patient since last cycle reset
         unsigned long _lastSampleTime;
         float         _lastInstantFlow;
 
-        uint8_t     sendCommand(uint16_t command);        
+        uint8_t     sendCommand(uint16_t command);
         void        softReset();
         int         readBytes();
         uint16_t    readOffset();

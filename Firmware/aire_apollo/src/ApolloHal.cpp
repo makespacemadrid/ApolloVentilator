@@ -1,5 +1,6 @@
 #include "ApolloHal.h"
 #include <Arduino.h>
+#define DEBUG
 #include "trace.h"
 
 ApolloHal::ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms) :
@@ -48,24 +49,33 @@ bool ApolloHal::begin()
     status = false;
   }
 
-  if (!this->entryEV_->begin())
-  {
-    TRACE("ERROR VALVE-IN");
-    status = false;
-  }
-
   if (!this->exitEV_->begin())
   {
     TRACE("ERROR VALVE-OUT");
     status = false;
+    return false;
   }
+
+  exitEV_->waitOpen();
+
+  if (!this->entryEV_->begin())
+  {
+    TRACE("ERROR VALVE-IN");
+    status = false;
+    return false;
+  }
+
+  entryEV_->waitClose();
+  delay(1000);
+
   TRACE("VERIFY PRESION!");
   // Close Entry Valve and open exit valve and wait 3 sec to empty the pressure in the system
   // This it's neccesary to reset 0 the presure in the sensor
-  this->entryEV_->close();
-  delay(1000);
-  this->exitEV_->open();
-  delay(3000);
+
+  //this->entryEV_->close();
+  //delay(1000);
+  //this->exitEV_->open();
+  //delay(3000);
 
   if (!this->entryPressureSensor_->begin())
   {
@@ -192,9 +202,12 @@ void ApolloHal::updateSensors()
   this->currentPressureExs_ = this->getPresureExs(false);
   this->statusPressureIns_  = this->getEntryValveStatus();
 //  this->statusPressureExs_  = (100-this->exitEV_->status()); //OJO esto tiene que cuadrar con el pid compute!!
-  this->statusPressureExs_  = this->exitEV_->status();
+  this->statusPressureExs_  = this->getExitValveStatus();
   //Serial.println(this->statusPressureExs_);
+  //this->entryEV_->update();
+  //this->exitEV_->update();
 }
+
 void ApolloHal::pidCompute()
 {
   this->pidPressureInsCompute();
@@ -283,7 +296,7 @@ void ApolloHal::pidFlowInsCompute()
 
   this->pidFlowIns_.Compute();
   //this->pidFlowIns_.run();
-  this->statusFlowIns_=constrain(this->statusFlowIns_,0.0,100.0);
+  this->statusFlowIns_ = constrain(this->statusFlowIns_,0.0,100.0);
   this->entryEV_->open(this->statusFlowIns_);
 //  Serial.println("pidFlowIns: current:" + String(this->currentFlowIns_) + " Target:" + String(this->flowInsTarget_) + " Output:" + String(this->statusFlowIns_));
 }

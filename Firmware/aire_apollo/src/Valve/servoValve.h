@@ -18,6 +18,7 @@ protected:
   double _percent;
   uint8_t _minPos;
   uint8_t _maxPos;
+
 };
 
 

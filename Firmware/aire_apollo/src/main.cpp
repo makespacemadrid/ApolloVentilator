@@ -195,19 +195,17 @@ void setup()
   com->debug("setup", "Configuración recibida");
   TRACE("CONFIG END");
 
-  // Create hal layer with
-  ApolloFlowSensor     *fInSensor   = new Sfm3000FlowSensor();
-  ApolloFlowSensor     *fOutSensor  = new MksmFlowSensor();
 //  ApolloPressureSensor *pSensor     = new DummyPressure();
-  ApolloPressureSensor *pSensor     = new mksBME280();
 
-//  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,3,100);
-//  ApolloValve* outValve = new servoValve(EXIT_EV_PIN,3,100);
+//Montaje de Miguel
+/*
+  ApolloFlowSensor     *fInSensor   = new MksmFlowSensor();
+  ApolloFlowSensor     *fOutSensor  = new MksmFlowSensor();
+  ApolloPressureSensor *pSensor     = new mksBME280diff();
 
-
-// ENABLE, DIR; STEP, MIN_ENDSTOP, MAX_ENDSTOP, CLOSE_POS,OPEN_POS, STEPS_REVOLUTION, MAX_RPM, MICROSTEPS
+  // ENABLE, DIR; STEP, MIN_ENDSTOP, MAX_ENDSTOP, CLOSE_POS , OPEN_POS, STEPS_PER_REVOLUTION, MAX_RPM, MICROSTEPS
   StepperNema *inStepper  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,STEPER1_ENDSTOP,NO_PIN,1050,800,5400,10,8);
-  StepperNema *outStepper = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,0,NO_PIN,1000,100,200,200,8);
+  StepperNema *outStepper = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,STEPER2_ENDSTOP,NO_PIN,1000,100,200,200,8);
   inStepper->setMinEndStopPressedState(HIGH);
   inStepper->enableMinEndstopPullup();
   outStepper->setMinEndStopPressedState(HIGH);
@@ -215,7 +213,15 @@ void setup()
 
   ApolloValve *inValve  = inStepper;
   ApolloValve *outValve = outStepper;
+*/
 
+//Montaje MakeSpace
+  ApolloFlowSensor     *fInSensor   = new MksmFlowSensor();
+  ApolloFlowSensor     *fOutSensor  = new MksmFlowSensor();
+  ApolloPressureSensor *pSensor     = new mksBME280();
+
+  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,3,100);
+  ApolloValve* outValve = new servoValve(EXIT_EV_PIN,3,100);
 
   hal = new ApolloHal(pSensor, fInSensor, fOutSensor, inValve, outValve, alarms);
 

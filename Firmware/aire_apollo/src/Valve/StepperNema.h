@@ -35,7 +35,8 @@ public:
 
   void    setMinEndStopPressedState(bool state_){minEndStopPressedState = state_;}
   void    setMaxEndStopPressedState(bool state_){maxEndStopPressedState = state_;}
-
+  void    enableMinEndstopPullup()              {minEndstopPinMode = INPUT_PULLUP;}
+  void    enableMaxEndstopPullup()              {maxEndstopPinMode = INPUT_PULLUP;}
 protected:
 
   bool      moveAwayMinEndStop();
@@ -71,8 +72,10 @@ const   uint32_t closePos  = 0;
 const   uint16_t maxRPM;
 const   uint8_t  microSteps;
 
-  bool minEndStopPressedState  = LOW;
-  bool maxEndStopPressedState  = LOW;
+  uint8_t  minEndstopPinMode  = INPUT;
+  uint8_t  maxEndstopPinMode  = INPUT;
+  bool minEndStopPressedState = LOW;
+  bool maxEndStopPressedState = LOW;
 
   DRV8825 stepMotor;
 };

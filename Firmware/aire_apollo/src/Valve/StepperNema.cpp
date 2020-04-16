@@ -179,14 +179,14 @@ bool StepperNema::begin()
     this->stepMotor.enable();
     stepMotor.setSpeedProfile(stepMotor.LINEAR_SPEED, MOTOR_ACCEL, MOTOR_DECEL); //Probar bien antes de activar
 
-    if(this->pinMaxEndstop  > 0) pinMode(this->pinMaxEndstop,INPUT_PULLUP);
+    if(this->pinMaxEndstop  > 0) pinMode(this->pinMaxEndstop,maxEndstopPinMode);
     if(this->pinMinEndstop  > 0)
-      pinMode(this->pinMinEndstop,INPUT_PULLUP);
+      pinMode(this->pinMinEndstop,minEndstopPinMode);
     else
       return true; //Si no hay final de carrera de minimo no hacemos nada mas.
 
     if(home())
-    {//Comprobacion del mecanismo. Desde el final de carrera hasta la posicion maxima ida y vuelta
+    {//Comprobacion del mecanismo. Desde el final de carrera hasta la posicion maxima ida y vuelta varias veces.
     //Los pasos para ir y para volver deben de ser (casi) los mismo o el mecanismo no esta bien
       //return true;
       return test();

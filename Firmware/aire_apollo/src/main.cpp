@@ -55,6 +55,7 @@ Apollo firmware
 #include "Sensor/FlowSensor/Sfm3000FlowSensor.h"
 #include "Sensor/FlowSensor/SoftSfm3000FlowSensor.h"
 #include "Sensor/Pressure/mksBME280.h"
+#include "Sensor/Pressure/mksBME280diff.h"
 #include "Sensor/Pressure/AnalogLinearPressure.h"
 #include "Sensor/Pressure/DummyPressure.h"
 #include "LocalControl/LocalEncoder.h"
@@ -206,9 +207,11 @@ void setup()
 
 // ENABLE, DIR; STEP, MIN_ENDSTOP, MAX_ENDSTOP, CLOSE_POS,OPEN_POS, STEPS_REVOLUTION, MAX_RPM, MICROSTEPS
   StepperNema *inStepper  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,STEPER1_ENDSTOP,NO_PIN,1050,800,5400,10,8);
-  StepperNema *outStepper = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,STEPER2_ENDSTOP,NO_PIN,1000,100,200,200,8);
+  StepperNema *outStepper = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,0,NO_PIN,1000,100,200,200,8);
   inStepper->setMinEndStopPressedState(HIGH);
-  outStepper->setMinEndStopPressedState(LOW);
+  inStepper->enableMinEndstopPullup();
+  outStepper->setMinEndStopPressedState(HIGH);
+  outStepper->enableMinEndstopPullup();
 
   ApolloValve *inValve  = inStepper;
   ApolloValve *outValve = outStepper;

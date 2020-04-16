@@ -65,7 +65,7 @@
 #define DEFAULT_GENDER 0
 #define DEFAULT_POR_FIO2 90
 
-#define MAX_STEPPER_ERROR 0.05 //Error percent alowwed when testing sttepers
+#define MAX_STEPPER_ERROR 0.05 //Error percent alowed when testing sttepers
 #define PIN_BUZZER 53
 #define NO_PIN 0
 /*

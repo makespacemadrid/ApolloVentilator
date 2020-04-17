@@ -38,6 +38,11 @@ Params:
 
 --port="mqttPort"                     default: 1883
 
+--location="location"                 default: "Makespace"
+
+--version="firmwareVersion"           default: 0.8
+
 --verbose 
+
 
 node mqtt.js   --serialPortName="/dev/tty.usbserial-arduino" --host="host" --port="63636" --topic="ventilator/measurement/wilson" --verbose

@@ -11,6 +11,7 @@ let options = mri( argv, { default: {
     host:           'localhost',
     port:           1883,
     topic:          'ventilator/measurement/wilson',
+    location:       'makeSpace',
     version:        '0.8'
 }});
 
@@ -41,8 +42,10 @@ client.on('connect', function() {
 
     parser.on('data',function(data){
     
+        let pacient     = options.topic.split('/').pop();
+        let location    = options.location;
         let version     = options.version;
-        let id          = options.topic.split('/').pop();
+
         let receiveData = data.toString();
         let rawCommand  = receiveData.split(':');
         let commandID   = rawCommand[0];
@@ -59,9 +62,11 @@ client.on('connect', function() {
             let intakeFlow         = parseFloat(ventilatorData[3]);
             let exitFlow           = parseFloat(ventilatorData[4]);
             let volume             = parseFloat(ventilatorData[6]);
-            let intakeValve        = parseFloat(ventilatorData[7]);
-            let exitValve          = parseFloat(ventilatorData[8]);
-            let status             = parseFloat(ventilatorData[9]);
+            let intakeValveStatus  = parseFloat(ventilatorData[7]);
+            let exitValveStatus    = parseFloat(ventilatorData[8]);
+            let intakeValveTarget  = parseFloat(ventilatorData[9]);
+            let exitValveTarget    = parseFloat(ventilatorData[10]);
+            let status             = parseFloat(ventilatorData[11]);
     
             let payload = [{
                     pressure          : pressure,
@@ -70,15 +75,22 @@ client.on('connect', function() {
                     intakeFlow        : intakeFlow,
                     exitFlow          : exitFlow,
                     volume            : volume,
-                    intakeValve       : intakeValve,
-                    exitValve         : exitValve,
+                    intakeValveStatus : intakeValveStatus,
+                    exitValveStatus   : exitValveStatus,
+                    intakeValveTarget : intakeValveTarget,
+                    exitValveTarget   : exitValveTarget,
                     status            : status
                 },{ 
-                    tag1: id ,
-                    tag2: version
+                    tag1: pacient ,
+                    tag2: location,
+                    tag3: version
                 }
             ];
-            client.publish(options.topic, JSON.stringify(payload));
+
+            let mqttPayload = JSON.stringify(payload);
+
+            showLog('Mqtt payload: '+ mqttPayload)
+            client.publish(options.topic, mqttPayload);
         }
     });
     

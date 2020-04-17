@@ -1,0 +1,3 @@
+.pio
+.vscode
+include/local.env.h

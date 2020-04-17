@@ -11,6 +11,7 @@ let options = mri( argv, { default: {
     host:           'localhost',
     port:           1883,
     topic:          'ventilator/measurement/wilson',
+    version:        '0.8'
 }});
 
 const noLog    = function(){};
@@ -39,7 +40,8 @@ client.on('connect', function() {
     showLog('Connected');
 
     parser.on('data',function(data){
-	
+    
+        let version     = options.version;
         let id          = options.topic.split('/').pop();
         let receiveData = data.toString();
         let rawCommand  = receiveData.split(':');
@@ -56,20 +58,24 @@ client.on('connect', function() {
             let exitInstantFlow    = parseFloat(ventilatorData[2]);
             let intakeFlow         = parseFloat(ventilatorData[3]);
             let exitFlow           = parseFloat(ventilatorData[4]);
-            let intakeValve        = parseFloat(ventilatorData[5]);
-            let exitValve          = parseFloat(ventilatorData[6]);
-            let status             = parseFloat(ventilatorData[7]);
+            let volume             = parseFloat(ventilatorData[6]);
+            let intakeValve        = parseFloat(ventilatorData[7]);
+            let exitValve          = parseFloat(ventilatorData[8]);
+            let status             = parseFloat(ventilatorData[9]);
     
             let payload = [{
                     pressure          : pressure,
                     intakeInstantFlow : intakeInstantFlow,
                     exitInstantFlow   : exitInstantFlow,
                     intakeFlow        : intakeFlow,
+                    exitFlow          : exitFlow,
+                    volume            : volume,
                     intakeValve       : intakeValve,
                     exitValve         : exitValve,
                     status            : status
                 },{ 
-                    tag1: id 
+                    tag1: id ,
+                    tag2: version
                 }
             ];
             client.publish(options.topic, JSON.stringify(payload));

@@ -15,6 +15,7 @@ class ApolloValve
         virtual void    waitOpen(double percent = 100)  {open(percent);}
         virtual void    waitClose()                     {close();}
         virtual double  status()                        {return 0;}
+        virtual double  target()                        {return status();}
         virtual void    update()                        {;}
     protected:
 };

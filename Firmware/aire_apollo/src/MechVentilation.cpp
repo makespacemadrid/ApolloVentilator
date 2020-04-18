@@ -138,6 +138,7 @@ void MechVentilation::insuflationPre()
      *  @todo Decir a la válvula que se abra
     */
     this->hal->resetEntryFlow();
+    this->hal->resetExitFlow();
     this->hal->valveExsClose();
     this->hal->setPressureInsTarget(this->_cfgPresionPico);
     this->stateNext();

@@ -1,30 +1,48 @@
 #include "SoftSfm3000FlowSensor.h"
 #include <Arduino.h>
 
+/*
 #define I2C_PULLUP 1
-#define I2C_TIMEOUT 1000
+//#define I2C_TIMEOUT 1000
 #define SDA_PORT PORTC
-#define SDA_PIN 2  //A10
+#define SDA_PIN 3
 #define SCL_PORT PORTC
-#define SCL_PIN 3  //A11
-#include <SoftWire.h>
-
+#define SCL_PIN 4
+//#define I2C_FASTMODE 1
 #define I2C_7BITADDR 0x40
 #define MEMLOC 0x0A
 #define ADDRLEN 1
+*/
+
+//#include <SoftWire.h>
 
 
-SoftWire softWire = SoftWire();
+
+SoftwareWire softWire(A5,A9);
+
+  SoftSfm3000FlowSensor::SoftSfm3000FlowSensor(uint8_t sampling_ms, uint8_t addr) : Sfm3000FlowSensor(sampling_ms,addr)
+  {
+    _lastSampleTime = 0;
+    _volSinceReset  = 0;
+  }
 
   bool SoftSfm3000FlowSensor::begin()
   {
 
     softWire.begin();
-    delay(100);      // give the sensor time to start after power up
-    softReset();
-    readScale();  // Read scale facor and read offset from sensor
-    readOffset();
-    startFlowMeasurement();
+    //delay(100);      // give the sensor time to start after power up
+    //softReset();
+    //readScale();  // Read scale facor and read offset from sensor
+    //readOffset();
+    //startFlowMeasurement();
+    softWire.beginTransmission(0x40);
+    softWire.write((uint8_t)0x10); // start continuous measurement
+    softWire.write((uint8_t)0x00); // command 0x1000
+    softWire.endTransmission();
+    _flowOffset  = 32768;
+    _scaleFactor = 800;
+    resetFlow();
+    delay(10);
     readBytes();    // first read is always invalid
     delay(1);
 
@@ -46,7 +64,6 @@ SoftWire softWire = SoftWire();
     softWire.write(command >> 8);
     softWire.write(command  && 0xFF);
     status = softWire.endTransmission();
-
 
     return status;
   }

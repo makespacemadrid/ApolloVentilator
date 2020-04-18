@@ -31,15 +31,18 @@ public:
 
     double getPresureIns(bool cache = false);
     double getPresureExs(bool cache = false);
-    double getEntryValveStatus()  { return this->entryEV_->status(); };
-    double getExitValveStatus()   { return this->exitEV_->status(); };
+    double getEntryValveStatus()  { return this->entryEV_->status(); }
+    double getExitValveStatus()   { return this->exitEV_->status() ; }
+    double getEntryValveTarget()  { return this->entryEV_->target(); }
+    double getExitValveTarget()   { return this->exitEV_->target() ; }
 
-    double getEntryFlow()         { return this->entryFlowSensor_->getFlow();}
-    double getEntryInstantFlow()  { return this->entryFlowSensor_->getInstantFlow();}
-    void   resetEntryFlow()       { return this->entryFlowSensor_->resetFlow();}
-    double getExitFlow()          { return this->exitFlowSensor_->getFlow();}
-    double getExitInstantFlow()   { return this->exitFlowSensor_->getInstantFlow();}
-    void   resetExitFlow()        { return this->exitFlowSensor_->resetFlow();}
+    double getEntryFlow()         { return entryFlowSensor_->getFlow()       ;}
+    double getEntryInstantFlow()  { return entryFlowSensor_->getInstantFlow();}
+    void   resetEntryFlow()       { return entryFlowSensor_->resetFlow()     ;}
+
+    double getExitFlow()          { return exitFlowSensor_->getFlow()       ;}
+    double getExitInstantFlow()   { return exitFlowSensor_->getInstantFlow();}
+    void   resetExitFlow()        { return exitFlowSensor_->resetFlow()     ;}
 
 
     void updateSensors();
@@ -68,8 +71,6 @@ public:
 
       ApolloAlarms *alarms_;
 
-      void openEntryEV();
-      void openExitEV();
 
       //Define the aggressive and conservative Tuning Parameters
       double c_consKp = 5, c_consKi = 3, c_consKd = 1;

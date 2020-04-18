@@ -5,6 +5,7 @@
 Sfm3000FlowSensor::Sfm3000FlowSensor(uint8_t sampling_ms, uint8_t addr) : _addr(addr), _samplingMS(sampling_ms)
   {
     _lastSampleTime = 0;
+    _volSinceReset  = 0;
   }
 
   Sfm3000FlowSensor::~Sfm3000FlowSensor()
@@ -21,7 +22,7 @@ Sfm3000FlowSensor::Sfm3000FlowSensor(uint8_t sampling_ms, uint8_t addr) : _addr(
     startFlowMeasurement();
     readBytes();    // first read is always invalid
     delay(1);
-
+    resetFlow();
     return true;
   }
 
@@ -56,8 +57,7 @@ Sfm3000FlowSensor::Sfm3000FlowSensor(uint8_t sampling_ms, uint8_t addr) : _addr(
 
     uint16_t newValue = (_data[0]<<8) | _data[1];
 
-    _lastInstantFlow= ((float)newValue - _flowOffset) / _scaleFactor;
-
+    _lastInstantFlow= ((float)newValue - _flowOffset) / float(_scaleFactor);
     return _lastInstantFlow;
 
   }
@@ -80,7 +80,6 @@ Sfm3000FlowSensor::Sfm3000FlowSensor(uint8_t sampling_ms, uint8_t addr) : _addr(
   void Sfm3000FlowSensor::resetFlow()
   {
     _volSinceReset = 0;
-    _lastSampleTime = millis();
   }
 
 

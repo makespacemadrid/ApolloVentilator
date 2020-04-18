@@ -199,7 +199,7 @@ void ApolloHal::setFlowInsTarget(double flow)
 void ApolloHal::updateSensors()
 {
   this->currentPressureIns_ = this->getPresureIns(false);
-  this->currentPressureExs_ = this->getPresureExs(false);
+  this->currentPressureExs_ = this->currentPressureIns_;
   this->statusPressureIns_  = this->getEntryValveStatus();
 //  this->statusPressureExs_  = (100-this->exitEV_->status()); //OJO esto tiene que cuadrar con el pid compute!!
   this->statusPressureExs_  = this->getExitValveStatus();

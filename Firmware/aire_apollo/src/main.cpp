@@ -62,6 +62,7 @@ Apollo firmware
 #include "LocalControl/LocalDisplay.h"
 
 
+
 int rpm     = DEFAULT_RPM;
 int vTidal  = DEFAULT_MIN_VOLUMEN_TIDAL;
 int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
@@ -75,6 +76,7 @@ MechVentilation     *ventilation;
 ApolloConfiguration *configuration = new ApolloConfiguration();
 Comunications       *com           = new Comunications(configuration);
 ApolloAlarms        *alarms        = new ApolloAlarms(com, PIN_BUZZER, true);
+
 
 
 #ifdef LOCALCONTROLS
@@ -160,25 +162,38 @@ void setRampsPWMFreq()
 
 void logData()
 {
+
   String pressure(hal->getPresureIns());
-  //String intakeFlow(hal->getEntryFlow());
-  String intakeFlow(0);
-  //  String exitFlow(hal->exitFlowSensor()->getFlow());
-  String exitFlow(0);
-  //String intakeInstantFlow(hal->getEntryInstantFlow());
-  //String exitInstantFlow(hal->exitFlowSensor()->getInstantFlow());
-  String intakeInstantFlow(0);
-  String exitInstantFlow(0);
-  //  String intakeValve(hal->exitValve()->status());
-  String intakeValve(hal->getEntryValveStatus());
-  String ExitValve(hal->getExitValveStatus());
+
+  String intakeInstantFlow(hal->getEntryInstantFlow());
+  String exitInstantFlow(hal->getExitInstantFlow());
+
+  float  in  = hal->getEntryFlow();
+  float  out = hal->getExitFlow();
+  float  vol = in + out;
+
+  String intakeFlow(in);
+  String exitFlow  (out);
+  String volume    (vol);
+
+  //String intakeFlow(0);
+  //String exitFlow(0);
+  //String intakeInstantFlow(0);
+  //String exitInstantFlow(0);
+
+  String intakeValveStatus(hal->getEntryValveStatus());
+  String ExitValveStatus(hal->getExitValveStatus());
+  String intakeValveTarget(hal->getEntryValveTarget());
+  String ExitValveTarget(hal->getExitValveTarget());
+
+
   String Status(ventilation->getStatus());
 
-  String data[] = {pressure, intakeInstantFlow, exitInstantFlow, intakeFlow, exitFlow, intakeValve, ExitValve,Status};
-  com->data(data, 8);
+  String data[] = {pressure, intakeInstantFlow, exitInstantFlow, intakeFlow, exitFlow,volume ,intakeValveStatus, ExitValveStatus,intakeValveTarget,ExitValveTarget,Status};
+  com->data(data, 11);
 }
 
-
+uint8_t test[500];
 void setup()
 {
   Serial.begin(115200);
@@ -216,12 +231,12 @@ void setup()
 */
 
 //Montaje MakeSpace
-  ApolloFlowSensor     *fInSensor   = new MksmFlowSensor();
-  ApolloFlowSensor     *fOutSensor  = new MksmFlowSensor();
+  ApolloFlowSensor     *fInSensor   = new SoftSfm3000FlowSensor(5,0x40);
+  ApolloFlowSensor     *fOutSensor  = new Sfm3000FlowSensor(5,0x40);
   ApolloPressureSensor *pSensor     = new mksBME280();
 
-  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,3,100);
-  ApolloValve* outValve = new servoValve(EXIT_EV_PIN,3,100);
+  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,0,80);
+  ApolloValve* outValve = new servoValve(EXIT_EV_PIN,0,60);
 
   hal = new ApolloHal(pSensor, fInSensor, fOutSensor, inValve, outValve, alarms);
 
@@ -346,5 +361,5 @@ void loop()
 #endif
 
 */
-delay(10);
+//delay(10);
 }

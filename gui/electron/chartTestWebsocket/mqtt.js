@@ -61,12 +61,12 @@ client.on('connect', function() {
             let exitInstantFlow    = parseFloat(ventilatorData[2]);
             let intakeFlow         = parseFloat(ventilatorData[3]);
             let exitFlow           = parseFloat(ventilatorData[4]);
-            let volume             = parseFloat(ventilatorData[6]);
-            let intakeValveStatus  = parseFloat(ventilatorData[7]);
-            let exitValveStatus    = parseFloat(ventilatorData[8]);
-            let intakeValveTarget  = parseFloat(ventilatorData[9]);
-            let exitValveTarget    = parseFloat(ventilatorData[10]);
-            let status             = parseFloat(ventilatorData[11]);
+            let volume             = parseFloat(ventilatorData[5]);
+            let intakeValveStatus  = parseFloat(ventilatorData[6]);
+            let exitValveStatus    = parseFloat(ventilatorData[7]);
+            let intakeValveTarget  = parseFloat(ventilatorData[8]);
+            let exitValveTarget    = parseFloat(ventilatorData[9]);
+            let status             = parseFloat(ventilatorData[10]);
     
             let payload = [{
                     pressure          : pressure,

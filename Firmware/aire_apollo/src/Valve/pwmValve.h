@@ -13,7 +13,7 @@ public:
   virtual bool    begin();
   virtual void    open(double percent = 100);
   virtual void    close();
-  virtual double status() {return _percent > 0;}
+  virtual double status()  {return _percent;}
 
 protected:
 

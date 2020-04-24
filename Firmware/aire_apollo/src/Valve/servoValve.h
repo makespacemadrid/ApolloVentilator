@@ -4,6 +4,8 @@
 #include "ApolloValve.h"
 #include <Servo.h>
 
+
+
 class servoValve : public ApolloValve
 {
 public:
@@ -11,14 +13,22 @@ public:
   virtual bool    begin();
   virtual void    open(double percent = 100);
   virtual void    close();
-  virtual double status() {return _percent;}
+  virtual void    waitOpen(double percent = 100);
+  virtual void    waitClose();
+  virtual double  status();
+  virtual double  target() {return _percent;}
+  virtual void    update();
 protected:
   Servo   _servo;
   uint8_t _pin;
-  double _percent;
+  double  _percent;
   uint8_t _minPos;
   uint8_t _maxPos;
-
+  double  _lastPos;
+  unsigned long _lastOrderTimestamp;
+  unsigned long _estimatedFinishTime;
+  const uint16_t _OpenTimeMS;
+  bool           _blockInterrupt;
 };
 
 

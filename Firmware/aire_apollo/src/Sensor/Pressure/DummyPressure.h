@@ -12,8 +12,8 @@ public:
     DummyPressure(){};
 
     bool begin(){return true;};
-    float readPascal(){return 1176.8;}; //12 cmH2o
-
+//    float readPascal(){return 1176.8;}; //12 cmH2o
+    float readPascal(){return 2000;}; //12 cmH2o
 private:
 };
 

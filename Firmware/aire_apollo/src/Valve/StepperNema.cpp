@@ -120,6 +120,7 @@ bool StepperNema::home()
 
 double StepperNema::status()
 {
+  //return target();
   double p = 0;
 //  if(openPos > closePos)
     p = map(this->lastPos,closePos,openPos,0,100);
@@ -128,19 +129,24 @@ double StepperNema::status()
     return p;
 } // Revisar la logica de inversion de movimiento!
 
+double StepperNema::target()
+{
+  return percent;
+}
+
 bool StepperNema::test()
 {
   uint32_t maxPos;
-  uint32_t minPos;
+//  uint32_t minPos;
   if(openPos > closePos)
   {
     maxPos = openPos;
-    minPos = maxPos;
+//    minPos = maxPos;
   }
   else
   {
     maxPos = closePos;
-    minPos = openPos;
+//    minPos = openPos;
   }
 
   stepMotor.move(maxPos);
@@ -148,10 +154,10 @@ bool StepperNema::test()
   stepMotor.move(maxPos);
   stepMotor.move(-maxPos);
   stepMotor.move(maxPos);
-  stepMotor.move(-maxPos);
-  stepMotor.move(maxPos);
-  stepMotor.move(-maxPos);
-  stepMotor.move(maxPos);
+//  stepMotor.move(-maxPos);
+//  stepMotor.move(maxPos);
+//  stepMotor.move(-maxPos);
+//  stepMotor.move(maxPos);
 
 
   uint32_t stepsBackToHome = countStepsToHome();

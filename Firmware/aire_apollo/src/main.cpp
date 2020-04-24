@@ -36,7 +36,7 @@ Apollo firmware
 #include <SPI.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
-#include <FlexiTimer2.h>
+//include <FlexiTimer2.h>
 
 //Apollo clases
 #include "ApolloHal.h"
@@ -62,6 +62,7 @@ Apollo firmware
 #include "LocalControl/LocalDisplay.h"
 
 
+
 int rpm     = DEFAULT_RPM;
 int vTidal  = DEFAULT_MIN_VOLUMEN_TIDAL;
 int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
@@ -75,6 +76,7 @@ MechVentilation     *ventilation;
 ApolloConfiguration *configuration = new ApolloConfiguration();
 Comunications       *com           = new Comunications(configuration);
 ApolloAlarms        *alarms        = new ApolloAlarms(com, PIN_BUZZER, true);
+
 
 
 #ifdef LOCALCONTROLS
@@ -107,7 +109,7 @@ void ISR1ms() //Esta funcion se ejecuta cada 0.1ms para gestionar sensores/actua
 //  c1++;
   //FlexiTimer2::stop();
   hal->ISR1ms();
-  if(++logTimeCounter >= LOG_INTERVAL*10) {sendLog = true;logTimeCounter = 0;}
+//  if(++logTimeCounter >= LOG_INTERVAL*10) {sendLog = true;logTimeCounter = 0;}
   //FlexiTimer2::start();
 }
 
@@ -160,25 +162,38 @@ void setRampsPWMFreq()
 
 void logData()
 {
+
   String pressure(hal->getPresureIns());
-  //String intakeFlow(hal->getEntryFlow());
-  String intakeFlow(0);
-  //  String exitFlow(hal->exitFlowSensor()->getFlow());
-  String exitFlow(0);
-  //String intakeInstantFlow(hal->getEntryInstantFlow());
-  //String exitInstantFlow(hal->exitFlowSensor()->getInstantFlow());
-  String intakeInstantFlow(0);
-  String exitInstantFlow(0);
-  //  String intakeValve(hal->exitValve()->status());
-  String intakeValve(hal->getEntryValveStatus());
-  String ExitValve(hal->getExitValveStatus());
+
+  String intakeInstantFlow(hal->getEntryInstantFlow());
+  String exitInstantFlow(hal->getExitInstantFlow());
+
+  float  in  = hal->getEntryFlow();
+  float  out = hal->getExitFlow();
+  float  vol = in + out;
+
+  String intakeFlow(in);
+  String exitFlow  (out);
+  String volume    (vol);
+
+  //String intakeFlow(0);
+  //String exitFlow(0);
+  //String intakeInstantFlow(0);
+  //String exitInstantFlow(0);
+
+  String intakeValveStatus(hal->getEntryValveStatus());
+  String ExitValveStatus(hal->getExitValveStatus());
+  String intakeValveTarget(hal->getEntryValveTarget());
+  String ExitValveTarget(hal->getExitValveTarget());
+
+
   String Status(ventilation->getStatus());
 
-  String data[] = {pressure, intakeInstantFlow, exitInstantFlow, intakeFlow, exitFlow, intakeValve, ExitValve,Status};
-  com->data(data, 8);
+  String data[] = {pressure, intakeInstantFlow, exitInstantFlow, intakeFlow, exitFlow,volume ,intakeValveStatus, ExitValveStatus,intakeValveTarget,ExitValveTarget,Status};
+  com->data(data, 11);
 }
 
-
+//uint8_t test[500];
 void setup()
 {
   Serial.begin(115200);
@@ -195,19 +210,17 @@ void setup()
   com->debug("setup", "Configuración recibida");
   TRACE("CONFIG END");
 
-  // Create hal layer with
-  ApolloFlowSensor     *fInSensor   = new Sfm3000FlowSensor();
-  ApolloFlowSensor     *fOutSensor  = new MksmFlowSensor();
 //  ApolloPressureSensor *pSensor     = new DummyPressure();
-  ApolloPressureSensor *pSensor     = new mksBME280();
 
-//  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,3,100);
-//  ApolloValve* outValve = new servoValve(EXIT_EV_PIN,3,100);
+//Montaje de Miguel
+/*
+  ApolloFlowSensor     *fInSensor   = new MksmFlowSensor();
+  ApolloFlowSensor     *fOutSensor  = new MksmFlowSensor();
+  ApolloPressureSensor *pSensor     = new mksBME280diff();
 
-
-// ENABLE, DIR; STEP, MIN_ENDSTOP, MAX_ENDSTOP, CLOSE_POS,OPEN_POS, STEPS_REVOLUTION, MAX_RPM, MICROSTEPS
+  // ENABLE, DIR; STEP, MIN_ENDSTOP, MAX_ENDSTOP, CLOSE_POS , OPEN_POS, STEPS_PER_REVOLUTION, MAX_RPM, MICROSTEPS
   StepperNema *inStepper  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,STEPER1_ENDSTOP,NO_PIN,1050,800,5400,10,8);
-  StepperNema *outStepper = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,0,NO_PIN,1000,100,200,200,8);
+  StepperNema *outStepper = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,STEPER2_ENDSTOP,NO_PIN,1000,100,200,200,8);
   inStepper->setMinEndStopPressedState(HIGH);
   inStepper->enableMinEndstopPullup();
   outStepper->setMinEndStopPressedState(HIGH);
@@ -215,8 +228,23 @@ void setup()
 
   ApolloValve *inValve  = inStepper;
   ApolloValve *outValve = outStepper;
+*/
 
+//Montaje MakeSpace
+//  ApolloFlowSensor     *fInSensor   = new SoftSfm3000FlowSensor(5,0x40);
+//  ApolloFlowSensor     *fOutSensor  = new Sfm3000FlowSensor(5,0x40);
+  ApolloFlowSensor     *fInSensor   = new SoftSfm3000FlowSensor(100,0x40);
+  ApolloFlowSensor     *fOutSensor  = new Sfm3000FlowSensor(100,0x40);
+  ApolloPressureSensor *pSensor     = new mksBME280();
 
+//  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,0,80);
+  ApolloValve* outValve = new servoValve(EXIT_EV_PIN,2,75);
+  StepperNema *inStepper  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,STEPER1_ENDSTOP,NO_PIN,1850,800,5400,3,8);
+  inStepper->setMinEndStopPressedState(HIGH);
+  inStepper->enableMinEndstopPullup();
+//StepperNema *outStepper = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,NO_PIN,NO_PIN,1000,100,200,200,8);
+  ApolloValve *inValve  = inStepper;
+//ApolloValve *outValve = outStepper;
   hal = new ApolloHal(pSensor, fInSensor, fOutSensor, inValve, outValve, alarms);
 
   TRACE("BEGIN HAL!");
@@ -227,7 +255,6 @@ void setup()
     delay(1000);
     //alarma!!
   }
-
   TRACE("HAL READY!");
 
   ventilation = new MechVentilation(hal, configuration, alarms);
@@ -251,10 +278,16 @@ void setup()
 
   //ISRs
 //  FlexiTimer2::set(1, 1.0/1000,ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
-  FlexiTimer2::set(1 , 1.0/10000,ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
-  FlexiTimer2::start();
+//  FlexiTimer2::set(1 , 1.0/10000,ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
+//  FlexiTimer2::start();
 //  MsTimer2::set(1, ISR1ms); // 500ms period
 //  MsTimer2::start();
+//Serial.println("VOlumen-hal2 "+String(hal->getEntryFlow()));
+
+//  hal->resetEntryFlow();
+//  hal->resetExitFlow();
+//  Serial.println("VOlumen-hal3 "+String(hal->getEntryFlow()));
+
 }
 
 
@@ -263,8 +296,14 @@ bool a = 0;
 bool b = 0;
 
 
+unsigned long lastLogTime         = 0;
+unsigned long lastVentilatorUpdate = 10;
+
+
 void loop()
 {
+
+
   //Serial.println("loop!"+String(tim)); Serial.flush();delay(10);
 
   //Comprobacion de alarmas
@@ -285,11 +324,31 @@ void loop()
   //  checkLeak(volc, volExit);
   //  calculateCompliance(pplat, peep);
 
+//  Serial.println("VOlumen-loop1 "+String(hal->getEntryFlow()));
+
+  hal->ISR1ms();
+//  Serial.println("VOlumen-loop2 "+String(hal->getEntryFlow()));
+
+  unsigned long now = millis();
+  if(now >= lastLogTime + LOG_INTERVAL)
+  {
+//    Serial.println("VOlumen-loop3 "+String(hal->getEntryFlow()));
+
+    lastLogTime = now;
+    logData();
+  }
+
+  if(now >= lastVentilatorUpdate + LOG_INTERVAL)
+  {
+    lastVentilatorUpdate = now;
+    ventilation->update();
+    alarms->check();
+  }
 
   // gestion del ventilador
-  ventilation->update();
-  if (sendLog) {logData();sendLog = false;}
-  alarms->check();
+//  ventilation->update();
+//  if (sendLog) {logData();sendLog = false;}
+//
 /*
   tim++;
   if(tim>500 && a == false)
@@ -302,7 +361,7 @@ void loop()
   {
     Serial.println("CLOSE");Serial.flush();
     b=true;
-    hal->valveInsClose();
+    hal->valveInsClose();0
     //hal->valveInsClose();
   }
   else if(tim>1500)
@@ -340,5 +399,5 @@ void loop()
 #endif
 
 */
-delay(10);
+//delay(10);
 }

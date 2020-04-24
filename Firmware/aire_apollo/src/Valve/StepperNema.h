@@ -4,6 +4,8 @@
 #include <Arduino.h>
 #include "Valve/ApolloValve.h"
 #include "DRV8825.h"
+
+//Valores por defecto, se reconfiguran al instanciar el objeto!
 // Motor steps per revolution. Most steppers are 200 steps or 1.8 degrees/step
 #define MOTOR_STEPS 200
 #define RPM         200
@@ -18,6 +20,11 @@
 //#include "BasicStepperDriver.h" // generic
 
 
+//TODO:
+// Comprobar los finales de carrera durante los movimientos (ahora esta desactivado en el update, hay que ponerlo en otro sitio idealmente)
+// Pensar en un mecanismo para que el stepper vuelva a hacer home de vez en cuando para asegurar que no se pierden pasos.
+//
+
 class StepperNema : public ApolloValve
 {
 
@@ -30,6 +37,7 @@ public:
   void    waitOpen(double percent = 100);
   void    waitClose();
   double  status();
+  double  target();
   void    update(); //Required to move de steps
   bool    calibrate();
 
@@ -48,13 +56,7 @@ protected:
   bool      isMaxEndStopPressed(){return digitalRead(pinMaxEndstop) == maxEndStopPressedState;}
   bool      isGoingForward()     {return lastDir == true;}
 
-  // Numero de pasos de apertura máxima del motor
-  // A mayor apertura necesaria, hay que aumentar la velocidad bajando los microsteps
-  // Configurar con los pasos necesarios para llegar al final del elemento que se quiera presionar, pulsar o rotar
 
-//  uint8_t pinEna; // No son necesarios pues ya los almacena la libreria del stepper
-//  uint8_t pinDir;
-//  uint8_t pinPul;
 
 const   uint8_t pinMinEndstop = 0;
 const   uint8_t pinMaxEndstop = 0;

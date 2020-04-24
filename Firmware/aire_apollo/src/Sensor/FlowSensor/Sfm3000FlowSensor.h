@@ -18,13 +18,13 @@
 class Sfm3000FlowSensor : public ApolloFlowSensor
 {
     public:
-        Sfm3000FlowSensor(uint8_t sampling_ms = 100, uint8_t addr = 0x40);
+        Sfm3000FlowSensor(uint8_t sampling_ms = 10, uint8_t addr = 0x40);
         ~Sfm3000FlowSensor();
-        bool begin();
+        virtual bool begin();
         float getFlow();
         float getInstantFlow();
         void resetFlow();
-        void update();
+        virtual void update();
 
     protected:
         uint8_t       _addr;
@@ -39,7 +39,7 @@ class Sfm3000FlowSensor : public ApolloFlowSensor
 
         uint8_t     sendCommand(uint16_t command);
         void        softReset();
-        int         readBytes();
+        virtual int readBytes();
         uint16_t    readOffset();
         uint16_t    readScale();
         void        startFlowMeasurement();

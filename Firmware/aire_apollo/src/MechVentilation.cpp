@@ -25,7 +25,7 @@ MechVentilation::MechVentilation(
 
 void MechVentilation::update(void)
 {
-
+  //Serial.println("Update vent");Serial.flush();
     this->hal->updateSensors();
 
     if (this->hal->getPresureIns(true) > DEFAULT_CMH20_MAX)
@@ -138,6 +138,7 @@ void MechVentilation::insuflationPre()
      *  @todo Decir a la válvula que se abra
     */
     this->hal->resetEntryFlow();
+    this->hal->resetExitFlow();
     this->hal->valveExsClose();
     this->hal->setPressureInsTarget(this->_cfgPresionPico);
     this->stateNext();

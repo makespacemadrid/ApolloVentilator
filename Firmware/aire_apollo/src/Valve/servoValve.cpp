@@ -65,6 +65,7 @@ void servoValve::waitClose()
 
 double servoValve::status()
 {
+//  return target();
   unsigned long now = millis();
   if(now >= _estimatedFinishTime)
       return _percent;

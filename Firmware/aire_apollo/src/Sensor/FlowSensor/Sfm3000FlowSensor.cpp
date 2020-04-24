@@ -4,8 +4,10 @@
 
 Sfm3000FlowSensor::Sfm3000FlowSensor(uint8_t sampling_ms, uint8_t addr) : _addr(addr), _samplingMS(sampling_ms)
   {
-    _lastSampleTime = 0;
-    _volSinceReset  = 0;
+    _lastSampleTime  = 0.0;
+    _volSinceReset   = 0.0;
+    _lastInstantFlow = 0.0;
+
   }
 
   Sfm3000FlowSensor::~Sfm3000FlowSensor()
@@ -23,6 +25,7 @@ Sfm3000FlowSensor::Sfm3000FlowSensor(uint8_t sampling_ms, uint8_t addr) : _addr(
     readBytes();    // first read is always invalid
     delay(1);
     resetFlow();
+
     return true;
   }
 
@@ -39,8 +42,10 @@ Sfm3000FlowSensor::Sfm3000FlowSensor(uint8_t sampling_ms, uint8_t addr) : _addr(
 
     if( now - _lastSampleTime > _samplingMS)
     {
-      _volSinceReset += (now-_lastSampleTime)*(_lastInstantFlow/60.0/1000.0);
+//      Serial.println("now: "+String(now)+" _lastSampleTime: "+String(_lastSampleTime)+ " _lastInstantFlow: "+String(_lastInstantFlow));
+      _volSinceReset += (now-_lastSampleTime)*(_lastInstantFlow/60000.0);
       _lastSampleTime = now;
+//      Serial.println(_volSinceReset);Serial.flush();
     }
   }
 
@@ -51,13 +56,15 @@ Sfm3000FlowSensor::Sfm3000FlowSensor(uint8_t sampling_ms, uint8_t addr) : _addr(
    */
   float Sfm3000FlowSensor::getInstantFlow()
   {
-
+//    _lastInstantFlow =1; //HACK
+//    return _lastInstantFlow;
     if (readBytes() == -1)
       return -1;    // ERROR
 
     uint16_t newValue = (_data[0]<<8) | _data[1];
 
     _lastInstantFlow= ((float)newValue - _flowOffset) / float(_scaleFactor);
+
     return _lastInstantFlow;
 
   }

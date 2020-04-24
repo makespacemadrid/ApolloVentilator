@@ -37,6 +37,7 @@ public:
   void    waitOpen(double percent = 100);
   void    waitClose();
   double  status();
+  double  target();
   void    update(); //Required to move de steps
   bool    calibrate();
 

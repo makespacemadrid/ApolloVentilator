@@ -12,10 +12,10 @@ class ApolloPressureSensor
         virtual ~ApolloPressureSensor() {};
         virtual bool begin() {return true;}              // to be able to report error if the sensor is not detected
         virtual float readPascal() = 0; //Implementar en la herencia!!!!!!
-        float readMilibar();
-        float readMMHg();
-        float readCMH2O();
-        void update() {;}
+        virtual float readMilibar();
+        virtual float readMMHg();
+        virtual float readCMH2O();
+        virtual void  update() {;}
 
     protected:
 

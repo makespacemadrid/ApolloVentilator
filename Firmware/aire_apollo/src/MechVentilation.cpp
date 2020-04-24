@@ -25,7 +25,7 @@ MechVentilation::MechVentilation(
 
 void MechVentilation::update(void)
 {
-
+  //Serial.println("Update vent");Serial.flush();
     this->hal->updateSensors();
 
     if (this->hal->getPresureIns(true) > DEFAULT_CMH20_MAX)

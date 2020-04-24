@@ -36,7 +36,7 @@ Apollo firmware
 #include <SPI.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
-#include <FlexiTimer2.h>
+//include <FlexiTimer2.h>
 
 //Apollo clases
 #include "ApolloHal.h"
@@ -109,7 +109,7 @@ void ISR1ms() //Esta funcion se ejecuta cada 0.1ms para gestionar sensores/actua
 //  c1++;
   //FlexiTimer2::stop();
   hal->ISR1ms();
-  if(++logTimeCounter >= LOG_INTERVAL*10) {sendLog = true;logTimeCounter = 0;}
+//  if(++logTimeCounter >= LOG_INTERVAL*10) {sendLog = true;logTimeCounter = 0;}
   //FlexiTimer2::start();
 }
 
@@ -193,7 +193,7 @@ void logData()
   com->data(data, 11);
 }
 
-uint8_t test[500];
+//uint8_t test[500];
 void setup()
 {
   Serial.begin(115200);
@@ -231,13 +231,20 @@ void setup()
 */
 
 //Montaje MakeSpace
-  ApolloFlowSensor     *fInSensor   = new SoftSfm3000FlowSensor(5,0x40);
-  ApolloFlowSensor     *fOutSensor  = new Sfm3000FlowSensor(5,0x40);
+//  ApolloFlowSensor     *fInSensor   = new SoftSfm3000FlowSensor(5,0x40);
+//  ApolloFlowSensor     *fOutSensor  = new Sfm3000FlowSensor(5,0x40);
+  ApolloFlowSensor     *fInSensor   = new SoftSfm3000FlowSensor(100,0x40);
+  ApolloFlowSensor     *fOutSensor  = new Sfm3000FlowSensor(100,0x40);
   ApolloPressureSensor *pSensor     = new mksBME280();
 
-  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,0,80);
-  ApolloValve* outValve = new servoValve(EXIT_EV_PIN,0,60);
-
+//  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,0,80);
+  ApolloValve* outValve = new servoValve(EXIT_EV_PIN,2,75);
+  StepperNema *inStepper  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,STEPER1_ENDSTOP,NO_PIN,1850,800,5400,3,8);
+  inStepper->setMinEndStopPressedState(HIGH);
+  inStepper->enableMinEndstopPullup();
+//StepperNema *outStepper = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,NO_PIN,NO_PIN,1000,100,200,200,8);
+  ApolloValve *inValve  = inStepper;
+//ApolloValve *outValve = outStepper;
   hal = new ApolloHal(pSensor, fInSensor, fOutSensor, inValve, outValve, alarms);
 
   TRACE("BEGIN HAL!");
@@ -248,7 +255,6 @@ void setup()
     delay(1000);
     //alarma!!
   }
-
   TRACE("HAL READY!");
 
   ventilation = new MechVentilation(hal, configuration, alarms);
@@ -272,10 +278,16 @@ void setup()
 
   //ISRs
 //  FlexiTimer2::set(1, 1.0/1000,ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
-  FlexiTimer2::set(1 , 1.0/10000,ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
-  FlexiTimer2::start();
+//  FlexiTimer2::set(1 , 1.0/10000,ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
+//  FlexiTimer2::start();
 //  MsTimer2::set(1, ISR1ms); // 500ms period
 //  MsTimer2::start();
+//Serial.println("VOlumen-hal2 "+String(hal->getEntryFlow()));
+
+//  hal->resetEntryFlow();
+//  hal->resetExitFlow();
+//  Serial.println("VOlumen-hal3 "+String(hal->getEntryFlow()));
+
 }
 
 
@@ -284,8 +296,14 @@ bool a = 0;
 bool b = 0;
 
 
+unsigned long lastLogTime         = 0;
+unsigned long lastVentilatorUpdate = 10;
+
+
 void loop()
 {
+
+
   //Serial.println("loop!"+String(tim)); Serial.flush();delay(10);
 
   //Comprobacion de alarmas
@@ -306,11 +324,31 @@ void loop()
   //  checkLeak(volc, volExit);
   //  calculateCompliance(pplat, peep);
 
+//  Serial.println("VOlumen-loop1 "+String(hal->getEntryFlow()));
+
+  hal->ISR1ms();
+//  Serial.println("VOlumen-loop2 "+String(hal->getEntryFlow()));
+
+  unsigned long now = millis();
+  if(now >= lastLogTime + LOG_INTERVAL)
+  {
+//    Serial.println("VOlumen-loop3 "+String(hal->getEntryFlow()));
+
+    lastLogTime = now;
+    logData();
+  }
+
+  if(now >= lastVentilatorUpdate + LOG_INTERVAL)
+  {
+    lastVentilatorUpdate = now;
+    ventilation->update();
+    alarms->check();
+  }
 
   // gestion del ventilador
-  ventilation->update();
-  if (sendLog) {logData();sendLog = false;}
-  alarms->check();
+//  ventilation->update();
+//  if (sendLog) {logData();sendLog = false;}
+//
 /*
   tim++;
   if(tim>500 && a == false)
@@ -323,7 +361,7 @@ void loop()
   {
     Serial.println("CLOSE");Serial.flush();
     b=true;
-    hal->valveInsClose();
+    hal->valveInsClose();0
     //hal->valveInsClose();
   }
   else if(tim>1500)

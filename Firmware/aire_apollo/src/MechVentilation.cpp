@@ -26,15 +26,14 @@ MechVentilation::MechVentilation(
 void MechVentilation::update(void)
 {
   //Serial.println("Update vent");Serial.flush();
-    this->hal->updateSensors();
 
-    if (this->hal->getPresureIns(true) > DEFAULT_CMH20_MAX)
-    {
+//    if (this->hal->getPresureIns(true) > DEFAULT_CMH20_MAX)
+//    {
         // @todo Alerta por sobrepresion
         //this->hal->valveExsOpen();
         //this->hal->valveInsClose();
-        this->alarms->critical(12, "Presion máxima alcanzada");
-    }
+//        this->alarms->critical(12, "Presion máxima alcanzada");
+//    }
 
     switch (this->_currentState)
     {
@@ -61,7 +60,6 @@ void MechVentilation::update(void)
         break;
     }
 
-    this->hal->pidCompute();
 
 }
 
@@ -108,11 +106,11 @@ void MechVentilation::wait()
         this->configurationUpdate();
     }
     //Detecta aspiración del paciente
-    if (this->hal->getPresureIns() <= this->_cfgCmh2oTriggerValue)
-    {
+//    if (this->hal->getPresureIns() <= this->_cfgCmh2oTriggerValue)
+//    {
         /** @todo Pendiente desarrollo */
-        stateNext();
-    }
+//        stateNext();
+//    }
     unsigned long now = millis();
     switch (this->mode)
     {
@@ -137,10 +135,10 @@ void MechVentilation::insuflationPre()
     /**
      *  @todo Decir a la válvula que se abra
     */
-    this->hal->resetEntryFlow();
-    this->hal->resetExitFlow();
-    this->hal->valveExsClose();
-    this->hal->setPressureInsTarget(this->_cfgPresionPico);
+    this->hal->resetInputFlow();
+    this->hal->resetOutputFlow();
+    this->hal->closeOutputValve();
+    this->hal->setPressureMode(this->_cfgPresionPico);
     this->stateNext();
 }
 
@@ -152,10 +150,10 @@ void MechVentilation::insufaltionProcess()
     switch (this->mode)
     {
     case Mode::Pressure:
-        this->hal->setPressureInsTarget(this->_cfgPresionPico);
+        this->hal->setPressureMode(this->_cfgPresionPico);
         break;
     case Mode::Flow:
-        if (this->hal->getEntryFlow() >= this->_cfgmlTidalVolume)
+        if (this->hal->getInputFlow() >= this->_cfgmlTidalVolume)
         {
             this->stateNext();
         }
@@ -171,7 +169,7 @@ void MechVentilation::insufaltionProcess()
 
 void MechVentilation::insuflationPost()
 {
-    if (this->hal->getPresureExs(true) < this->_cfgPresionPico)
+    if (this->hal->getPressure() < this->_cfgPresionPico)
     {
         //this->hal->valveExsClose();
         this->alarms->info(14, "No llegamos a presión Pico");
@@ -180,7 +178,7 @@ void MechVentilation::insuflationPost()
     unsigned long now = millis();
     if ((now - this->lastExecution) >= (this->_cfgSecTimeInsufflation * 1000))
     {
-        this->hal->valveInsClose();
+        this->hal->closeInputValve();
         this->stateNext();
     }
 }
@@ -188,7 +186,7 @@ void MechVentilation::insuflationPost()
 void MechVentilation::exsufflationPre()
 {
     /** @todo Abrimos válvulas de salida */
-    this->hal->setPressureExsTarget(this->_cfgPresionPeep);
+    this->hal->setPressureMode(this->_cfgPresionPeep);
     //this->hal->valveInsOpen(35);
     stateNext();
 }
@@ -224,7 +222,7 @@ void MechVentilation::exsufflationProcess()
 }
 void MechVentilation::exsufflationPost()
 {
-    if (this->hal->getPresureExs(true) < (this->_cfgPresionPeep - 1)) //) && !this->hal->getExitValveStatus())
+    if (this->hal->getPressure() < (this->_cfgPresionPeep - 1)) //) && !this->hal->getExitValveStatus())
     {
         //this->hal->valveExsClose();
         this->alarms->info(13, "Presión debajo de PEEP");

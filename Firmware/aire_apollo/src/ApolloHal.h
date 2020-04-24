@@ -16,95 +16,102 @@ public:
     ~ApolloHal();
 
     bool  begin();
-    void  setFlow(float flow, float pressure);
+    bool  test();
+    bool  calibrate();
 
 
-    void valveInsOpen(uint8_t percent = 100);
-    void valveInsClose();
-    void valveExsOpen(uint8_t percent = 100);
-    void valveExsClose();
-
-    void setPressureInsTarget(double pressure);
-    void setPressureExsTarget(double pressure);
-    void setFlowInsTarget    (double flow);
+    bool  setFlowMode     (float flow, float maxPressure);
+    bool  setPressureMode (float pressure);
 
 
-    double getPresureIns(bool cache = false);
-    double getPresureExs(bool cache = false);
-    double getEntryValveStatus()  { return this->entryEV_->status(); }
-    double getExitValveStatus()   { return this->exitEV_->status() ; }
-    double getEntryValveTarget()  { return this->entryEV_->target(); }
-    double getExitValveTarget()   { return this->exitEV_->target() ; }
-
-    double getEntryFlow()         { return entryFlowSensor_->getFlow()       ;}
-    double getEntryInstantFlow()  { return entryFlowSensor_->getInstantFlow();}
-    void   resetEntryFlow()       { return entryFlowSensor_->resetFlow()     ;}
-
-    double getExitFlow()          { return exitFlowSensor_->getFlow()       ;}
-    double getExitInstantFlow()   { return exitFlowSensor_->getInstantFlow();}
-    void   resetExitFlow()        { return exitFlowSensor_->resetFlow()     ;}
+    void openInputValve     (uint8_t percent = 100, bool wait = false);
+    void closeInputValve    (bool wait = false);
+    void openOutputValve    (uint8_t percent = 100, bool wait = false);
+    void closeOutputValve   (bool wait = false);
 
 
-    void updateSensors();
-    void pidCompute();
-    void ISR1ms(); //
+    double getPressure()          { return _lastPressure;}
+    double getInputValveStatus()  { return _lastInputValveStatus;}
+    double getOutputValveStatus() { return _lastOutputValveStatus;}
+    double getInputValveTarget()  { return _inputValve->target();}
+    double getOutputValveTarget() { return _outputValve->target();}
 
-  #ifdef INTFLOWSENSOR // Gestion de los sensores de flujo por interrupcion
+    double getInputFlow()         { return _lastInputFlow;}
+    double getInputInstantFlow()  { return _lastInputInstantFlow;}
+    void   resetInputFlow()       { _inputFlowSensor->resetFlow();}
+
+    double getOutputFlow()        { return _lastOutputFlow;}
+    double getOutputInstantFlow() { return _lastOutputInstantFlow;}
+    void   resetOutputFlow()      { _outputFlowSensor->resetFlow();}
+
+
+    void update();
+    void highFrecuencyUpdate();
+
+  #ifdef INTFLOWSENSOR // Gestion de los sensores de flujo que usan interrupciones
     void flowIn()
     {
-      entryFlowSensor_->pulse();
+      _inputFlowSensor->pulse();
     }
 
     void flowOut()
     {
-      exitFlowSensor_->pulse();
+      _outputFlowSensor->pulse();
     }
   #endif
 
 
   private:
-      ApolloPressureSensor  *entryPressureSensor_;
-      ApolloFlowSensor      *entryFlowSensor_;
-      ApolloFlowSensor      *exitFlowSensor_;
-      ApolloValve           *entryEV_;
-      ApolloValve           *exitEV_;
 
-      ApolloAlarms *alarms_;
+    void computePIDs();
+
+    ApolloPressureSensor  *_inputPressureSensor;
+    ApolloFlowSensor      *_inputFlowSensor;
+    ApolloFlowSensor      *_outputFlowSensor;
+    ApolloValve           *_inputValve;
+    ApolloValve           *_outputValve;
+    ApolloAlarms          *_alarms;
+
+//
+    float  _lastInputValveStatus;
+    float  _lastOutputValveStatus;
+    float  _lastPressure;
+    float  _lastInputFlow;
+    float  _lastOutputFlow;
+    float  _lastInputInstantFlow;
+    float  _lastOutputInstantFlow;
 
 
-      //Define the aggressive and conservative Tuning Parameters
-      double c_consKp = 5, c_consKi = 3, c_consKd = 1;
 
-      //Cache pressure to prevent overload values of sensors
-      double currentPressureIns_;
-      double currentPressureExs_;
-      double currentFlowIns_;
+//CONTROL PID PRESSURE
+    PID     _inputPressurePID;
+    double  _inputPressurePIDInput;
+    double  _inputPressurePIDTarget;
+    double  _inputPressurePIDOutput;
+    double  _inputPressurePIDKp;
+    double  _inputPressurePIDKd;
+    double  _inputPressurePIDKi;
 
-      double statusPressureIns_;
-      double statusPressureExs_;
-      double statusFlowIns_;
+    PID     _outputPressurePID;
+    double  _outputPressurePIDInput;
+    double  _outputPressurePIDTarget;
+    double  _outputPressurePIDOutput;
+    double  _outputPressurePIDKp;
+    double  _outputPressurePIDKd;
+    double  _outputPressurePIDKi;
 
-      //Targets of PID
-      double pressureInsTarget_;
-      double pressureExsTarget_;
-      double flowInsTarget_;
+//CONTROL PID FLOW
+    PID    _flowPID;
+    double _flowPIDInput;
+    double _flowPIDTarget;
+    double _flowPIDOutput;
+    double _flowPIDKp;
+    double _flowPIDKd;
+    double _flowPIDKi;
 
-      bool enableFlowIns_     = false;
-      bool enablePressureIns_ = false;
-      bool enablePressureExs_ = false;
-
-      PID pidPressureIns_;// = PID(&this->currentPressureIns_, &this->statusPressureIns_, &this->pressureInsTarget_, c_consKp, c_consKi, c_consKd, DIRECT);
-      PID pidPressureExs_;// = PID(&this->currentPressureExs_, &this->statusPressureExs_, &this->pressureExsTarget_, c_consKp, c_consKi, c_consKd, REVERSE);
-      PID pidFlowIns_;    // = PID(&this->currentFlowIns_    , &this->statusFlowIns_    , &this->flowInsTarget_    , c_consKp, c_consKi, c_consKd, DIRECT);
-
-      void initializePidPressureIns();
-      void initializePidPressureExs();
-      void initializePidFlowIns();
-
-      void pidPressureInsCompute();
-      void pidFlowInsCompute();
-      void pidPressureExsCompute();
-
+//
+    uint16_t _sensorLoopMS;
+    uint16_t _highFreqUpdateMillis;
 };
 
 #endif

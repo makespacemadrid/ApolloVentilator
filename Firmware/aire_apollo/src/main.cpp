@@ -24,7 +24,7 @@ Apollo firmware
 
 // #define DEBUG         //Activar mensajes debug - Algo pasa con el TRACE()
 // #define INTFLOWSENSOR //Activar solo para usar los sensores de flujo por interrupcion.(NO NECESARIO PARA EL RESTO DE SENSORES DE FLUJO)
-// #define LOCALCONTROLS // Display y encoders presentes.
+
 
 
 #include "../include/defaults.h"
@@ -67,24 +67,17 @@ int rpm     = DEFAULT_RPM;
 int vTidal  = DEFAULT_MIN_VOLUMEN_TIDAL;
 int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
 
-//REVISAR EL TEMA DEL VOLATILE EN LAS INTERRUPCIONES!
-volatile  uint16_t  logTimeCounter = 0;
-volatile  bool      sendLog        = false;
-ApolloHal  *hal;
 
+ApolloHal           *hal;
 MechVentilation     *ventilation;
 ApolloConfiguration *configuration = new ApolloConfiguration();
 Comunications       *com           = new Comunications(configuration);
 ApolloAlarms        *alarms        = new ApolloAlarms(com, PIN_BUZZER, true);
 
-
-
-#ifdef LOCALCONTROLS
-  LocalEncoder encoderRPM(PIN_ENC_RPM_DT, PIN_ENC_RPM_CLK, PIN_ENC_RPM_SW);
-  LocalEncoder encoderTidal(PIN_ENC_TIDAL_DT, PIN_ENC_TIDAL_CLK, PIN_ENC_TIDAL_SW);
-  LocalEncoder encoderPorcInspira(PIN_ENC_PCTINS_DT, PIN_ENC_PCTINS_CLK, PIN_ENC_PCTINS_SW);
-  LocalDisplay display = LocalDisplay();
-#endif
+unsigned long lastTelemetryUpdate;
+unsigned long lastSensorsUpdate ;
+unsigned long lastCommunicationsUpdate;
+unsigned long lastVentilatorUpdate;
 
 
 //implementar en el ventilador ??
@@ -104,14 +97,14 @@ int calculateCompliance(int pplat, int peep)
 */
 
 
-void ISR1ms() //Esta funcion se ejecuta cada 0.1ms para gestionar sensores/actuadores!
-{             // OJO!!! no bloquear ni hacer nada muy costoso en tiempo!!!!!!
+//void ISR1ms() //Esta funcion se ejecuta cada 0.1ms para gestionar sensores/actuadores!
+//{             // OJO!!! no bloquear ni hacer nada muy costoso en tiempo!!!!!!
 //  c1++;
   //FlexiTimer2::stop();
-  hal->ISR1ms();
+//  hal->ISR1ms();
 //  if(++logTimeCounter >= LOG_INTERVAL*10) {sendLog = true;logTimeCounter = 0;}
   //FlexiTimer2::start();
-}
+//}
 
 /*
 void ISRHighFreq()//interrupcion cada 100 microsegundos
@@ -134,9 +127,9 @@ void ISRHighFreq()//interrupcion cada 100 microsegundos
   }
 #endif
 
+/*
 void setRampsPWMFreq()
 {//UNTESTED!
-  /*
   timer 0 (controls pin 13, 4);
   timer 1 (controls pin 12, 11);
   timer 2 (controls pin 10, 9);
@@ -155,21 +148,20 @@ void setRampsPWMFreq()
   TCCR2B &= ~myEraser;   // this operation (AND plus NOT),  set the three bits in TCCR2B to 0
   int myPrescaler = 3;   // this could be a number in [1 , 6]. In this case, 3 corresponds in binary to 011.
   TCCR2B |= myPrescaler; //this operation (OR), replaces the last three bits in TCCR2B with our new value 011
-*/
 }
-
+*/
 /// Porgram Begin
 
-void logData()
+void sendTelemetry()
 {
 
-  String pressure(hal->getPresureIns());
+  String pressure(hal->getPressure());
 
-  String intakeInstantFlow(hal->getEntryInstantFlow());
-  String exitInstantFlow(hal->getExitInstantFlow());
+  String intakeInstantFlow(hal->getInputInstantFlow());
+  String exitInstantFlow(hal->getOutputInstantFlow());
 
-  float  in  = hal->getEntryFlow();
-  float  out = hal->getExitFlow();
+  float  in  = hal->getInputFlow();
+  float  out = hal->getOutputFlow();
   float  vol = in + out;
 
   String intakeFlow(in);
@@ -181,10 +173,10 @@ void logData()
   //String intakeInstantFlow(0);
   //String exitInstantFlow(0);
 
-  String intakeValveStatus(hal->getEntryValveStatus());
-  String ExitValveStatus(hal->getExitValveStatus());
-  String intakeValveTarget(hal->getEntryValveTarget());
-  String ExitValveTarget(hal->getExitValveTarget());
+  String intakeValveStatus(hal->getInputValveStatus());
+  String ExitValveStatus(hal->getOutputValveStatus());
+  String intakeValveTarget(hal->getInputValveTarget());
+  String ExitValveTarget(hal->getOutputValveTarget());
 
 
   String Status(ventilation->getStatus());
@@ -222,9 +214,9 @@ void setup()
   StepperNema *inStepper  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,STEPER1_ENDSTOP,NO_PIN,1050,800,5400,10,8);
   StepperNema *outStepper = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,STEPER2_ENDSTOP,NO_PIN,1000,100,200,200,8);
   inStepper->setMinEndStopPressedState(HIGH);
-  inStepper->enableMinEndstopPullup();
+//  inStepper->enableMinEndstopPullup();
   outStepper->setMinEndStopPressedState(HIGH);
-  outStepper->enableMinEndstopPullup();
+//  outStepper->enableMinEndstopPullup();
 
   ApolloValve *inValve  = inStepper;
   ApolloValve *outValve = outStepper;
@@ -239,7 +231,7 @@ void setup()
 
 //  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,0,80);
   ApolloValve* outValve = new servoValve(EXIT_EV_PIN,2,75);
-  StepperNema *inStepper  = new StepperNema(STEPER1_ENABLE,STEPER1_DIR,STEPER1_STEP,STEPER1_ENDSTOP,NO_PIN,1850,800,5400,3,8);
+  StepperNema *inStepper  = new StepperNema(STEPPER1_ENABLE,STEPPER1_DIR,STEPPER1_STEP,STEPPER1_ENDSTOP,NO_PIN,1850,800,5400,3,8);
   inStepper->setMinEndStopPressedState(HIGH);
   inStepper->enableMinEndstopPullup();
 //StepperNema *outStepper = new StepperNema(STEPER2_ENABLE,STEPER2_DIR,STEPER2_STEP,NO_PIN,NO_PIN,1000,100,200,200,8);
@@ -259,24 +251,24 @@ void setup()
 
   ventilation = new MechVentilation(hal, configuration, alarms);
 
-#ifdef LOCALCONTROLS
-  display.init();
-  display.clear();
-  display.writeLine(0, "RPM: "        + String(configuration->getRpm()));
-  display.writeLine(1, "Vol Tidal: "  + String(configuration->getMlTidalVolumen()));
-  display.writeLine(2, "Press PEEP: " + String(configuration->getPressionPeep()));
-  display.writeLine(3, "% Insp: "     + String(configuration->getPorcentajeInspiratorio()));
-#endif
-
 
 
 #ifdef INTFLOWSENSOR
   attachInterrupt(digitalPinToInterrupt(ENTRY_FLOW_PIN), flowIn, RISING);
   attachInterrupt(digitalPinToInterrupt(EXIT_FLOW_PIN), flowOut, RISING);
 #endif
-  TRACE("SETUP COMPLETED!");
 
-  //ISRs
+unsigned long now = millis();
+
+lastSensorsUpdate         =now+7;
+lastTelemetryUpdate       =now;
+lastVentilatorUpdate      =now;
+lastCommunicationsUpdate  =now;
+
+
+  TRACE("SETUP COMPLETED!: " +String(now)+" ms");
+
+//ISRs
 //  FlexiTimer2::set(1, 1.0/1000,ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
 //  FlexiTimer2::set(1 , 1.0/10000,ISR1ms); // Interrupcion de 1ms para el manejo de sensores/actuadores.
 //  FlexiTimer2::start();
@@ -289,15 +281,6 @@ void setup()
 //  Serial.println("VOlumen-hal3 "+String(hal->getEntryFlow()));
 
 }
-
-
-uint32_t tim = 0;
-bool a = 0;
-bool b = 0;
-
-
-unsigned long lastLogTime         = 0;
-unsigned long lastVentilatorUpdate = 10;
 
 
 void loop()
@@ -324,80 +307,32 @@ void loop()
   //  checkLeak(volc, volExit);
   //  calculateCompliance(pplat, peep);
 
-//  Serial.println("VOlumen-loop1 "+String(hal->getEntryFlow()));
 
-  hal->ISR1ms();
-//  Serial.println("VOlumen-loop2 "+String(hal->getEntryFlow()));
+  hal->highFrecuencyUpdate();
 
   unsigned long now = millis();
-  if(now >= lastLogTime + LOG_INTERVAL)
+  if(now >= lastTelemetryUpdate + TELEMETRY_INTERVAL)
   {
-//    Serial.println("VOlumen-loop3 "+String(hal->getEntryFlow()));
-
-    lastLogTime = now;
-    logData();
+    lastTelemetryUpdate = now;
+    sendTelemetry();
   }
 
-  if(now >= lastVentilatorUpdate + LOG_INTERVAL)
+  if(now >= lastSensorsUpdate + SENSORS_INTERVAL)
+  {
+    lastSensorsUpdate = now;
+    hal->update();
+  }
+
+  if(now >= lastVentilatorUpdate + VENTILATOR_INTERVAL)
   {
     lastVentilatorUpdate = now;
     ventilation->update();
     alarms->check();
   }
 
-  // gestion del ventilador
-//  ventilation->update();
-//  if (sendLog) {logData();sendLog = false;}
-//
-/*
-  tim++;
-  if(tim>500 && a == false)
+  if(now >= lastCommunicationsUpdate + COMMUNICATIONS_INTERVAL)
   {
-    Serial.println("OPEN");Serial.flush();
-    a=true;
-    hal->valveInsOpen(90);
+    lastCommunicationsUpdate = now;
+    com->serialRead();
   }
-  else if(tim>1000 && b == false)
-  {
-    Serial.println("CLOSE");Serial.flush();
-    b=true;
-    hal->valveInsClose();0
-    //hal->valveInsClose();
-  }
-  else if(tim>1500)
-  {
-    a=false,b=false;
-    tim = 0;
-  }
-*/
-
-/*
-#ifdef LOCALCONTROLS
-  if (encoderRPM.updateValue(&rpm))
-  {
-    configuration->setRpm(rpm);
-    display.writeLine(0, "RPM: " + String(configuration->getRpm()));
-  }
-  if (encoderTidal.updateValue(&vTidal, 10))
-  {
-    configuration->setTidalVolume(vTidal);
-    display.writeLine(1, "Vol Tidal: " + String(configuration->getMlTidalVolumen()));
-  }
-  if (encoderPorcInspira.updateValue(&porcentajeInspiratorio, 1))
-  {
-    configuration->setPorcentajeInspiratorio(porcentajeInspiratorio);
-    display.writeLine(3, "% Insp: " + String(configuration->getPorcentajeInspiratorio()));
-  }
-  if (com->serialRead())
-  {
-    display.writeLine(0, "RPM: "        + String(configuration->getRpm()));
-    display.writeLine(1, "Vol Tidal: "  + String(configuration->getMlTidalVolumen()));
-    display.writeLine(3, "% Insp: "     + String(configuration->getPorcentajeInspiratorio()));
-  }
-#else
-  com->serialRead();
-#endif
-
-*/
-//delay(10);
 }

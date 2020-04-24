@@ -1,8 +1,12 @@
 #ifndef DEFAULTS_H
 #define DEFAULTS_H
 
-#define LOG_INTERVAL 25 //milliseconds
 
+//TIMERS
+#define SENSORS_INTERVAL        10 //milliseconds
+#define TELEMETRY_INTERVAL      50 //milliseconds
+#define VENTILATOR_INTERVAL     100 //milliseconds
+#define COMMUNICATIONS_INTERVAL 500 //milliseconds
 //------HardWare---------
 #define ENTRY_EV_PIN    6   //Valvula - Entrada
 #define EXIT_EV_PIN     11  //Valvula - Salida
@@ -10,15 +14,15 @@
 #define EXIT_FLOW_PIN   4   //Sendor de Flujo - Salida
 //Sttepers (if needed)
   //RAMPS_X STEPER y ENDSTOP X_MIN
-#define STEPER1_ENABLE  38
-#define STEPER1_DIR     A1
-#define STEPER1_STEP    A0
-#define STEPER1_ENDSTOP  3
+#define STEPPER1_ENABLE  38
+#define STEPPER1_DIR     A1
+#define STEPPER1_STEP    A0
+#define STEPPER1_ENDSTOP  3
   //RAMPS_Y STEPER y ENDSTOP Y_MIN
-#define STEPER2_ENABLE  A2
-#define STEPER2_DIR     A7
-#define STEPER2_STEP    A6
-#define STEPER2_ENDSTOP 14
+#define STEPPER2_ENABLE  A2
+#define STEPPER2_DIR     A7
+#define STEPPER2_STEP    A6
+#define STEPPER2_ENDSTOP 14
 
 //#define PRESSURE_SENSOR_PIN      ??
 //-------I2C--------

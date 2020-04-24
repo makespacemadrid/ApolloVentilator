@@ -32,14 +32,15 @@ public:
 
   StepperNema(uint8_t pin_Enable,uint8_t pinDir_,uint8_t pinStep_,uint8_t pinMinEndStop_ = 0,uint8_t pinMaxEndStop_ = 0, int closePos_=0, int startPos_=0,uint16_t stepsPerRevolution_ = 200, uint16_t maxRpm_ = RPM, uint8_t microsteps_ = MICROSTEPS);
   bool    begin();
-  void    open(double percent = 100.0);
-  void    close();
-  void    waitOpen(double percent = 100);
-  void    waitClose();
+  void    open(double percent = 100.0,bool wait = false);
+  void    close(bool wait = false);
   double  status();
   double  target();
-  void    update(); //Required to move de steps
+  void    update();
+  void    highFreqUpdate(); //Required to move de steps
+
   bool    calibrate();
+  bool    test();
 
   void    setMinEndStopPressedState(bool state_){minEndStopPressedState = state_;}
   void    setMaxEndStopPressedState(bool state_){maxEndStopPressedState = state_;}
@@ -50,7 +51,7 @@ protected:
   bool      moveAwayMinEndStop();
   bool      moveTowardsMinEndStop();
   bool      home(); //Reemplaza calibrate?
-  bool      test();
+
   uint16_t  countStepsToHome();
   bool      isMinEndStopPressed(){return digitalRead(pinMinEndstop) == minEndStopPressedState;}
   bool      isMaxEndStopPressed(){return digitalRead(pinMaxEndstop) == maxEndStopPressedState;}

@@ -224,7 +224,7 @@ bool StepperNema::calibrate()
   return true;
 }
 
-void StepperNema::open(double openPercent)
+void StepperNema::open(double openPercent, bool wait)
 {
 //
     blockUpdate = true;
@@ -245,40 +245,27 @@ void StepperNema::open(double openPercent)
         this->lastDir=0; //izquierdas
       }
 //    Serial.println("NEMA-MOVER:"+String(mover));Serial.flush();
-    this->stepMotor.startMove(mover);
-//    Serial.println("Stepper "+String(mover)+" "+String(this->stepDestination)+" "+String(this->lastPos)+" "+String(percent));
-//    this->stepMotor.move(mover);
-//    lastPos = stepDestination;
+
+    if(wait)
+    {
+      this->stepMotor.move(mover);
+      lastPos = stepDestination;
+    }
+    else
+    {
+      this->stepMotor.startMove(mover);
+    }
+
     blockUpdate = false;
 }
 
-void StepperNema::close()
+void StepperNema::close(bool wait)
 {
-  this->open(0);
-}
-
-void    StepperNema::waitOpen(double openPercent)
-{
-  blockUpdate = true;
-  this->percent = constrain(openPercent,0.0,100.0);
-  this->stepDestination = map(this->percent,0,100,closePos,openPos);
-  int32_t mover = this->stepDestination - this->lastPos;
-  if(mover>0){
-    this->lastDir=1; //derechas
-  }else{
-    this->lastDir=0; //izquierdas
-  }
-  this->stepMotor.move(mover);
-  lastPos = stepDestination;
-  blockUpdate = false;
-}
-
-void    StepperNema::waitClose()
-{
-  waitOpen(0);
+  this->open(0,wait);
 }
 
 void StepperNema::update(){
+//check limits!!!!!
 /*
   if(this->pinFcIni != 0 && isMinEndStopPressed() && !this->lastDir){
     stepMotor.stop();
@@ -288,12 +275,16 @@ void StepperNema::update(){
     stepMotor.stop();
   }
 */
+}
+
+
+void StepperNema::highFreqUpdate(){
 
   //if(nextActionTime - millis() > 30) return;
   if(blockUpdate) return;
   //Serial.println("UPDATE STTEPER");Serial.flush();
   blockUpdate = true;
-  interrupts();//WTF! Sin esto se bloquea por que sin interrupciones no funciona delay y la clase del stepper llama a un delay si todavia no es tiempo de dar un paso.
+  //interrupts();//WTF! Sin esto se bloquea por que sin interrupciones no funciona delay y la clase del stepper llama a un delay si todavia no es tiempo de dar un paso.
   if(stepMotor.nextAction() < 1)
   {
     return;

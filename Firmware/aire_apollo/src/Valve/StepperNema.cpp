@@ -19,12 +19,12 @@ bool StepperNema::moveAwayMinEndStop()
   {
     stepMotor.move(1);
     counter++;
-    delay(1);
+    //delay(1);
   }
 
   if(isMinEndStopPressed())
   {
-      TRACE("Cannot move away min endstop!");
+      Serial.println("Cannot move away min endstop!");
       return false;
   }
   else return true;
@@ -37,12 +37,12 @@ bool StepperNema::moveTowardsMinEndStop()
   {
     stepMotor.move(-1);
     counter++;
-    delay(1);
+    //delay(1);
   }
 
   if(!isMinEndStopPressed())
   {
-      TRACE("Cannot hit min endstop!");
+      Serial.println("Cannot hit min endstop!");
       return false;
   }
   else return true;
@@ -55,7 +55,7 @@ uint16_t StepperNema::countStepsToHome()
   {
     stepMotor.move(-1);
     count++;
-    delay(1);
+    //delay(1);
   }
   return count;
 }
@@ -127,7 +127,7 @@ double StepperNema::status()
 //  else
 //    p = map(this->lastPos,openPos,closePos,0,100);
     return p;
-} // Revisar la logica de inversion de movimiento!
+}
 
 double StepperNema::target()
 {
@@ -179,7 +179,7 @@ bool StepperNema::test()
 bool StepperNema::begin()
 {
     this->stepMotor.begin(this->maxRPM,this->microSteps);
-    TRACE("Nema- MaxRPM  maxrpm:" + String(maxRPM) + " microsteps:" + String(microSteps));
+    Serial.println("Nema- MaxRPM  maxrpm:" + String(maxRPM) + " microsteps:" + String(microSteps));
     // if using enable/disable on ENABLE pin (active LOW) instead of SLEEP uncomment next line
     this->stepMotor.setEnableActiveState(LOW);
     this->stepMotor.enable();
@@ -195,11 +195,11 @@ bool StepperNema::begin()
     {//Comprobacion del mecanismo. Desde el final de carrera hasta la posicion maxima ida y vuelta varias veces.
     //Los pasos para ir y para volver deben de ser (casi) los mismo o el mecanismo no esta bien
       //return true;
-      return test();
+      return true;
     }
     else
     {
-      TRACE("Stepper Homing error!");
+      Serial.println("Stepper Homing error!");
       return false;
     }
 }
@@ -287,6 +287,7 @@ void StepperNema::highFreqUpdate(){
   //interrupts();//WTF! Sin esto se bloquea por que sin interrupciones no funciona delay y la clase del stepper llama a un delay si todavia no es tiempo de dar un paso.
   if(stepMotor.nextAction() < 1)
   {
+    blockUpdate = false;
     return;
   }
   else

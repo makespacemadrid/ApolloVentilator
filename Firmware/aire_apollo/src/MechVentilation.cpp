@@ -138,7 +138,7 @@ void MechVentilation::insuflationPre()
     this->hal->resetInputFlow();
     this->hal->resetOutputFlow();
     this->hal->closeOutputValve();
-    this->hal->setPressureMode(this->_cfgPresionPico);
+    this->hal->setConstantPressure(this->_cfgPresionPico);
     this->stateNext();
 }
 
@@ -150,7 +150,7 @@ void MechVentilation::insufaltionProcess()
     switch (this->mode)
     {
     case Mode::Pressure:
-        this->hal->setPressureMode(this->_cfgPresionPico);
+        this->hal->setConstantPressure(this->_cfgPresionPico);
         break;
     case Mode::Flow:
         if (this->hal->getInputFlow() >= this->_cfgmlTidalVolume)
@@ -186,7 +186,7 @@ void MechVentilation::insuflationPost()
 void MechVentilation::exsufflationPre()
 {
     /** @todo Abrimos válvulas de salida */
-    this->hal->setPressureMode(this->_cfgPresionPeep);
+    this->hal->setConstantPressure(this->_cfgPresionPeep);
     //this->hal->valveInsOpen(35);
     stateNext();
 }

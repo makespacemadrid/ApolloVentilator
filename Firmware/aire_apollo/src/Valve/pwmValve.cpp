@@ -1,5 +1,5 @@
 #include "pwmValve.h"
-
+/* HACK!
 pwmValve::pwmValve(uint8_t pin) : _pin(pin)
 {
 
@@ -25,3 +25,4 @@ void    pwmValve::close()
 {
   digitalWrite(_pin,0);
 }
+*/

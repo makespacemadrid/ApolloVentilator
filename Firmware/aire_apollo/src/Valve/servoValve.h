@@ -2,7 +2,7 @@
 #define SERVOVALVE_H
 
 #include "ApolloValve.h"
-#include <Servo.h>
+#include <PWMServo.h>
 
 
 
@@ -16,12 +16,12 @@ public:
   virtual double  status();
   virtual double  target() {return _percent;}
 protected:
-  Servo   _servo;
-  uint8_t _pin;
-  double  _percent;
-  uint8_t _minPos;
-  uint8_t _maxPos;
-  double  _lastPos;
+  PWMServo _servo;
+  uint8_t  _pin;
+  double   _percent;
+  uint8_t  _minPos;
+  uint8_t  _maxPos;
+  double   _lastPos;
   unsigned long _lastOrderTimestamp;
   unsigned long _estimatedFinishTime;
   const uint16_t _OpenTimeMS;

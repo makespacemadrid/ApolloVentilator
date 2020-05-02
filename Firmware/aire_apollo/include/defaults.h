@@ -2,6 +2,7 @@
 #define DEFAULTS_H
 
 
+
 //TIMERS
 #define SENSORS_INTERVAL        10 //milliseconds
 #define TELEMETRY_INTERVAL      50 //milliseconds
@@ -12,18 +13,30 @@
 #define EXIT_EV_PIN     11  //Valvula - Salida
 #define ENTRY_FLOW_PIN  3   //Sensor de Flujo - Entrada
 #define EXIT_FLOW_PIN   4   //Sendor de Flujo - Salida
-//Sttepers (if needed)
-  //RAMPS_X STEPER y ENDSTOP X_MIN
-#define STEPPER1_ENABLE  38
-#define STEPPER1_DIR     A1
-#define STEPPER1_STEP    A0
-#define STEPPER1_ENDSTOP  3
-  //RAMPS_Y STEPER y ENDSTOP Y_MIN
-#define STEPPER2_ENABLE  A2
-#define STEPPER2_DIR     A7
-#define STEPPER2_STEP    A6
-#define STEPPER2_ENDSTOP 14
 
+#if defined(ARDUINO_ARCH_ESP32)
+  #define STEPPER1_ENABLE  0
+  #define STEPPER1_DIR     0
+  #define STEPPER1_STEP    0
+  #define STEPPER1_ENDSTOP 0
+    //RAMPS_Y STEPER y ENDSTOP Y_MIN
+  #define STEPPER2_ENABLE  0
+  #define STEPPER2_DIR     0
+  #define STEPPER2_STEP    0
+  #define STEPPER2_ENDSTOP 0
+#else
+  //Sttepers (if needed)
+    //RAMPS_X STEPER y ENDSTOP X_MIN
+  #define STEPPER1_ENABLE  38
+  #define STEPPER1_DIR     A1
+  #define STEPPER1_STEP    A0
+  #define STEPPER1_ENDSTOP  3
+    //RAMPS_Y STEPER y ENDSTOP Y_MIN
+  #define STEPPER2_ENABLE  A2
+  #define STEPPER2_DIR     A7
+  #define STEPPER2_STEP    A6
+  #define STEPPER2_ENDSTOP 14
+#endif
 //#define PRESSURE_SENSOR_PIN      ??
 //-------I2C--------
 #define BME280_ADDR 0x76

@@ -63,6 +63,8 @@ const   uint8_t pinMinEndstop = 0;
 const   uint8_t pinMaxEndstop = 0;
         double  percent = 0.0;
 
+        bool    moving      = false;
+        bool    pendingMove = false;
         bool    blockUpdate = false;
         bool    lastDir     = 0;
         int32_t lastPos     = 0;
@@ -79,7 +81,6 @@ const   uint8_t  microSteps;
   uint8_t  maxEndstopPinMode  = INPUT;
   bool minEndStopPressedState = LOW;
   bool maxEndStopPressedState = LOW;
-
   DRV8825 stepMotor;
 };
 

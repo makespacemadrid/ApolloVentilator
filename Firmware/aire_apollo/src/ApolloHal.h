@@ -12,16 +12,25 @@ class ApolloHal
 {
 
 public:
-    ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms);
+//    ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms);
+    ApolloHal();
     ~ApolloHal();
+
+    void addValves        (ApolloValve* inputValve,ApolloValve* outputValve);
+    void addPressureSensor(ApolloPressureSensor* pressureSensor);
+    void addFlowSensors   (ApolloFlowSensor* inputFlow, ApolloFlowSensor* outputFlow);
+
+    void debug(String debugmsg);
+    void sendData();
+
 
     bool  begin();
     bool  test();
     bool  calibrate();
 
 
-    bool  setFlowMode     (float flow, float maxPressure);
-    bool  setPressureMode (float pressure);
+    bool  setConstantFlow     (float flow, float maxPressure);
+    bool  setConstantPressure (float pressure);
 
 
     void openInputValve     (uint8_t percent = 100, bool wait = false);
@@ -33,8 +42,8 @@ public:
     double getPressure()          { return _lastPressure;}
     double getInputValveStatus()  { return _lastInputValveStatus;}
     double getOutputValveStatus() { return _lastOutputValveStatus;}
-    double getInputValveTarget()  { return _inputValve->target();}
-    double getOutputValveTarget() { return _outputValve->target();}
+    double getInputValveTarget()  { return _lastInputValveTarget;}
+    double getOutputValveTarget() { return _lastOutputValveTarget;}
 
     double getInputFlow()         { return _lastInputFlow;}
     double getInputInstantFlow()  { return _lastInputInstantFlow;}
@@ -63,6 +72,7 @@ public:
 
   private:
 
+    void initPIDs();
     void computePIDs();
 
     ApolloPressureSensor  *_inputPressureSensor;
@@ -75,43 +85,56 @@ public:
 //
     float  _lastInputValveStatus;
     float  _lastOutputValveStatus;
+    float  _lastInputValveTarget;
+    float  _lastOutputValveTarget;
     float  _lastPressure;
     float  _lastInputFlow;
     float  _lastOutputFlow;
     float  _lastInputInstantFlow;
     float  _lastOutputInstantFlow;
 
+    bool   _hasPressureSensor;
+    bool   _hasFlowSensors;
+
+//CONTROL PID
+    bool    _constantPressureEnabled;
+    PID     _constantPressurePID;
+    double  _constantPressurePIDInput;
+    double  _constantPressurePIDTarget;
+    double  _constantPressurePIDOutput;
+    double  _constantPressurePIDKp;
+    double  _constantPressurePIDKd;
+    double  _constantPressurePIDKi;
+
+    bool   _constantFlowEnabled;
+    PID    _constantFlowPID;
+    double _constantFlowPIDInput;
+    double _constantFlowPIDTarget;
+    double _constantFlowPIDOutput;
+    double _constantFlowPIDKp;
+    double _constantFlowPIDKd;
+    double _constantFlowPIDKi;
+
+    PID     _overPressurePID;
+    double  _overPressurePIDInput;
+    double  _overPressurePIDTarget;
+    double  _overPressurePIDOutput;
+    double  _overPressurePIDKp;
+    double  _overPressurePIDKd;
+    double  _overPressurePIDKi;
 
 
-//CONTROL PID PRESSURE
-    PID     _inputPressurePID;
-    double  _inputPressurePIDInput;
-    double  _inputPressurePIDTarget;
-    double  _inputPressurePIDOutput;
-    double  _inputPressurePIDKp;
-    double  _inputPressurePIDKd;
-    double  _inputPressurePIDKi;
-
-    PID     _outputPressurePID;
-    double  _outputPressurePIDInput;
-    double  _outputPressurePIDTarget;
-    double  _outputPressurePIDOutput;
-    double  _outputPressurePIDKp;
-    double  _outputPressurePIDKd;
-    double  _outputPressurePIDKi;
-
-//CONTROL PID FLOW
-    PID    _flowPID;
-    double _flowPIDInput;
-    double _flowPIDTarget;
-    double _flowPIDOutput;
-    double _flowPIDKp;
-    double _flowPIDKd;
-    double _flowPIDKi;
+    PID     _inspiratoryRisePID;
+    double  _inspiratoryRisePIDInput;
+    double  _inspiratoryRisePIDTarget;
+    double  _inspiratoryRisePIDOutput;
+    double  _inspiratoryRisePIDKp;
+    double  _inspiratoryRisePIDKd;
+    double  _inspiratoryRisePIDKi;
 
 //
-    uint16_t _sensorLoopMS;
-    uint16_t _highFreqUpdateMillis;
+    unsigned long _lastSensorLoopMicros;
+    unsigned long _lastHighFreqUpdateMicros;
 };
 
 #endif

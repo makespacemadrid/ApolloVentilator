@@ -3,15 +3,15 @@
 Information: Checkout our [wiki](https://github.com/makespacemadrid/ApolloVentilator/wiki)
 
 
-###Schematic
+### Schematic
 ![Schematic](https://github.com/makespacemadrid/ApolloVentilator/raw/master/media/esquemaBasico.png)
 
 
-###Prototipe 1 @ MakeSpace Madrid
-![Prototipe 1 @ MakeSpace Madrid] (https://github.com/makespacemadrid/ApolloVentilator/raw/master/media/prototype1.jpg)
+### Prototype 1 @ MakeSpace Madrid
+![Prototipe1] (https://github.com/makespacemadrid/ApolloVentilator/raw/master/media/prototype1.jpg)
 
-###Prototipe 2 @ Miguel's Workshop
-![Prototipe 2 @ Miguel's Workshop] (https://github.com/makespacemadrid/ApolloVentilator/raw/master/media/prototype1.jpg)
+### Prototype 2 @ Miguel's Workshop
+![Prototipe2] (https://github.com/makespacemadrid/ApolloVentilator/raw/master/media/prototype2.jpg)
 
 ## Getting started
 

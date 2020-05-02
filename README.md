@@ -2,6 +2,13 @@
 
 Information: Checkout our [wiki](https://github.com/makespacemadrid/ApolloVentilator/wiki)
 
+
+![Idea](https://github.com/makespacemadrid/ApolloVentilator/raw/master/media/esquemaBasico.png)
+
+![Prototipe 1 @ MakeSpace Madrid] (https://github.com/makespacemadrid/ApolloVentilator/raw/master/media/prototype1.png)
+
+![Prototipe 2 @ Miguel's Workshop] (https://github.com/makespacemadrid/ApolloVentilator/raw/master/media/prototype1.png)
+
 ## Getting started
 
 ### Linux

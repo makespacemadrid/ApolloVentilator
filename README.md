@@ -8,10 +8,10 @@ Information: Checkout our [wiki](https://github.com/makespacemadrid/ApolloVentil
 
 
 ### Prototype 1 @ MakeSpace Madrid
-![Prototipe1] (https://github.com/makespacemadrid/ApolloVentilator/raw/master/media/prototype1.jpg)
+![Prototype1](https://github.com/makespacemadrid/ApolloVentilator/raw/master/media/prototype1.jpg)
 
 ### Prototype 2 @ Miguel's Workshop
-![Prototipe2] (https://github.com/makespacemadrid/ApolloVentilator/raw/master/media/prototype2.jpg)
+![Prototype2](https://github.com/makespacemadrid/ApolloVentilator/raw/master/media/prototype2.jpg)
 
 ## Getting started
 

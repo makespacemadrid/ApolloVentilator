@@ -7,6 +7,7 @@ from random import random, randint
 from window import MainWindow
 import sys
 import functools
+from itertools import count
 
 
 '''
@@ -15,7 +16,31 @@ raw_data = b'{ "type" : "ventilatorConfig", "rpm" : 15,"pMax" : 50.0,"pPeak" : 4
 '''
 #TODO: change from bytestring to string
 
-def update_graph():
+class Plot(pg.PlotWidget):
+    def __init__(self, index):
+        super().__init__()
+        self.index = index
+        self.pseudotime = count()
+        self.buffer = 100
+        self.x = [next(self.pseudotime)]
+        self.y = [randint(0,8)]
+        print("Initialized ", self.x, self.y)
+        self.setBackground('w')
+        pen = pg.mkPen(color=(255, 0, 0))
+        self.data_line =  self.plot(self.x, self.y, pen=pen)         
+        
+    def plot_graph(self, data):
+        self.x.append(next(self.pseudotime))
+        self.y.append(data)
+        print("Updated ", self.x, self.y)
+        if len(self.x) > self.buffer:
+            # print('buffer length achieved')
+            self.x = self.x[1:]
+            self.y = self.y[1:]
+        self.data_line.setData(self.x, self.y)
+
+
+def plot_graphs(plot1,plot2,plot3,plot4):
     raw_data = { 
         "type" : "ventilatorConfig", 
         "rpm" : random(),
@@ -26,48 +51,12 @@ def update_graph():
         "ieRatio" : random(),
         "iRiseTime" : random()
     }
-
-class Plot(pg.PlotWidget):
-    def __init__(self, index):
-        super().__init__()
-        self.index = index
-        
-        self.x = list(range(0,200))
-        self.y = [randint(0,8) for _ in range(200)]
-        self.setBackground('w')
-        pen = pg.mkPen(color=(255, 0, 0))
-        self.data_line =  self.plot(self.x, self.y, pen=pen)         
-        
-    def plot_graph(self):
-        self.x = list(range(0,200))
-        self.y = [randint(0,8) for _ in range(200)]
-        print(self.x, self.y)
-        self.data_line.setData(self.x, self.y)
-
-
-    def update_plot_data(self, data): 
-        self.x = self.x[1:]  # Remove the first y element.
-        self.x.append(self.x[-1] + 1)   # Add a new value 1 higher than the last.
-
-        self.y = self.y[1:]  # Remove the first 
-        # if len(selfdata) > 0:
-        try:
-            self.y.append(data)
-            # self.data_line.setData(self.x, self.y)
-        except IndexError:
-            print('error getting data ')
-        except ValueError:
-            print('error converting data ')
-        except:
-            print('other kind of error ', data, sys.exc_info()[0])
-
-
-def plot_graphs(plot1,plot2,plot3,plot4):
     print('plot_graphs')
-    plot1.plot_graph()
-    plot2.plot_graph()
-    plot3.plot_graph()
-    plot4.plot_graph()
+
+    plot1.plot_graph(raw_data['pMax'])
+    plot2.plot_graph(raw_data['pPeak'])
+    plot3.plot_graph(raw_data['pPEEP'])
+    plot4.plot_graph(raw_data['rpm'])
 
 
 if __name__ == "__main__":
@@ -84,7 +73,7 @@ if __name__ == "__main__":
     window.layout.addWidget(yotro)
     window.layout.addWidget(otrouanmortaim)
     timer = QTimer()
-    timer.setInterval(10)
+    timer.setInterval(100)
     plot_process = functools.partial(plot_graphs,plot1=unpg, plot2=otropg, plot3=yotro,plot4=otrouanmortaim)
     timer.timeout.connect(plot_process)
     timer.start()

@@ -1,16 +1,13 @@
 #include "StepperNema.h"
 #include "trace.h"
-StepperNema::StepperNema(uint8_t pinEnable_,uint8_t pinDir_,uint8_t pinStep_,uint8_t pinMinEndStop_ ,uint8_t pinMaxEndStop_ , int closePos_, int openPos_, uint16_t stepsPerRevolution_ ,uint16_t maxRpm_, uint8_t microsteps_) :
-  pinMinEndstop(pinMinEndStop_), pinMaxEndstop(pinMaxEndStop_),
-  openPos(openPos_), closePos(closePos_), maxRPM(maxRpm_), microSteps(microsteps_),
-  stepMotor(stepsPerRevolution_, pinDir_, pinStep_, pinEnable_,-1,-1,-1)
-
+StepperNema::StepperNema(uint8_t pinStep_,uint8_t pinDir_, int8_t pinMinEndstop_ , int8_t pin_Enable, bool enabledState ,uint16_t stepsPerRevolution_) :
+  stepMotor(stepsPerRevolution_, pinDir_, pinStep_, pin_Enable,-1,-1,-1) ,pinMinEndstop(pinMinEndstop_),maxRPM(RPM),microSteps(MICROSTEPS)
 {
-  if(openPos > closePos)
-    this->stepsMax = openPos*1.1;
-  else
-    this->stepsMax = closePos*1.1;
+  stepMotor.setEnableActiveState(enabledState);
+  Serial.println("Nema- step:" +String(pinStep_) + " dir:" + String(pinDir_) + " endstop:" + String(pinMinEndstop));
 }
+
+
 
 bool StepperNema::moveAwayMinEndStop()
 {
@@ -63,7 +60,7 @@ uint16_t StepperNema::countStepsToHome()
 bool StepperNema::home()
 {
   Serial.print("HOMING....");
-  if(this->pinMinEndstop <= 0)
+  if(pinMinEndstop < 0)
   {
     Serial.println("No endStop!");
     return true; //Nothing to do here, si no hay final de carrera le damos hacia el 0 unos segundos para que choque?
@@ -123,7 +120,7 @@ double StepperNema::status()
   //return target();
   double p = 0;
 //  if(openPos > closePos)
-    p = map(this->lastPos,closePos,openPos,0,100);
+    p = map(lastPos,closePos,openPos,0,100);
 //  else
 //    p = map(this->lastPos,openPos,closePos,0,100);
     return p;
@@ -136,29 +133,54 @@ double StepperNema::target()
 
 bool StepperNema::test()
 {
+
+  Serial.print("TESTING....");
   uint32_t maxPos;
 //  uint32_t minPos;
-  if(openPos > closePos)
-  {
-    maxPos = openPos;
+
+
+
+
+for(int t = 0 ; t < 5 ; t++)
+{
+  open(100,true);
+  delay(100);
+  close(true);
+  delay(100);
+}
+if(openPos > closePos)
+{
+  maxPos = openPos;
 //    minPos = maxPos;
-  }
-  else
-  {
-    maxPos = closePos;
+  open(100,true);
+}
+else
+{
+  maxPos = closePos;
 //    minPos = openPos;
+    close(true);
+}
+
+//  stepMotor.move(maxPos);
+//  stepMotor.move(-maxPos);
+//  stepMotor.move(maxPos);
+//  stepMotor.move(-maxPos);
+//  stepMotor.move(maxPos);
+//  stepMotor.move(-maxPos);
+//  stepMotor.move(maxPos);
+//  stepMotor.move(-maxPos);
+//  stepMotor.move(maxPos);
+//  stepMotor.move(-maxPos);
+//  stepMotor.move(maxPos);
+//  stepMotor.move(-maxPos);
+//  stepMotor.move(maxPos);
+
+
+  if(pinMinEndstop < 0)
+  {
+    Serial.println("No endStop!");
+    return true; //Nothing to do here
   }
-
-  stepMotor.move(maxPos);
-  stepMotor.move(-maxPos);
-  stepMotor.move(maxPos);
-  stepMotor.move(-maxPos);
-  stepMotor.move(maxPos);
-//  stepMotor.move(-maxPos);
-//  stepMotor.move(maxPos);
-//  stepMotor.move(-maxPos);
-//  stepMotor.move(maxPos);
-
 
   uint32_t stepsBackToHome = countStepsToHome();
   Serial.println("STEPS: "+String(maxPos) + " BACK: " + String(stepsBackToHome));
@@ -172,21 +194,29 @@ bool StepperNema::test()
     Serial.println("UNRELIABLE STEPPER");
     return false;
   }
-  else return true;
+  else
+  {
+    lastPos = 0;
+    return true;
+  }
 
 }
 
 bool StepperNema::begin()
 {
-    this->stepMotor.begin(this->maxRPM,this->microSteps);
+  if(openPos > closePos)
+    this->stepsMax = openPos*1.1;
+  else
+    this->stepsMax = closePos*1.1;
+
+    stepMotor.begin(maxRPM,microSteps);
     Serial.println("Nema- MaxRPM  maxrpm:" + String(maxRPM) + " microsteps:" + String(microSteps));
     // if using enable/disable on ENABLE pin (active LOW) instead of SLEEP uncomment next line
-    this->stepMotor.setEnableActiveState(LOW);
     this->stepMotor.enable();
     stepMotor.setSpeedProfile(stepMotor.LINEAR_SPEED, MOTOR_ACCEL, MOTOR_DECEL); //Probar bien antes de activar
 
-    if(this->pinMaxEndstop  > 0) pinMode(this->pinMaxEndstop,maxEndstopPinMode);
-    if(this->pinMinEndstop  > 0)
+    if(this->pinMaxEndstop) pinMode(this->pinMaxEndstop,maxEndstopPinMode);
+    if(this->pinMinEndstop)
       pinMode(this->pinMinEndstop,minEndstopPinMode);
     else
       return true; //Si no hay final de carrera de minimo no hacemos nada mas.
@@ -195,6 +225,7 @@ bool StepperNema::begin()
     {//Comprobacion del mecanismo. Desde el final de carrera hasta la posicion maxima ida y vuelta varias veces.
     //Los pasos para ir y para volver deben de ser (casi) los mismo o el mecanismo no esta bien
       //return true;
+      lastPos = 0;
       return true;
     }
     else

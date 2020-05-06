@@ -71,9 +71,7 @@ ApolloHal hal;
 //Comunications       *com           = new Comunications(configuration);
 //ApolloAlarms        *alarms        = new ApolloAlarms(com, PIN_BUZZER, true);
 
-unsigned long lastTelemetryUpdate;
-unsigned long lastSensorsUpdate ;
-unsigned long lastCommunicationsUpdate;
+
 unsigned long lastVentilatorUpdate;
 
 
@@ -153,10 +151,22 @@ void setup()
 
 //  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,0,80);
 //  ApolloValve* outValve = new servoValve(EXIT_EV_PIN,2,75);
-  StepperNema *inStepper  = new StepperNema(STEPPER1_ENABLE,STEPPER1_DIR,STEPPER1_STEP,NO_PIN,NO_PIN,1800,850,5400,10,2);
+  StepperNema *inStepper  = new StepperNema(STEPPER1_STEP,STEPPER1_DIR,STEPPER1_ENDSTOP, STEPPER1_ENABLE , LOW ,5400);
   inStepper->setMinEndStopPressedState(HIGH);
   inStepper->enableMinEndstopPullup();
-  StepperNema *outStepper = new StepperNema(STEPPER2_ENABLE,STEPPER2_DIR,STEPPER2_STEP,NO_PIN,NO_PIN,1500,0,200,150,16);
+  inStepper->setMaxRPM(10);
+  inStepper->setMicrosteps(2);
+  inStepper->setOpenPos(700);
+  inStepper->setClosedPos(1650);
+
+  StepperNema *outStepper = new StepperNema(STEPPER2_STEP,STEPPER2_DIR,STEPPER2_ENDSTOP, STEPPER2_ENABLE);
+  outStepper->setMinEndStopPressedState(HIGH);
+  outStepper->enableMinEndstopPullup();
+  outStepper->setMaxRPM(500);
+  outStepper->setMicrosteps(16);
+  outStepper->setOpenPos(0);
+  outStepper->setClosedPos(1950);
+
   ApolloValve *inValve  = inStepper;
   ApolloValve *outValve = outStepper;
 
@@ -181,12 +191,12 @@ void setup()
     //alarma!!
   }
 
-  while (!hal.test())
-  {
-    hal.debug("HAL TEST ERR!"); // No arrancamos si falla algun componente o podemos arrancar con algunos en fallo?
-    delay(1000);
+//  while (!hal.test())
+//  {
+//    hal.debug("HAL TEST ERR!"); // No arrancamos si falla algun componente o podemos arrancar con algunos en fallo?
+//    delay(1000);
     //alarma!!
-  }
+//  }
 
   while (!hal.calibrate())
   {
@@ -202,10 +212,8 @@ void setup()
 
 
   unsigned long now = millis();
-  lastSensorsUpdate         =now;
-  lastTelemetryUpdate       =now;
-  lastVentilatorUpdate      =now;
-  lastCommunicationsUpdate  =now;
+  lastVentilatorUpdate = now;
+
 
   #ifdef INTFLOWSENSOR
     attachInterrupt(digitalPinToInterrupt(ENTRY_FLOW_PIN), flowIn, RISING);
@@ -215,7 +223,7 @@ void setup()
   hal.debug("SETUP COMPLETED!: " +String(now)+" ms");
 
 //TESTING!
-//  hal.setConstantPressure(45.0);
+//  hal.setConstantPressure(30.0);
 }
 
 uint16_t loops;
@@ -246,21 +254,9 @@ void loop()
   //  calculateCompliance(pplat, peep);
 
 
-  hal.highFrecuencyUpdate();
+  hal.update();
 
   unsigned long now = millis();
-
-  if(now >= lastTelemetryUpdate + TELEMETRY_INTERVAL)
-  {
-    lastTelemetryUpdate = now;
-    hal.sendData();
-  }
-
-  if(now >= lastSensorsUpdate + SENSORS_INTERVAL)
-  {
-    lastSensorsUpdate = now;
-    hal.update();
-  }
 
   if(now >= lastVentilatorUpdate + VENTILATOR_INTERVAL)
   {
@@ -269,9 +265,4 @@ void loop()
 //    alarms->check();
   }
 
-  if(now >= lastCommunicationsUpdate + COMMUNICATIONS_INTERVAL)
-  {
-    lastCommunicationsUpdate = now;
-//    com->serialRead();
-  }
 }

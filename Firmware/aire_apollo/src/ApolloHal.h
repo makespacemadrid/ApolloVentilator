@@ -11,6 +11,15 @@
 class ApolloHal
 {
 
+enum pressureMode
+{
+  none,
+  rampUpPressure,
+  constantPressure,
+  lastItem
+};
+
+
 public:
 //    ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms);
     ApolloHal();
@@ -27,8 +36,10 @@ public:
     bool  begin();
     bool  test();
     bool  calibrate();
+    bool  calibratePressure();
 
 
+    void  risePressure(float pressure, uint16_t targetTime);
     bool  setConstantFlow     (float flow, float maxPressure);
     bool  setConstantPressure (float pressure);
 
@@ -55,7 +66,7 @@ public:
 
 
     void update();
-    void highFrecuencyUpdate();
+
 
   #ifdef INTFLOWSENSOR // Gestion de los sensores de flujo que usan interrupciones
     void flowIn()
@@ -74,6 +85,8 @@ public:
 
     void initPIDs();
     void computePIDs();
+    void highFrecuencyUpdate();
+    void sensorUpdate();
 
     ApolloPressureSensor  *_inputPressureSensor;
     ApolloFlowSensor      *_inputFlowSensor;
@@ -93,8 +106,17 @@ public:
     float  _lastInputInstantFlow;
     float  _lastOutputInstantFlow;
 
+
+    uint16_t _lastInspiratoryRiseTimeMS;
+    unsigned long _lastInspiratoryRiseStart;
+    float    _lastInspiratoryValveStatus;
+    bool     _pressureTargetArchived;
+
     bool   _hasPressureSensor;
     bool   _hasFlowSensors;
+
+    pressureMode _pressureMode = none;
+    float        _pressureTarget;
 
 //CONTROL PID
     bool    _constantPressureEnabled;
@@ -135,6 +157,10 @@ public:
 //
     unsigned long _lastSensorLoopMicros;
     unsigned long _lastHighFreqUpdateMicros;
+
+    unsigned long _lastTelemetryUpdate;
+    unsigned long _lastSensorsUpdate ;
+    unsigned long _lastCommunicationsUpdate;
 };
 
 #endif

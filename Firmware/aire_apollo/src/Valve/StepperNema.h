@@ -30,7 +30,7 @@ class StepperNema : public ApolloValve
 
 public:
 
-  StepperNema(uint8_t pin_Enable,uint8_t pinDir_,uint8_t pinStep_,uint8_t pinMinEndStop_ = 0,uint8_t pinMaxEndStop_ = 0, int closePos_=0, int startPos_=0,uint16_t stepsPerRevolution_ = 200, uint16_t maxRpm_ = RPM, uint8_t microsteps_ = MICROSTEPS);
+  StepperNema(uint8_t pinStep_,uint8_t pinDir_, int8_t pinMinEndstop_  = NO_PIN, int8_t pin_Enable = NO_PIN, bool enabledState = LOW ,uint16_t stepsPerRevolution_ = 200);
   bool    begin();
   void    open(double percent = 100.0,bool wait = false);
   void    close(bool wait = false);
@@ -42,6 +42,12 @@ public:
   bool    calibrate();
   bool    test();
 
+
+  void    setMicrosteps(uint8_t msteps) {microSteps = msteps;}
+  void    setMaxRPM(int16_t mrpm)               {maxRPM = mrpm;}
+  void    setOpenPos(uint32_t   opos)           {openPos = opos;}
+  void    setClosedPos(uint32_t cpos)           {closePos = cpos;}
+  void    setMaxEndstopPin(int8_t pin)          {pinMaxEndstop = pin;}
   void    setMinEndStopPressedState(bool state_){minEndStopPressedState = state_;}
   void    setMaxEndStopPressedState(bool state_){maxEndStopPressedState = state_;}
   void    enableMinEndstopPullup()              {minEndstopPinMode = INPUT_PULLUP;}
@@ -58,30 +64,29 @@ protected:
   bool      isGoingForward()     {return lastDir == true;}
 
 
+   DRV8825 stepMotor;
+   int8_t pinMinEndstop = 0;
+   int8_t pinMaxEndstop = 0;
+    double  percent = 0.0;
 
-const   uint8_t pinMinEndstop = 0;
-const   uint8_t pinMaxEndstop = 0;
-        double  percent = 0.0;
-
-        bool    moving      = false;
-        bool    pendingMove = false;
-        bool    blockUpdate = false;
-        bool    lastDir     = 0;
-        int32_t lastPos     = 0;
+    bool    moving      = false;
+    bool    pendingMove = false;
+    bool    blockUpdate = false;
+    bool    lastDir     = 0;
+    int32_t lastPos     = 0;
 //  uint32_t nextActionTime;
 
-        int32_t  stepDestination = 0;
-const   uint32_t openPos  = 0; // Offset steps
-const   uint32_t closePos  = 0;
-        uint32_t stepsMax  = MOTOR_STEPS*MICROSTEPS;
-const   uint16_t maxRPM;
-const   uint8_t  microSteps;
+   int32_t  stepDestination = 0;
+   uint32_t openPos  = 0; // Offset steps
+   uint32_t closePos  = 0;
+   uint32_t stepsMax  = MOTOR_STEPS*MICROSTEPS;
+   uint16_t maxRPM;
+   uint8_t  microSteps;
 
   uint8_t  minEndstopPinMode  = INPUT;
   uint8_t  maxEndstopPinMode  = INPUT;
   bool minEndStopPressedState = LOW;
   bool maxEndStopPressedState = LOW;
-  DRV8825 stepMotor;
 };
 
 #endif

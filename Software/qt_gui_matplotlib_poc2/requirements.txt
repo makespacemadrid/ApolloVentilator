@@ -1,0 +1,8 @@
+# PyQt5==5.14.0
+# PyQt5-sip
+# PyQtChart
+# pyqtgraph
+# pyserial
+
+matplotlib==3.2.1
+numpy==1.18.2

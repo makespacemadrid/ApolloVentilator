@@ -8,7 +8,7 @@ from window import MainWindow
 import sys
 import functools
 from itertools import count
-
+import paho.mqtt.client as mqtt
 
 '''
 Example data received
@@ -40,6 +40,15 @@ class Plot(pg.PlotWidget):
         self.data_line.setData(self.x, self.y)
 
 
+
+def on_connect(client, userdata, flags, rc):
+  print("Connected with result code "+str(rc))
+  client.subscribe("topic/test")
+
+def on_message(client, userdata, msg):
+    print(msg.payload.decode())
+    plot_graphs(unpg, otropg, yotro, otrouanmortaim)
+
 def plot_graphs(plot1,plot2,plot3,plot4):
     raw_data = { 
         "type" : "ventilatorConfig", 
@@ -61,7 +70,8 @@ def plot_graphs(plot1,plot2,plot3,plot4):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = MainWindow()   
+    window = MainWindow()
+    broker_ip = "192.168.1.39"  # TODO: parameterize if necessary
 
     unpg = Plot(0)
     otropg = Plot(1)
@@ -72,11 +82,18 @@ if __name__ == "__main__":
     window.layout.addWidget(otropg)
     window.layout.addWidget(yotro)
     window.layout.addWidget(otrouanmortaim)
-    timer = QTimer()
-    timer.setInterval(100)
-    plot_process = functools.partial(plot_graphs,plot1=unpg, plot2=otropg, plot3=yotro,plot4=otrouanmortaim)
-    timer.timeout.connect(plot_process)
-    timer.start()
+    # timer = QTimer()
+    # timer.setInterval(100)
+    # plot_process = functools.partial(plot_graphs,plot1=unpg, plot2=otropg, plot3=yotro,plot4=otrouanmortaim)
+    # timer.timeout.connect(plot_process)
+    # timer.start()
+
+    client = mqtt.Client()
+    client.connect(broker_ip,1883,60)
+
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.loop_forever()
 
     window.show()
 

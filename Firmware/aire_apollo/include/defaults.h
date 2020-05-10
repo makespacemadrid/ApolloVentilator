@@ -5,7 +5,7 @@
 
 //TIMERS
 #define SENSORS_INTERVAL        10 //milliseconds
-#define TELEMETRY_INTERVAL      25 //milliseconds
+#define TELEMETRY_INTERVAL      50 //milliseconds
 #define VENTILATOR_INTERVAL     100 //milliseconds
 #define COMMUNICATIONS_INTERVAL 500 //milliseconds
 //------HardWare---------
@@ -88,9 +88,7 @@
 #define MAX_STEPPER_ERROR 0.05 //Error percent alowed when testing sttepers
 #define PIN_BUZZER 53
 
-/*
-#if __has_include("myhacks.h")
-# include "myhacks.h"
-#endif
-*/
+#define MAX_JSON_SIZE 300
+#define SERIAL_BAUDS 921600
+
 #endif

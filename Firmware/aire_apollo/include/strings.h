@@ -1,6 +1,7 @@
 #ifndef STRINGS_H
 #define STRINGS_H
 
+#define STR_JSON_TYPE     "type"
 #define STR_MEDICAL_DATA  "medicalData"
 #define STR_PRESSURE      "pressure"
 #define STR_INPUT_FLOW    "inputFlow"
@@ -24,6 +25,10 @@
 #define STR_OUTPUT_STATUS "oValveStatus"
 #define STR_INPUT_TARGET  "iValveTarget"
 #define STR_OUTPUT_TARGET "oValveTarget"
+#define STR_LAST_SENSOR_LOOP_MICROS "lastSensorMicros"
+#define STR_LAST_HF_LOOP_MICROS     "lastHfMicros"
+#define STR_LAST_TELEMETRY_MICROS   "lastTelemetryMicros"
+
 
 #define STR_VENTILATOR_CONFIG     "ventilatorConfig"
 #define STR_RESPIRATIONS_PER_MIN  "rpm"

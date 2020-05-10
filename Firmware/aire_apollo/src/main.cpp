@@ -133,7 +133,7 @@ void setRampsPWMFreq()
 //uint8_t test[500];
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(SERIAL_BAUDS);
   hal.debug("\nINIT");
 //  alarms->begin();
 

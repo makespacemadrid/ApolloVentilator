@@ -1,4 +1,4 @@
-update=Tuesday, 12 May 2020 at 00:52:45
+update=Tuesday, 12 May 2020 at 01:11:03
 version=1
 last_client=pcbnew
 [general]
@@ -14,8 +14,14 @@ LibDir=
 [eeschema/libraries]
 [SchematicFrame]
 version=1
+[PcbFrame]
+version=1
+[ModEditFrame]
+version=1
+[LibeditFrame]
+version=1
 [sheetnames]
-1=00000000-0000-0000-0000-00005e9d59a9:
+1=00000000-0000-0000-0000-00005eafd983:
 [pcbnew]
 version=1
 PageLayoutDescrFile=
@@ -40,9 +46,7 @@ ProhibitOverlappingCourtyards=1
 CopperEdgeClearance=0.01
 TrackWidth1=0.25
 TrackWidth2=0.5
-TrackWidth3=0.8
-TrackWidth4=1
-TrackWidth5=1.2
+TrackWidth3=1
 ViaDiameter1=0.8
 ViaDrill1=0.4
 dPairWidth1=0.2

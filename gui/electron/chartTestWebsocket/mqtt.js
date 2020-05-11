@@ -12,7 +12,7 @@ let options = mri( argv, { default: {
     port:           1883,
     topic:          'ventilator/measurement/wilson',
     location:       'makeSpace',
-    version:        '0.8'
+    version:        '0.81'
 }});
 
 const noLog    = function(){};
@@ -47,50 +47,29 @@ client.on('connect', function() {
         let version     = options.version;
 
         let receiveData = data.toString();
-        let rawCommand  = receiveData.split(':');
-        let commandID   = rawCommand[0];
-    
+
         printLog("Serial port data: "+ receiveData);
-    
-        if (commandID === 'DATA'){
-    
-            let ventilatorData	   = rawCommand[1].split(',');
-            
-            let pressure           = parseFloat(ventilatorData[0]);
-            let intakeInstantFlow  = parseFloat(ventilatorData[1]);
-            let exitInstantFlow    = parseFloat(ventilatorData[2]);
-            let intakeFlow         = parseFloat(ventilatorData[3]);
-            let exitFlow           = parseFloat(ventilatorData[4]);
-            let volume             = parseFloat(ventilatorData[5]);
-            let intakeValveStatus  = parseFloat(ventilatorData[6]);
-            let exitValveStatus    = parseFloat(ventilatorData[7]);
-            let intakeValveTarget  = parseFloat(ventilatorData[8]);
-            let exitValveTarget    = parseFloat(ventilatorData[9]);
-            let status             = parseFloat(ventilatorData[10]);
-    
-            let payload = [{
-                    pressure          : pressure,
-                    intakeInstantFlow : intakeInstantFlow,
-                    exitInstantFlow   : exitInstantFlow,
-                    intakeFlow        : intakeFlow,
-                    exitFlow          : exitFlow,
-                    volume            : volume,
-                    intakeValveStatus : intakeValveStatus,
-                    exitValveStatus   : exitValveStatus,
-                    intakeValveTarget : intakeValveTarget,
-                    exitValveTarget   : exitValveTarget,
-                    status            : status
-                },{ 
+
+        try {
+            let ventilatorData  = JSON.parse(receiveData);
+            ventilatorData.time = Date.now()+'000000';
+                          
+            let payload = [
+                ventilatorData,
+                { 
                     tag1: pacient ,
                     tag2: location,
                     tag3: version
                 }
             ];
-
+    
             let mqttPayload = JSON.stringify(payload);
-
+    
             showLog('Mqtt payload: '+ mqttPayload)
             client.publish(options.topic, mqttPayload);
+        }
+        catch(e){
+            showLog('JSON parse: '+ e) 
         }
     });
     
@@ -98,7 +77,7 @@ client.on('connect', function() {
         showLog('Serial port error: '+ err.message);
         process.exit(1);
     })
-    
+
     port.on('close', function() {
         showLog('Port closed');
     })

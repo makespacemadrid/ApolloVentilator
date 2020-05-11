@@ -143,35 +143,37 @@ class Device(Gtk.Grid):
             return command_and_data
 
         while True:
-            time.sleep(0.5)
+            # time.sleep(0.5)
             serial_line =  self.serial.readline()
-            serial_data = parse_serial_line(serial_line)  # TODO: Usar funciones de Parser
-            serial_command = serial_data[0]
-            if serial_command == "DATA":
-                print('>>>>> ',serial_line)
-                serial_code = serial_data[1].strip()
-                values = serial_data[1].split(',')
-                timestamp = dt.datetime.now().strftime('%H:%M:%S')
-                data = values[0:2]
-                args = [timestamp, data[0], data[1].strip()]
-                print(args)
-                GLib.idle_add(self.loop_update_values, *args)
-            elif serial_command == "ALERT":
-                print('>>>>> ',serial_line)
-                serial_code = serial_data[1].strip()
-                print('>>>>> ',serial_data[1])
-                Notify.Notification.new("Alert caused by:", codes[serial_code]).show()
-                os.system('play -nq -t alsa synth 1 sine 400')
-            elif serial_command == "DEBUG":
-                logging.warning(serial_data[1])
-            elif serial_command == "CONFIG":
-                schema = "CONFIG,PR,12,60,15,40,40,5" #TODO: review schema proposal
-                self.serial.write(schema)
+            print("======== ", serial_line)
+            if ("DATA" or "ALERT" or "DEBUG" or "CONFIG") in serial_line.decode('utf-8'): # TODO: revisar para resto de casos
+                serial_data = parse_serial_line(serial_line)  # TODO: Usar funciones de Parser
+                serial_command = serial_data[0]
+                if serial_command == "DATA":
+                    print('>>>>> ',serial_line)
+                    serial_code = serial_data[1].strip()
+                    values = serial_data[1].split(',')
+                    timestamp = dt.datetime.now().strftime('%H:%M:%S')
+                    data = values[0:2]
+                    args = [timestamp, data[0], data[1].strip()]
+                    print(args)
+                    GLib.idle_add(self.loop_update_values, *args)
+                elif serial_command == "ALERT":
+                    print('>>>>> ',serial_line)
+                    serial_code = serial_data[1].strip()
+                    print('>>>>> ',serial_data[1])
+                    Notify.Notification.new("Alert caused by:", codes[serial_code]).show()
+                    os.system('play -nq -t alsa synth 1 sine 400')
+                elif serial_command == "DEBUG":
+                    logging.warning(serial_data[1])
+                elif serial_command == "CONFIG":
+                    schema = "CONFIG,PR,12,60,15,40,40,5" #TODO: review schema proposal
+                    self.serial.write(schema)
             else:
-                logging.error(f"Serial command not found: {serial_command}")
-                Notify.Notification.new("Serial command not found").show()
+                logging.warning(f"Serial command not found:")
+                # Notify.Notification.new("Serial command not found").show()
 
-            time.sleep(1)
+            # time.sleep(1)
 
 
 class App:
@@ -192,7 +194,7 @@ class App:
         # try:
         self.add_device_widget_to_notebook(device_args={
             'label': entry_label.get_text() or 'Paciente {}'.format(len(self.devices) + 1),
-            'port': entry_port.get_text() or '/dev/ttyUSB0'
+            'port': entry_port.get_text() or '/dev/ttyACM0'
         })
         # except:
             # Notify.Notification.new("Serial port Not Found")

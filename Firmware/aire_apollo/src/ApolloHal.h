@@ -6,7 +6,6 @@
 #include "Sensor/Pressure/ApolloPressureSensor.h"
 #include "Valve/ApolloValve.h"
 #include "ApolloAlarms.h"
-//#include <AutoPID.h>
 #include <PID_v1.h>
 class ApolloHal
 {

@@ -309,20 +309,23 @@ void StepperNema::update(){
 }
 
 
-void StepperNema::highFreqUpdate(){
-
-  //if(nextActionTime - millis() > 30) return;
+void StepperNema::highFreqUpdate()
+{
   if(blockUpdate) return;
-  //Serial.println("UPDATE STTEPER");Serial.flush();
   blockUpdate = true;
-  //interrupts();//WTF! Sin esto se bloquea por que sin interrupciones no funciona delay y la clase del stepper llama a un delay si todavia no es tiempo de dar un paso.
-  if(stepMotor.nextAction() < 1)
+  if(stepMotor.getStepsRemaining() == 0)
   {
     blockUpdate = false;
     return;
   }
   else
   {
+    if(micros() < nextActionTime-5)
+    {
+      blockUpdate = false;
+      return;
+    }
+    nextActionTime = micros()+stepMotor.nextAction();
     if(this->lastDir){
       this->lastPos++;
     }else{

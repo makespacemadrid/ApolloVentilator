@@ -1,7 +1,6 @@
 #include "ApolloHal.h"
 #include <Arduino.h>
-//#define DEBUG
-#include "trace.h"
+
 
 ApolloHal::ApolloHal() :
     _constantPressurePID(&_constantPressurePIDInput , &_constantPressurePIDOutput , &_constantPressurePIDTarget , _constantPressurePIDKp , _constantPressurePIDKi , _constantPressurePIDKd , DIRECT),
@@ -51,33 +50,59 @@ void ApolloHal::debug(String debugmsg)
 
 void ApolloHal::sendData()
 {
-  String pressure(getPressure());
-  String intakeInstantFlow(getInputInstantFlow());
-  String exitInstantFlow  (getOutputInstantFlow());
+  unsigned long start = micros();
+  sendMedicalData();
+  sendHardwareInfo();
+  _lastTelemetryUpdateMicros = micros() - start;
+}
 
-  float  in  = getInputFlow();
-  float  out = getOutputFlow();
-  float  vol = in + out;
+void ApolloHal::sendMedicalData()
+{
+  StaticJsonDocument<MAX_JSON_SIZE> jsonOutput;
+  jsonOutput[STR_JSON_TYPE] = STR_MEDICAL_DATA;
 
-  String intakeFlow(in);
-  String exitFlow  (out);
-  String volume    (vol);
-
-  String intakeValveStatus(getInputValveStatus());
-  String ExitValveStatus  (getOutputValveStatus());
-  String intakeValveTarget(getInputValveTarget());
-  String ExitValveTarget  (getOutputValveTarget());
-
-//  String Status(ventilation->getStatus());
-  String Status(-1);
-  String data[] = {pressure, intakeInstantFlow, exitInstantFlow, intakeFlow, exitFlow,volume ,intakeValveStatus, ExitValveStatus,intakeValveTarget,ExitValveTarget,Status};
-  Serial.print("DATA:");
-  Serial.print(data[0]);
-  for(int i = 1 ; i < 11 ; i++)
+  if(_hasPressureSensor)
   {
-    Serial.print(","+String(data[i]));
+    jsonOutput[STR_PRESSURE] = getPressure();
   }
+
+  if(_hasFlowSensors)
+  {
+    float  in  = getInputFlow();
+    float  out = getOutputFlow();
+    float  vol = in + out;
+
+    jsonOutput[STR_INPUT_FLOW] = in;
+    jsonOutput[STR_INPUT_FLOW] = out;
+    jsonOutput[STR_VOLUME]     = vol;
+  }
+
+  serializeJson(jsonOutput, Serial);
   Serial.println();
+}
+
+void ApolloHal::sendHardwareInfo()
+{
+  StaticJsonDocument<MAX_JSON_SIZE> jsonOutput;
+  jsonOutput[STR_JSON_TYPE] = STR_HARDWARE_INFO;
+
+  jsonOutput[STR_INPUT_STATUS] = getInputValveStatus();
+  jsonOutput[STR_INPUT_TARGET] = getInputValveTarget();
+
+  jsonOutput[STR_OUTPUT_STATUS] = getOutputValveStatus();
+  jsonOutput[STR_OUTPUT_TARGET] = getOutputValveTarget();
+  jsonOutput[STR_LAST_SENSOR_LOOP_MICROS] = _lastSensorLoopMicros;
+  jsonOutput[STR_LAST_HF_LOOP_MICROS]     = _lastHighFreqUpdateMicros;
+  jsonOutput[STR_LAST_TELEMETRY_MICROS]   = _lastTelemetryUpdateMicros;
+
+
+  serializeJson(jsonOutput, Serial);
+  Serial.println();
+}
+
+void ApolloHal::sendConfig()
+{//TODO
+
 }
 
 /**

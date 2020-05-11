@@ -2,11 +2,17 @@
 #define APOLLO_HALL_H
 
 #include "../include/defaults.h"
+#include "strings.h"
+
 #include "Sensor/FlowSensor/ApolloFlowSensor.h"
 #include "Sensor/Pressure/ApolloPressureSensor.h"
 #include "Valve/ApolloValve.h"
 #include "ApolloAlarms.h"
 #include <PID_v1.h>
+#include <ArduinoJson.h>
+
+
+
 class ApolloHal
 {
 
@@ -86,6 +92,9 @@ public:
     void computePIDs();
     void highFrecuencyUpdate();
     void sensorUpdate();
+    void sendMedicalData();
+    void sendHardwareInfo();
+    void sendConfig();
 
     ApolloPressureSensor  *_inputPressureSensor;
     ApolloFlowSensor      *_inputFlowSensor;
@@ -156,6 +165,7 @@ public:
 //
     unsigned long _lastSensorLoopMicros;
     unsigned long _lastHighFreqUpdateMicros;
+    unsigned long _lastTelemetryUpdateMicros;
 
     unsigned long _lastTelemetryUpdate;
     unsigned long _lastSensorsUpdate ;

@@ -88,7 +88,6 @@
 #define MAX_STEPPER_ERROR 0.05 //Error percent alowed when testing sttepers
 #define PIN_BUZZER 53
 
-#define MAX_JSON_SIZE 300
 #define SERIAL_BAUDS 921600
 
 #endif

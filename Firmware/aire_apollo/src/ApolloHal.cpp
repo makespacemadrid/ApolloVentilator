@@ -64,6 +64,7 @@ void ApolloHal::sendMedicalData()
   if(_hasPressureSensor)
   {
     jsonOutput[STR_PRESSURE] = getPressure();
+    jsonOutput[STR_TARGET_PRESSURE] = _pressureTarget;
   }
 
   if(_hasFlowSensors)
@@ -72,8 +73,10 @@ void ApolloHal::sendMedicalData()
     float  out = getOutputFlow();
     float  vol = in + out;
 
-    jsonOutput[STR_INPUT_FLOW] = in;
-    jsonOutput[STR_INPUT_FLOW] = out;
+    jsonOutput[STR_INPUT_FLOW]  = in;
+    jsonOutput[STR_OUTPUT_FLOW] = out;
+    jsonOutput[STR_INPUT_FLOW_INSTANT]  = getInputInstantFlow();
+    jsonOutput[STR_OUTPUT_FLOW_INSTANT] = getOutputFlow();
     jsonOutput[STR_VOLUME]     = vol;
   }
 

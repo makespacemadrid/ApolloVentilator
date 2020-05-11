@@ -29,6 +29,7 @@ Apollo firmware
 
 #include "../include/defaults.h"
 #include "trace.h"
+#include "strings.h"
 
 //Arduino libraries
 #include "Arduino.h"

@@ -1,17 +1,24 @@
 #ifndef STRINGS_H
 #define STRINGS_H
 
+#define MAX_JSON_SIZE 300
+
 #define STR_JSON_TYPE     "type"
-#define STR_MEDICAL_DATA  "medicalData"
+#define STR_MEDICAL_DATA  "mData"
 #define STR_PRESSURE      "pressure"
-#define STR_INPUT_FLOW    "inputFlow"
-#define STR_OUTPUT_FLOW   "outputFlow"
-#define STR_VOLUME        "volume"
+#define STR_TARGET_PRESSURE     "tPressure"
+#define STR_INPUT_FLOW_INSTANT  "iFlowInstant"
+#define STR_OUTPUT_FLOW_INSTANT "oFlowInstant"
+#define STR_INPUT_FLOW    "iFlow"
+#define STR_OUTPUT_FLOW   "oFlow"
+#define STR_VOLUME        "vol"
 
 #define STR_VENT_STATUS     "ventilatorStatus"
 #define STR_HARDWARE_STATUS "hardwareStatus"
 #define STR_OK              "ok"
 #define STR_UNCAL           "uncal"
+#define STR_TESTING         "testing"
+#define STR_CALIBRATION     "calibration"
 #define STR_ERROR           "error"
 #define STR_RUNNING         "running"
 #define STR_STOPPED         "stopped"
@@ -20,14 +27,14 @@
 //TODO.... error messages!
 
 
-#define STR_HARDWARE_INFO "hardwareInfo"
-#define STR_INPUT_STATUS  "iValveStatus"
-#define STR_OUTPUT_STATUS "oValveStatus"
-#define STR_INPUT_TARGET  "iValveTarget"
-#define STR_OUTPUT_TARGET "oValveTarget"
-#define STR_LAST_SENSOR_LOOP_MICROS "lastSensorMicros"
-#define STR_LAST_HF_LOOP_MICROS     "lastHfMicros"
-#define STR_LAST_TELEMETRY_MICROS   "lastTelemetryMicros"
+#define STR_HARDWARE_INFO "hwInfo"
+#define STR_INPUT_STATUS  "iStatus"
+#define STR_OUTPUT_STATUS "oStatus"
+#define STR_INPUT_TARGET  "iTarget"
+#define STR_OUTPUT_TARGET "oTarget"
+#define STR_LAST_SENSOR_LOOP_MICROS "sMicros"
+#define STR_LAST_HF_LOOP_MICROS     "hfMicros"
+#define STR_LAST_TELEMETRY_MICROS   "tMicros"
 
 
 #define STR_VENTILATOR_CONFIG     "ventilatorConfig"

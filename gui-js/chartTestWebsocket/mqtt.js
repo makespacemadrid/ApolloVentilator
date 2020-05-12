@@ -7,7 +7,7 @@ const argv        = process.argv.slice(2);
 
 let options = mri( argv, { default: {
     serialPortName: "/dev/ttyACM0",
-    serialPortRate: 115200,
+    serialPortRate: 921600,
     host:           'localhost',
     port:           1883,
     topic:          'ventilator/measurement/wilson',

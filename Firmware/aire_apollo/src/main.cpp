@@ -155,7 +155,7 @@ void setup()
   StepperNema *inStepper  = new StepperNema(STEPPER1_STEP,STEPPER1_DIR,STEPPER1_ENDSTOP, STEPPER1_ENABLE , LOW ,5400);
   inStepper->setMinEndStopPressedState(HIGH);
   inStepper->enableMinEndstopPullup();
-  inStepper->setMaxRPM(10);
+  inStepper->setMaxRPM(12);
   inStepper->setMicrosteps(2);
   inStepper->setOpenPos(700);
   inStepper->setClosedPos(1650);
@@ -163,10 +163,10 @@ void setup()
   StepperNema *outStepper = new StepperNema(STEPPER2_STEP,STEPPER2_DIR,STEPPER2_ENDSTOP, STEPPER2_ENABLE);
   outStepper->setMinEndStopPressedState(HIGH);
   outStepper->enableMinEndstopPullup();
-  outStepper->setMaxRPM(500);
-  outStepper->setMicrosteps(16);
-  outStepper->setOpenPos(0);
-  outStepper->setClosedPos(1950);
+  outStepper->setMaxRPM(300);
+  outStepper->setMicrosteps(8);
+  outStepper->setOpenPos(100);
+  outStepper->setClosedPos(400);
 
   ApolloValve *inValve  = inStepper;
   ApolloValve *outValve = outStepper;
@@ -192,12 +192,12 @@ void setup()
     //alarma!!
   }
 
-//  while (!hal.test())
-//  {
-//    hal.debug("HAL TEST ERR!"); // No arrancamos si falla algun componente o podemos arrancar con algunos en fallo?
-//    delay(1000);
+  while (!hal.test())
+  {
+    hal.debug("HAL TEST ERR!"); // No arrancamos si falla algun componente o podemos arrancar con algunos en fallo?
+    delay(1000);
     //alarma!!
-//  }
+  }
 
   while (!hal.calibrate())
   {

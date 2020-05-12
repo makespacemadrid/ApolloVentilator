@@ -10,8 +10,8 @@
 #define MOTOR_STEPS 200
 #define RPM         200
 // Acceleration and deceleration values are always in FULL steps / s^2
-#define MOTOR_ACCEL 12000
-#define MOTOR_DECEL 8000
+#define MOTOR_ACCEL 16000
+#define MOTOR_DECEL 16000
 // Microstepping mode. If you hardwired it to save pins, set to the same value here.
 #define MICROSTEPS 16  // Ojo funciona hasta a 16 (TODO:Verificar)
 

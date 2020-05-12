@@ -320,7 +320,7 @@ void StepperNema::highFreqUpdate()
   }
   else
   {
-    if(micros() < nextActionTime-5)
+    if(nextActionTime - micros() < 5)
     {
       blockUpdate = false;
       return;

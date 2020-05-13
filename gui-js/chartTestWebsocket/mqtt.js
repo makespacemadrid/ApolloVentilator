@@ -7,7 +7,7 @@ const argv        = process.argv.slice(2);
 
 let options = mri( argv, { default: {
     serialPortName: "/dev/ttyACM0",
-    serialPortRate: 115200,
+    serialPortRate: 921600,
     host:           'localhost',
     port:           1883,
     topic:          'ventilator/measurement/wilson',
@@ -15,9 +15,10 @@ let options = mri( argv, { default: {
     version:        '0.81'
 }});
 
-const noLog    = function(){};
-const showLog  = function(log){ console.log(log); };
-const printLog = options.verbose!==undefined?showLog:noLog;
+const noLog      = function(){};
+const showLog    = function(log){ console.log(log); };
+const printLog   = options.verbose!==undefined?showLog:noLog;
+const printDebug = options.debug!==undefined?showLog:noLog;
 
 const port = new SerialPort(
     options.serialPortName, { 
@@ -65,11 +66,11 @@ client.on('connect', function() {
     
             let mqttPayload = JSON.stringify(payload);
     
-            showLog('Mqtt payload: '+ mqttPayload)
+            printLog('Mqtt payload: '+ mqttPayload)
             client.publish(options.topic, mqttPayload);
         }
         catch(e){
-            showLog('JSON parse: '+ e) 
+            printDebug("Debug: "+ receiveData);
         }
     });
     

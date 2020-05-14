@@ -15,44 +15,47 @@ let options = mri( argv, { default: {
     version:        '0.81'
 }});
 
-const noLog      = function(){};
-const showLog    = function(log){ console.log(log); };
-const printLog   = options.verbose!==undefined?showLog:noLog;
-const printDebug = options.debug!==undefined?showLog:noLog;
+const noLog        = function(){};
+const showLog      = function(log){ console.log(log); };
+const logMessage   = options.verbose!==undefined?showLog:noLog;
+const debugMessage = options.debug!==undefined?showLog:noLog;
 
 const port = new SerialPort(
     options.serialPortName, { 
         baudRate: options.serialPortRate,
     }, function (err) {
         if (err) {
-            showLog('Serial port: '+ err.message);
+            showLog('Serial port error: '+ err.message);
             process.exit(1);
         }
     }
 );
 
 const parser    = port.pipe(new Readline({ delimiter: '\r\n' }));
-let mqttOptions = { port: options.port }
+let mqttOptions = { port: options.port, protocolVersion:4 }
 var client      = mqtt.connect('mqtt://'+options.host, mqttOptions)
 
 showLog("Connecting...");
 
 client.on('connect', function() {
 
-    showLog('Connected');
+    showLog('Mqtt client connected');
+
+    let pacient  = options.topic.split('/').pop();
+    let location = options.location;
+    let version  = options.version;
+    let topic    = options.topic;
 
     parser.on('data',function(data){
     
-        let pacient     = options.topic.split('/').pop();
-        let location    = options.location;
-        let version     = options.version;
-
         let receiveData = data.toString();
-
-        printLog("Serial port data: "+ receiveData);
+        logMessage("Serial port data: "+ receiveData);
 
         try {
+
             let ventilatorData  = JSON.parse(receiveData);
+            let messageType     = ventilatorData.type;
+
             ventilatorData.time = Date.now()+'000000';
                           
             let payload = [
@@ -65,12 +68,13 @@ client.on('connect', function() {
             ];
     
             let mqttPayload = JSON.stringify(payload);
-    
-            printLog('Mqtt payload: '+ mqttPayload)
-            client.publish(options.topic, mqttPayload);
+            let mqttTopic   = topic+'/'+messageType;
+
+            logMessage('Mqtt payload: '+ mqttPayload)
+            client.publish(mqttTopic, mqttPayload);
         }
         catch(e){
-            printDebug("Debug: "+ receiveData);
+            debugMessage("Debug: "+ receiveData);
         }
     });
     

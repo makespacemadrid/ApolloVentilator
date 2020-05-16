@@ -486,8 +486,9 @@ void ApolloHal::computePIDs()
     //Serial.println("PID-Pressure-Output, target: "+String(_overPressurePIDTarget)+" input: "+String(_overPressurePIDInput)+" Output: "+String(_overPressurePIDOutput));
   }
 
-  if(_lastPressure > _overPressurePIDTarget)
+  if( (_overPressureTriggered) || (_lastPressure > _overPressurePIDTarget) )
   {
+    _overPressureTriggered = true;
     double result;
     _overPressurePIDInput   = _lastPressure;
     _overPressurePID.Compute();
@@ -495,5 +496,7 @@ void ApolloHal::computePIDs()
     double outputValvePercent  = constrain(result , 0, 100);
     if(outputValvePercent != _lastOutputValveTarget)
       _outputValve->open(outputValvePercent);
+    if(outputValvePercent == 0)
+      _overPressureTriggered = false;
   }
 }

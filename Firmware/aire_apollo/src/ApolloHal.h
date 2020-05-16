@@ -145,6 +145,7 @@ public:
     double _constantFlowPIDKd;
     double _constantFlowPIDKi;
 
+    bool    _overPressureTriggered;
     PID     _overPressurePID;
     double  _overPressurePIDInput;
     double  _overPressurePIDTarget;

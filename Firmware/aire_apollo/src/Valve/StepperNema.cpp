@@ -29,7 +29,7 @@ bool StepperNema::moveAwayMinEndStop()
 
 bool StepperNema::moveTowardsMinEndStop()
 {
-  uint32_t counter = 0;
+  int counter = 0;
   while(!isMinEndStopPressed() && counter < stepsMax)
   {
     stepMotor.move(-1);
@@ -69,7 +69,6 @@ bool StepperNema::home()
   int endStopHit = 0;
   if(isMinEndStopPressed()) // Si Ya estamos pisando el final de carrera nos retiramos un poco
   {
-   
     Serial.print("RETRACT...");
     endStopHit++;
     if(!moveAwayMinEndStop())
@@ -320,18 +319,13 @@ void StepperNema::highFreqUpdate()
     return;
   }
   else
-  {  
-    unsigned long mic = micros();
-    long t = nextActionTime - mic;
-    if(t > 5)
+  {
+    if(nextActionTime - micros() < 5)
     {
       blockUpdate = false;
       return;
     }
-    nextActionTime = stepMotor.nextAction();
-    mic = micros();
-    nextActionTime += mic;
-    
+    nextActionTime = micros()+stepMotor.nextAction();
     if(this->lastDir){
       this->lastPos++;
     }else{
@@ -339,7 +333,5 @@ void StepperNema::highFreqUpdate()
     }
   }
   blockUpdate = false;
-
-  
 //  Serial.println("stepper->"+String(this->stepDestination)+","+String(this->lastDir)+","+String(this->lastStep));
 }

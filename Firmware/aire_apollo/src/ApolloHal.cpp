@@ -219,7 +219,7 @@ bool ApolloHal::calibratePressure()
   update();
   _outputValve->close(true);
   update();
-  delay(1000);
+  delay(2500);
   _lastPressure = _inputPressureSensor->readCMH2O();
   if(_lastPressure > 5)
   {
@@ -227,13 +227,14 @@ bool ApolloHal::calibratePressure()
     return false;
   }
 
-  _lastInspiratoryValveStatus = 15;
+  _lastInspiratoryValveStatus = 20;
   _pressureTarget  = 30;
+  _overPressurePIDTarget = 40;
   _inspiratoryRisePIDTarget = 1500;
 
   _pressureMode = none;
   PIDAutotuner tuner = PIDAutotuner();
-  tuner.setTargetInputValue(_lastPressure);
+  tuner.setTargetInputValue(_pressureTarget);
   tuner.setLoopInterval(50);
   tuner.setOutputRange(-25, +25);
   tuner.setZNMode(PIDAutotuner::ZNModeNoOvershoot);
@@ -296,6 +297,11 @@ bool ApolloHal::calibratePressure()
 
     _inputValve->close(true);
     _outputValve->open(100);
+    _pressureMode = constantPressure;
+    _pressureTarget = 5;
+    _constantPressurePIDTarget = _pressureTarget;
+    _overPressurePIDTarget = 10;
+
     while(millis() < deadline)
     {
         update();
@@ -413,7 +419,7 @@ void ApolloHal::update()
     sensorUpdate();
     if(_pressureMode == rampUpPressure)
     {
-      if(_lastPressure > _pressureTarget * 0.9)
+      if(_lastPressure > _pressureTarget * 0.75)
       {
         _pressureMode = constantPressure;
         _constantPressurePIDTarget = _pressureTarget;

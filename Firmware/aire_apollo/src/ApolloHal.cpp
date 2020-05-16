@@ -294,7 +294,7 @@ bool ApolloHal::calibratePressure()
     _lastInspiratoryValveStatus = constrain(_lastInspiratoryValveStatus,0,100);
     deadline = millis()+5000;
 
-    _inputValve->close();
+    _inputValve->close(true);
     _outputValve->open(100);
     while(millis() < deadline)
     {
@@ -413,7 +413,7 @@ void ApolloHal::update()
     sensorUpdate();
     if(_pressureMode == rampUpPressure)
     {
-      if(_lastPressure > _pressureTarget * 0.75)
+      if(_lastPressure > _pressureTarget * 0.9)
       {
         _pressureMode = constantPressure;
         _constantPressurePIDTarget = _pressureTarget;
@@ -443,7 +443,7 @@ void ApolloHal::update()
 void ApolloHal::initPIDs()
 {
   _overPressurePIDTarget = DEFAULT_CMH20_MAX;
-  _constantPressurePIDKp = 2.5  ,  _constantPressurePIDKi = 1.10 ,_constantPressurePIDKd = 0.10;
+  _constantPressurePIDKp = 1.1  ,  _constantPressurePIDKi = 1.1 ,_constantPressurePIDKd = 0.1;
   _overPressurePIDKp     = 5.00  , _overPressurePIDKi     = 0.00 ,_overPressurePIDKd     = 0.00;
   _constantFlowPIDKp     = 1.00  , _constantFlowPIDKi     = 0.00 ,_constantFlowPIDKd     = 0.00;
   _inspiratoryRisePIDKp  = 0.01  , _inspiratoryRisePIDKi  = 0.00 ,_inspiratoryRisePIDKd  = 0.00;

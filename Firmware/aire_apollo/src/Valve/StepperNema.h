@@ -74,7 +74,7 @@ protected:
     bool    blockUpdate = false;
     bool    lastDir     = 0;
     int32_t lastPos     = 0;
-    long nextActionTime = 0;
+    unsigned long nextActionTime;
 
    int32_t  stepDestination = 0;
    uint32_t openPos  = 0; // Offset steps

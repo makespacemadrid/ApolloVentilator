@@ -1,5 +1,6 @@
 #include "ApolloHal.h"
 #include <Arduino.h>
+#include <pidautotuner.h>
 
 
 ApolloHal::ApolloHal() :
@@ -215,7 +216,9 @@ bool ApolloHal::calibrate()
 bool ApolloHal::calibratePressure()
 {
   _inputValve->close(true);
+  update();
   _outputValve->close(true);
+  update();
   delay(1000);
   _lastPressure = _inputPressureSensor->readCMH2O();
   if(_lastPressure > 5)
@@ -228,7 +231,47 @@ bool ApolloHal::calibratePressure()
   _pressureTarget  = 30;
   _inspiratoryRisePIDTarget = 1500;
 
-  for(int i = 0; i < 10 ; i++)
+  _pressureMode = none;
+  PIDAutotuner tuner = PIDAutotuner();
+  tuner.setTargetInputValue(_lastPressure);
+  tuner.setLoopInterval(50);
+  tuner.setOutputRange(-25, +25);
+  tuner.setZNMode(PIDAutotuner::ZNModeNoOvershoot);
+  tuner.startTuningLoop();
+
+  while (!tuner.isFinished()) {
+
+      // This loop must run at the same speed as the PID control loop being tuned
+      unsigned long startTime = millis();
+
+      // Get input value here (temperature, encoder position, velocity, etc)
+      double input =_inputPressureSensor->readCMH2O();
+
+      // Call tunePID() with the input value
+      double output = tuner.tunePID(input);
+
+      // Set the output - tunePid() will return values within the range configured
+      // by setOutputRange(). Don't change the value or the tuning results will be
+      // incorrect.
+      double result = _lastInputValveStatus + output;
+      double inputValvePercent  = constrain(result , 0, 100);
+      if(inputValvePercent != _lastInputValveTarget)
+        _inputValve->open(inputValvePercent);
+      // This loop must run at the same speed as the PID control loop being tuned
+      while (millis() - startTime < SENSORS_INTERVAL)
+      {
+        update();
+      }
+  }
+
+  _constantPressurePID.SetTunings(tuner.getKp() , tuner.getKi() , tuner.getKd());
+
+  _inputValve->close(true);
+  update();
+  _outputValve->open(true);
+  update();
+
+  for(int i = 0; i < 25 ; i++)
   {
     update();
     _pressureTargetArchived = false;

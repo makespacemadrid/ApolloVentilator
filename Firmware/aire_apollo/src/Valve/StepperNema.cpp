@@ -320,12 +320,14 @@ void StepperNema::highFreqUpdate()
   }
   else
   {
-    if(nextActionTime - micros() < 5)
+    long t = nextActionTime - micros();
+    if(t > 5 || t < 10000) // el 10000 es para el caso de desbordamiento de contador!
     {
       blockUpdate = false;
       return;
     }
-    nextActionTime = micros()+stepMotor.nextAction();
+    nextActionTime = stepMotor.nextAction();
+    nextActionTime += micros();
     if(this->lastDir){
       this->lastPos++;
     }else{

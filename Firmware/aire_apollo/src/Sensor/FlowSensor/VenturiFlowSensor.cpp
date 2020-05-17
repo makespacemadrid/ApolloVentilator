@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include "Sensor/Pressure/ApolloPressureSensor.h"
 
-VenturiFlowSensor::VenturiFlowSensor(ApolloPressureSensor *sensor, uint8_t sampling_ms = 10) : _sensor(sensor), _samplingMS(sampling_ms)
+VenturiFlowSensor::VenturiFlowSensor(ApolloPressureSensor *sensor, uint8_t sampling_ms) : _sensor(sensor), _samplingMS(sampling_ms)
 {
 
 }
@@ -40,7 +40,7 @@ bool VenturiFlowSensor::begin()
    * @return float Return instal flow  in SLM or -1 if error
    */
   float VenturiFlowSensor::getInstantFlow()
-  {     
+  {
 
     _lastInstantFlow= _sensor->readPascal();
 
@@ -67,6 +67,3 @@ bool VenturiFlowSensor::begin()
   {
     _volSinceReset = 0;
   }
-
-
-

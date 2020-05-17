@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "express": "",
+    "mimic-response": "",
+    "mqtt": "",
+    "mri": "",
+    "request": "",
+    "serialport": "",
+    "socket.io": ""
+  },
+  "scripts": {}
+}

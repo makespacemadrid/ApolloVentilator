@@ -1,7 +1,7 @@
 Firmware/aire_apollo/.vscode/*
 .vscode/*
 metrics/__pycache__/*
-
+gui-js/chartTestWebsocket/node_modules/*/*/*/*/*/*
 Firmware/aire_apollo/.vscode/c_cpp_properties.json
 Firmware/aire_apollo/.vscode/launch.json
 

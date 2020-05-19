@@ -166,10 +166,10 @@ void setup()
   outStepper->setMaxRPM(300);
   outStepper->setMicrosteps(8);
   outStepper->setOpenPos(100);
-  outStepper->setClosedPos(400);
+  outStepper->setClosedPos(500);
 
-  ApolloValve *inValve  = inStepper;
-  ApolloValve *outValve = outStepper;
+  ApolloValve *inValve  = outStepper;
+  ApolloValve *outValve = inStepper;
 
   hal.addValves(inValve,outValve);
 
@@ -179,10 +179,10 @@ void setup()
   hal.addPressureSensor(pSensor);
 
 //Sensores de FLOW
-  ApolloFlowSensor     *fInSensor   = new Sfm3000FlowSensor(100,0x40);
-  ApolloFlowSensor     *fOutSensor  = new Sfm3000FlowSensor(100,0x40);
+//  ApolloFlowSensor     *fInSensor   = new Sfm3000FlowSensor(100,0x40);
+//  ApolloFlowSensor     *fOutSensor  = new Sfm3000FlowSensor(100,0x40);
 
-  hal.addFlowSensors(fInSensor, fOutSensor);
+//  hal.addFlowSensors(fInSensor, fOutSensor);
 
   hal.debug("BEGIN HAL!");
   while (!hal.begin())
@@ -224,7 +224,7 @@ void setup()
   hal.debug("SETUP COMPLETED!: " +String(now)+" ms");
 
 //TESTING!
-//  hal.setConstantPressure(30.0);
+  hal.setConstantPressure(28.0);
 }
 
 uint16_t loops;

@@ -24,6 +24,15 @@ enum pressureMode
   lastItem
 };
 
+struct pidVARS
+{
+  double target = 0.0;
+  double input  = 0.0;
+  double output = 0.0;
+  double kp = 0.0;
+  double ki = 0.0;
+  double kd = 0.0;
+};
 
 public:
 //    ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms);
@@ -93,7 +102,9 @@ public:
     void highFrecuencyUpdate();
     void sensorUpdate();
     void sendMedicalData();
-    void sendHardwareInfo();
+    void sendValveStatus();
+    void sendPIDConfig();
+    void sendMetrics();
     void sendConfig();
 
     ApolloPressureSensor  *_inputPressureSensor;
@@ -115,10 +126,10 @@ public:
     float  _lastOutputInstantFlow;
 
 
-    uint16_t _lastInspiratoryRiseTimeMS;
+    uint16_t      _lastInspiratoryRiseTimeMS;
     unsigned long _lastInspiratoryRiseStart;
-    float    _lastInspiratoryValveStatus;
-    bool     _pressureTargetArchived;
+    float         _lastInspiratoryValveStatus;
+    bool   _pressureTargetArchived;
 
     bool   _hasPressureSensor;
     bool   _hasFlowSensors;
@@ -163,14 +174,18 @@ public:
     double  _inspiratoryRisePIDKd;
     double  _inspiratoryRisePIDKi;
 
-//
-    unsigned long _lastSensorLoopMicros;
-    unsigned long _lastHighFreqUpdateMicros;
-    unsigned long _lastTelemetryUpdateMicros;
 
-    unsigned long _lastTelemetryUpdate;
-    unsigned long _lastSensorsUpdate ;
-    unsigned long _lastCommunicationsUpdate;
+    float _avgSensorLoopMicros      = 0;
+    float _avgHighFreqUpdateMicros  = 0;
+    float _avgTelemetryUpdateMicros = 0;
+    uint32_t _sensorLoops           = 0;
+    uint32_t _hfLoops               = 0;
+    uint32_t _telemetryLoops        = 0;
+
+    unsigned long _lastTelemetryUpdate      = 0;
+    unsigned long _lastSensorsUpdate        = 0;
+    unsigned long _lastCommunicationsUpdate = 0;
+    unsigned long _lastMetricsUpdate        = 0;
 };
 
 #endif

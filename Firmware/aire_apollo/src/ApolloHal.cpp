@@ -53,8 +53,10 @@ void ApolloHal::sendData()
 {
   unsigned long start = micros();
   sendMedicalData();
-  sendHardwareInfo();
-  _lastTelemetryUpdateMicros = micros() - start;
+  sendValveStatus();
+  uint16_t elapsed = micros() - start;
+  _avgTelemetryUpdateMicros = ((_avgTelemetryUpdateMicros*5) + elapsed ) / 6.0;
+  _telemetryLoops++;
 }
 
 void ApolloHal::sendMedicalData()
@@ -85,7 +87,7 @@ void ApolloHal::sendMedicalData()
   Serial.println();
 }
 
-void ApolloHal::sendHardwareInfo()
+void ApolloHal::sendValveStatus()
 {
   StaticJsonDocument<MAX_JSON_SIZE> jsonOutput;
   jsonOutput[STR_JSON_TYPE] = STR_HARDWARE_INFO;
@@ -95,13 +97,43 @@ void ApolloHal::sendHardwareInfo()
 
   jsonOutput[STR_OUTPUT_STATUS] = getOutputValveStatus();
   jsonOutput[STR_OUTPUT_TARGET] = getOutputValveTarget();
-  jsonOutput[STR_LAST_SENSOR_LOOP_MICROS] = _lastSensorLoopMicros;
-  jsonOutput[STR_LAST_HF_LOOP_MICROS]     = _lastHighFreqUpdateMicros;
-  jsonOutput[STR_LAST_TELEMETRY_MICROS]   = _lastTelemetryUpdateMicros;
-
 
   serializeJson(jsonOutput, Serial);
   Serial.println();
+}
+
+void ApolloHal::sendPIDConfig()
+{
+  StaticJsonDocument<MAX_JSON_SIZE> jsonOutput;
+  jsonOutput[STR_JSON_TYPE] = STR_HARDWARE_INFO;
+
+  jsonOutput[STR_PRESSURE_PID_KP] = _constantPressurePIDKp;
+  jsonOutput[STR_PRESSURE_PID_KI] = _constantPressurePIDKi;
+  jsonOutput[STR_PRESSURE_PID_KD] = _constantPressurePIDKd;
+  serializeJson(jsonOutput, Serial);
+  Serial.println();
+}
+
+void ApolloHal::sendMetrics()
+{
+  StaticJsonDocument<MAX_JSON_SIZE> jsonOutput;
+  jsonOutput[STR_JSON_TYPE] = STR_HARDWARE_INFO;
+
+  jsonOutput[STR_AVG_SENSOR_LOOP_MICROS] = _avgSensorLoopMicros;
+  jsonOutput[STR_AVG_HF_LOOP_MICROS]     = _avgHighFreqUpdateMicros;
+  jsonOutput[STR_AVG_TELEMETRY_MICROS]   = _avgTelemetryUpdateMicros;
+
+  jsonOutput[STR_SENSOR_LOOPS]    = _sensorLoops;
+  jsonOutput[STR_HF_LOOPS]        = _hfLoops;
+  jsonOutput[STR_TELEMETRY_LOOPS] = _telemetryLoops;
+
+  _sensorLoops = 0;
+  _hfLoops     = 0;
+  _telemetryLoops = 0;
+
+  serializeJson(jsonOutput, Serial);
+  Serial.println();
+  _lastMetricsUpdate = millis();
 }
 
 void ApolloHal::sendConfig()
@@ -217,9 +249,10 @@ bool ApolloHal::calibratePressure()
 {
   _inputValve->close(true);
   update();
-  _outputValve->close(true);
+  _outputValve->open(true);
   update();
-  delay(2500);
+  delay(5000);
+  update();
   _lastPressure = _inputPressureSensor->readCMH2O();
   if(_lastPressure > 5)
   {
@@ -228,55 +261,19 @@ bool ApolloHal::calibratePressure()
   }
 
   _lastInspiratoryValveStatus = 20;
-  _pressureTarget  = 30;
-  _overPressurePIDTarget = 40;
   _inspiratoryRisePIDTarget = 1500;
 
-  _pressureMode = none;
-  PIDAutotuner tuner = PIDAutotuner();
-  tuner.setTargetInputValue(_pressureTarget);
-  tuner.setLoopInterval(50);
-  tuner.setOutputRange(-25, +25);
-  tuner.setZNMode(PIDAutotuner::ZNModeNoOvershoot);
-  tuner.startTuningLoop();
-
-  while (!tuner.isFinished()) {
-
-      // This loop must run at the same speed as the PID control loop being tuned
-      unsigned long startTime = millis();
-
-      // Get input value here (temperature, encoder position, velocity, etc)
-      double input =_inputPressureSensor->readCMH2O();
-
-      // Call tunePID() with the input value
-      double output = tuner.tunePID(input);
-
-      // Set the output - tunePid() will return values within the range configured
-      // by setOutputRange(). Don't change the value or the tuning results will be
-      // incorrect.
-      double result = _lastInputValveStatus + output;
-      double inputValvePercent  = constrain(result , 0, 100);
-      if(inputValvePercent != _lastInputValveTarget)
-        _inputValve->open(inputValvePercent);
-      // This loop must run at the same speed as the PID control loop being tuned
-      while (millis() - startTime < SENSORS_INTERVAL)
-      {
-        update();
-      }
-  }
-
-  _constantPressurePID.SetTunings(tuner.getKp() , tuner.getKi() , tuner.getKd());
-
-  _inputValve->close(true);
-  update();
-  _outputValve->open(true);
-  update();
+  double calTarget = 30;
+  double calPEEP   = 5;
 
   for(int i = 0; i < 25 ; i++)
   {
-    update();
+    _pressureTarget = calTarget;
+    _constantPressurePIDTarget = _pressureTarget;
+    _overPressurePIDTarget = calTarget+10;
     _pressureTargetArchived = false;
     _pressureMode = rampUpPressure;
+    update();
     _outputValve->close(true);
     update();
     _lastInspiratoryRiseStart = millis();
@@ -288,20 +285,67 @@ bool ApolloHal::calibratePressure()
     }
     _pressureMode = none;
     if(!_pressureTargetArchived)
-      _lastInspiratoryRiseTimeMS = 5000;
+      _lastInspiratoryRiseTimeMS = 3000;
     _inspiratoryRisePIDInput = _lastInspiratoryRiseTimeMS;
     _inspiratoryRisePID.Compute();
     _lastInspiratoryValveStatus += _inspiratoryRisePIDOutput;
     _lastInspiratoryValveStatus = constrain(_lastInspiratoryValveStatus,0,100);
-    deadline = millis()+5000;
 
+
+////////////// AUTOCALIBRADOR
+    if(_pressureTargetArchived && i == 9)
+    {
+      _pressureTarget  = calTarget;
+      _overPressurePIDTarget = calTarget + 10;
+      _pressureMode = none;
+      PIDAutotuner tuner = PIDAutotuner();
+      tuner.setTargetInputValue(_pressureTarget);
+      //tuner.setLoopInterval(50);
+      tuner.setOutputRange(0,100);
+      tuner.setZNMode(PIDAutotuner::ZNModeNoOvershoot);
+      tuner.startTuningLoop();
+
+      while (!tuner.isFinished()) {
+
+          // This loop must run at the same speed as the PID control loop being tuned
+          unsigned long startTime = millis();
+
+          // Get input value here (temperature, encoder position, velocity, etc)
+          double input =_inputPressureSensor->readCMH2O();
+
+          // Call tunePID() with the input value
+          double output = tuner.tunePID(input);
+          _constantPressurePIDKp = tuner.getKp();
+          _constantPressurePIDKi = tuner.getKi();
+          _constantPressurePIDKd = tuner.getKd();
+          sendPIDConfig();
+          // Set the output - tunePid() will return values within the range configured
+          // by setOutputRange(). Don't change the value or the tuning results will be
+          // incorrect.
+          //double result = _lastInputValveStatus + output;
+          //double inputValvePercent  = constrain(result , 0, 100);
+          if(output != _lastInputValveTarget)
+            _inputValve->open(output);
+          // This loop must run at the same speed as the PID control loop being tuned
+          while (millis() - startTime < SENSORS_INTERVAL)
+          {
+            update();
+          }
+      }
+      _constantPressurePIDKp = tuner.getKp();
+      _constantPressurePIDKi = tuner.getKi();
+      _constantPressurePIDKd = tuner.getKd();
+      _constantPressurePID.SetTunings(tuner.getKp() , tuner.getKi() , tuner.getKd());
+      sendPIDConfig();
+    }
+///////////// FIN AUTOCALIBRADOR
     _inputValve->close(true);
     _outputValve->open(100);
     _pressureMode = constantPressure;
-    _pressureTarget = 5;
+    _pressureTarget = calPEEP;
     _constantPressurePIDTarget = _pressureTarget;
-    _overPressurePIDTarget = 10;
-
+    _overPressurePIDTarget = calPEEP+5;
+    deadline = millis()+5000;
     while(millis() < deadline)
     {
         update();
@@ -368,8 +412,8 @@ void ApolloHal::highFrecuencyUpdate()
     _inputFlowSensor->highFreqUpdate();
     _outputFlowSensor->highFreqUpdate();
   }
-
-  _lastHighFreqUpdateMicros = micros() - startTime;
+  _hfLoops++;
+  _avgHighFreqUpdateMicros = ( (_avgHighFreqUpdateMicros*5) + (micros() - startTime)) /6;
 }
 
 void ApolloHal::sensorUpdate()
@@ -399,7 +443,8 @@ void ApolloHal::sensorUpdate()
     _lastOutputInstantFlow = _outputFlowSensor->getInstantFlow();
   }
 
-  _lastSensorLoopMicros = micros() - startTime;
+  _sensorLoops++;
+  _avgSensorLoopMicros = ( (_avgSensorLoopMicros*5) + (micros() - startTime)) /6;
 }
 
 void ApolloHal::update()
@@ -413,6 +458,11 @@ void ApolloHal::update()
     sendData();
   }
 
+  if(now >= _lastMetricsUpdate + 1000)
+  {
+    sendMetrics();
+  }
+
   if(now >= _lastSensorsUpdate + SENSORS_INTERVAL)
   {
     _lastSensorsUpdate = now;
@@ -423,6 +473,7 @@ void ApolloHal::update()
       {
         _pressureMode = constantPressure;
         _constantPressurePIDTarget = _pressureTarget;
+        _constantFlowPIDOutput = _lastInputValveStatus;
       }
     }
 
@@ -449,8 +500,8 @@ void ApolloHal::update()
 void ApolloHal::initPIDs()
 {
   _overPressurePIDTarget = DEFAULT_CMH20_MAX;
-  _constantPressurePIDKp = 1.1  ,  _constantPressurePIDKi = 1.1 ,_constantPressurePIDKd = 0.1;
-  _overPressurePIDKp     = 5.00  , _overPressurePIDKi     = 0.00 ,_overPressurePIDKd     = 0.00;
+  _constantPressurePIDKp = 2.5   , _constantPressurePIDKi = 0.0 ,_constantPressurePIDKd = 0.0;
+  _overPressurePIDKp     = 5.0   , _overPressurePIDKi     = 0.00 ,_overPressurePIDKd     = 0.00;
   _constantFlowPIDKp     = 1.00  , _constantFlowPIDKi     = 0.00 ,_constantFlowPIDKd     = 0.00;
   _inspiratoryRisePIDKp  = 0.01  , _inspiratoryRisePIDKi  = 0.00 ,_inspiratoryRisePIDKd  = 0.00;
 
@@ -460,20 +511,21 @@ void ApolloHal::initPIDs()
   _constantFlowPID.SetTunings     (_constantFlowPIDKp     , _constantFlowPIDKi     , _constantFlowPIDKd);
   _inspiratoryRisePID.SetTunings  (_inspiratoryRisePIDKp  , _inspiratoryRisePIDKi  , _inspiratoryRisePIDKd);
 
-  _constantPressurePID.SetOutputLimits (-25,25);
-  _overPressurePID.SetOutputLimits     (-50,50);
+  _constantPressurePID.SetOutputLimits (0,100);
+  _overPressurePID.SetOutputLimits     (-15,15);
   _constantFlowPID.SetOutputLimits     (0,100);
   _inspiratoryRisePID.SetOutputLimits  (-15,15);
 
-  _constantPressurePID.SetSampleTime(50);
-  _overPressurePID.SetSampleTime    (50);
-  _constantFlowPID.SetSampleTime    (50);
+  //_constantPressurePID.SetSampleTime(50);
+  //_overPressurePID.SetSampleTime    (50);
+  //_constantFlowPID.SetSampleTime    (50);
   //_inspiratoryRisePID.SetSampleTime (50);
 
   _constantPressurePID.SetMode(AUTOMATIC);
   _overPressurePID.SetMode    (AUTOMATIC);
   _constantFlowPID.SetMode    (AUTOMATIC);
   _inspiratoryRisePID.SetMode (AUTOMATIC);
+  sendPIDConfig();
 }
 
 void ApolloHal::computePIDs()
@@ -483,10 +535,10 @@ void ApolloHal::computePIDs()
       double result;
       _constantPressurePIDInput = _lastPressure;
       _constantPressurePID.Compute();
-      result = _lastInputValveStatus + _constantPressurePIDOutput;
-      double inputValvePercent  = constrain(result , 0, 100);
-      if(inputValvePercent != _lastInputValveTarget)
-        _inputValve->open(inputValvePercent);
+      //result = _lastInputValveStatus + _constantPressurePIDOutput;
+      //double inputValvePercent  = constrain(result , 0, 100);
+      if(_constantPressurePIDOutput != _lastInputValveTarget)
+        _inputValve->open(_constantPressurePIDOutput);
 
     //Serial.println("PID-Pressure-Input , target: "+String(_constantPressurePIDTarget)+" input: "+String(_constantPressurePIDInput)+" Output: "+String(_constantPressurePIDOutput));
     //Serial.println("PID-Pressure-Output, target: "+String(_overPressurePIDTarget)+" input: "+String(_overPressurePIDInput)+" Output: "+String(_overPressurePIDOutput));

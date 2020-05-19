@@ -99,6 +99,7 @@ public:
 
     void initPIDs();
     void computePIDs();
+    void autotunePressurePID();
     void highFrecuencyUpdate();
     void sensorUpdate();
     void sendMedicalData();

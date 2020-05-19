@@ -469,7 +469,7 @@ void ApolloHal::update()
     sensorUpdate();
     if(_pressureMode == rampUpPressure)
     {
-      if(_lastPressure > _pressureTarget * 0.75)
+      if(_lastPressure > _pressureTarget * 0.85)
       {
         _pressureMode = constantPressure;
         _constantPressurePIDTarget = _pressureTarget;
@@ -500,8 +500,8 @@ void ApolloHal::update()
 void ApolloHal::initPIDs()
 {
   _overPressurePIDTarget = DEFAULT_CMH20_MAX;
-  _constantPressurePIDKp = 2.5   , _constantPressurePIDKi = 0.0 ,_constantPressurePIDKd = 0.0;
-  _overPressurePIDKp     = 5.0   , _overPressurePIDKi     = 0.00 ,_overPressurePIDKd     = 0.00;
+  _constantPressurePIDKp = 5     , _constantPressurePIDKi = 0.0 ,_constantPressurePIDKd = 0.0;
+  _overPressurePIDKp     = 5     , _overPressurePIDKi     = 0.00 ,_overPressurePIDKd     = 0.00;
   _constantFlowPIDKp     = 1.00  , _constantFlowPIDKi     = 0.00 ,_constantFlowPIDKd     = 0.00;
   _inspiratoryRisePIDKp  = 0.01  , _inspiratoryRisePIDKi  = 0.00 ,_inspiratoryRisePIDKd  = 0.00;
 

@@ -79,5 +79,12 @@ bool mksBME280diff::begin()
  */
 float mksBME280diff::readPascal()
 {
-     return this->bme.readPressure() - this->bmeOffset.readPressure();
+     i2cBusSelect(this->i2cBus);
+
+     float presTubo = this->bme.readPressure();
+     float  presAmbiente = this->bmeOffset.readPressure();
+
+//     Serial.println(String(presAmbiente)+"\t"+String(presTubo));
+//     Serial.flush();
+     return  presTubo - presAmbiente ;
 }

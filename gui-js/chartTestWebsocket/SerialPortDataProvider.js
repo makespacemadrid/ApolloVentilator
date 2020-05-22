@@ -6,8 +6,8 @@ const Readline   = require('@serialport/parser-readline');
 function SerialPortDataProvider(options, eventEmitter) {
 
     const serialPort = new SerialPort(
-        options.serialPortName, { 
-            baudRate: options.serialPortRate,
+        options.serialportname, { 
+            baudRate: options.serialportrate,
         }, function (err){
             if(err!=null){ eventEmitter.emit('serialPortError', err.message); }
         }

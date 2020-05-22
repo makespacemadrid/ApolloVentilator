@@ -19,6 +19,8 @@ ApolloHal::ApolloHal() :
   _lastSensorsUpdate         =0;
   _lastTelemetryUpdate       =0;
   _lastCommunicationsUpdate  =0;
+  _hwStatus = hardwareUNKNOWN;
+  _lastInspiratoryValveStatus = 0;
 }
 
 ApolloHal::~ApolloHal()
@@ -102,6 +104,51 @@ void ApolloHal::sendValveStatus()
   Serial.println();
 }
 
+void ApolloHal::sendVentilatorStatus(String errorMSG)
+{
+  StaticJsonDocument<MAX_JSON_SIZE> jsonOutput;
+  jsonOutput[STR_JSON_TYPE] = STR_VENT_STATUS;
+
+
+  enum hardwareStatus
+  {
+    hardwareUNKNOWN,
+    hardwareOK,
+    hardwareUNCAL,
+    hardwareERROR,
+    hardwareTESTING,
+    hardwareCALIBRATION
+  };
+
+  enum ventilatorStatus
+  {
+    ventilatorSTOPPED,
+    ventilatorRUNNING,
+    ventilatorPAUSED,
+    ventilatorERROR
+  };
+
+  String hwS    = "NULL";
+  String ventS  = STR_ERROR; // TODO!
+
+  switch(_hwStatus)
+  {
+      case hardwareUNKNOWN      : hwS = STR_UNKNOWN;    break;
+      case hardwareOK           : hwS = STR_OK;         break;
+      case hardwareUNCAL        : hwS = STR_UNCAL;      break;
+      case hardwareERROR        : hwS = STR_ERROR;      break;
+      case hardwareTESTING      : hwS = STR_TESTING;    break;
+      case hardwareCALIBRATION  : hwS = STR_CALIBRATION;break;
+  }
+
+  jsonOutput[STR_HARDWARE_STATUS] = hwS;
+  jsonOutput[STR_VENT_STATUS]     = ventS;
+  jsonOutput[STR_ERROR_MSG]       = errorMSG;
+
+  serializeJson(jsonOutput, Serial);
+  Serial.println();
+}
+
 void ApolloHal::sendPIDConfig()
 {
   StaticJsonDocument<MAX_JSON_SIZE> jsonOutput;
@@ -138,9 +185,57 @@ void ApolloHal::sendMetrics()
 
 void ApolloHal::sendConfig()
 {//TODO
-
+  debug("SEND CONFIG no implementado todavia!!!!");
 }
 
+void ApolloHal::readSerial()
+{
+  if(!Serial.available()) return;
+  String payload = Serial.readStringUntil('\n');
+  StaticJsonDocument<MAX_JSON_SIZE> jsonInput;
+  DeserializationError error = deserializeJson(jsonInput, payload);
+  if (error) {
+    debug("deserializeJson() failed: " + String(error.c_str()));
+    debug(payload);
+    return;
+  }
+
+  String type = jsonInput[STR_JSON_TYPE];
+  if(!type)
+  {
+    debug("JSON with no type!");
+    return;
+  }
+  if(type == STR_COMMAND)
+  {
+    String cmd = jsonInput[STR_COMMAND];
+    if(cmd == STR_COMMAND_START)
+    {
+      debug("START no implementado");
+    }
+    else if(cmd == STR_COMMAND_STOP)
+    {
+      debug("STOP no implementado");
+    }
+    else if(cmd == STR_COMMAND_PAUSE)
+    {
+      debug("PAUSE no implementado");
+    }
+    else if(cmd == STR_COMMAND_TEST)
+    {
+      test();
+    }
+    else if(cmd == STR_COMMAND_CALIBRATE)
+    {
+      calibrate();
+    }
+    else if(cmd == STR_COMMAND_GET_CONFIG)
+    {
+      sendConfig();
+    }
+  }
+
+}
 /**
  * @brief Initialize and check all sensor
  *
@@ -152,12 +247,16 @@ bool ApolloHal::begin()
 
   if(!_inputValve || !_outputValve)
   {
+    _hwStatus = hardwareERROR;
+    sendVentilatorStatus("ERROR! NO VALVES!");
     debug("ERROR! NO VALVES!");
     return false;
   }
 
   if (!_outputValve->begin())
   {
+    _hwStatus = hardwareERROR;
+    sendVentilatorStatus("ERROR! VALVE-OUT");
     debug("ERROR! VALVE-OUT");
     return false;
   }
@@ -166,6 +265,8 @@ bool ApolloHal::begin()
 
   if (!this->_inputValve->begin())
   {
+    _hwStatus = hardwareERROR;
+    sendVentilatorStatus("ERROR! VALVE-IN");
     debug("ERROR! VALVE-IN");
     return false;
   }
@@ -175,9 +276,12 @@ bool ApolloHal::begin()
 
   if(_inputPressureSensor)
   {
+    debug("wait for pressure release!");
     delay(5000);
     if (!_inputPressureSensor->begin())
     {
+      _hwStatus = hardwareERROR;
+      sendVentilatorStatus("ERROR! PRESSSURE SENSOR!");
       debug("ERROR PRESSURE SENSOR!");
       return false;
     }
@@ -189,12 +293,16 @@ bool ApolloHal::begin()
   {
     if (!this->_inputFlowSensor->begin())
     {
+      _hwStatus = hardwareERROR;
+      sendVentilatorStatus("ERROR! FLOW-IN!");
       debug("ERROR FLOW-IN!");
       return false;
     }
 
     if (!this->_outputFlowSensor->begin())
     {
+      _hwStatus = hardwareERROR;
+      sendVentilatorStatus("ERROR! FLOW-OUT!");
       debug("ERROR FLOW-OUT");
       return false;
     }
@@ -203,14 +311,31 @@ bool ApolloHal::begin()
   else {_hasFlowSensors = false;}
 
   initPIDs();
+
+  sendPIDConfig();
+
+  if(readCalibrationData())
+  {
+    _hwStatus = hardwareOK;
+    sendVentilatorStatus();
+  }
+  else
+  {
+    _hwStatus = hardwareUNCAL;
+    sendVentilatorStatus();
+  }
   return true;
 }
 
 bool ApolloHal::test()
 {
+  _hwStatus = hardwareTESTING;
+  sendVentilatorStatus();
   debug("TESTING HARDWARE");
   if(!_inputValve || !_outputValve)
   {
+    _hwStatus = hardwareERROR;
+    sendVentilatorStatus("ERROR! NO VALVES!");
     debug("ERROR! NO VALVES!");
     return false;
   }
@@ -219,6 +344,8 @@ bool ApolloHal::test()
 
   if (!_outputValve->test())
   {
+    _hwStatus = hardwareERROR;
+    sendVentilatorStatus("TEST ERROR! VALVE-OUT");
     debug("TEST ERROR! VALVE-OUT");
     _outputValve->begin();
     return false;
@@ -228,33 +355,45 @@ bool ApolloHal::test()
 
   if (!this->_inputValve->test())
   {
-    _inputValve->begin();
+    _hwStatus = hardwareERROR;
+    sendVentilatorStatus("TEST ERROR! VALVE-IN");
     debug("TEST ERROR! VALVE-IN");
     return false;
   }
   _inputValve->close(true);
+
+  if(readCalibrationData())
+  {
+    _hwStatus = hardwareOK;
+    sendVentilatorStatus();
+  }
+  else
+  {
+    _hwStatus = hardwareUNCAL;
+    sendVentilatorStatus();
+  }
   return true;
 }
 
 bool ApolloHal::calibrate()
 {
-
   if(_hasPressureSensor)
     return calibratePressure();
   else
     return true;
 }
 
-void ApolloHal::autotunePressurePID()
+void ApolloHal::autotunePressurePID(float target)
 {
-  _pressureTarget  = 30;
-  _overPressurePIDTarget = 30 + 10;
+  debug("Autotune START!");
+  _pressureTarget  = target;
+  _overPressurePIDTarget = DEFAULT_CMH20_MAX;
   _pressureMode = none;
   PIDAutotuner tuner = PIDAutotuner();
   tuner.setTargetInputValue(_pressureTarget);
-  //tuner.setLoopInterval(50);
+  tuner.setLoopInterval(SENSORS_INTERVAL);
   tuner.setOutputRange(0,100);
-  tuner.setZNMode(PIDAutotuner::ZNModeNoOvershoot);
+  tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
   tuner.startTuningLoop();
 
   while (!tuner.isFinished()) {
@@ -285,9 +424,10 @@ void ApolloHal::autotunePressurePID()
       }
   }
   _constantPressurePIDKp = tuner.getKp();
-  _constantPressurePIDKi = tuner.getKi();
-  _constantPressurePIDKd = tuner.getKd();
-  _constantPressurePID.SetTunings(tuner.getKp() , tuner.getKi() , tuner.getKd());
+  _constantPressurePIDKi = 0;
+  _constantPressurePIDKd = 0;
+  _constantPressurePID.SetTunings(_constantPressurePIDKp , _constantPressurePIDKi , _constantPressurePIDKd);
+  debug("AutoTune result: Kp:"+String(tuner.getKp())+" Ki:"+String(tuner.getKi())+" Kd:"+String(tuner.getKd()));
   sendPIDConfig();
   ///////////// FIN AUTOCALIBRADOR
 }
@@ -295,26 +435,42 @@ void ApolloHal::autotunePressurePID()
 
 bool ApolloHal::calibratePressure()
 {
-  _inputValve->close(true);
-  update();
-  _outputValve->open(true);
-  update();
-  delay(5000);
-  update();
-  _lastPressure = _inputPressureSensor->readCMH2O();
-  if(_lastPressure > 5)
-  {
-    debug("Calibration error, too much pressure on start!");
-    return false;
-  }
-
-  _lastInspiratoryValveStatus = 20;
-  _inspiratoryRisePIDTarget = 1500;
+  _hwStatus = hardwareCALIBRATION;
+  _inspiratoryRisePIDTarget = 1000;
+  if(_lastInspiratoryValveStatus == 0) _lastInspiratoryValveStatus = 20;
 
   double calTarget = 30;
   double calPEEP   = 5;
 
-  for(int i = 0; i < 25 ; i++)
+  sendVentilatorStatus();
+  _inputValve->close(true);
+  update();
+  _outputValve->open(true);
+  update();
+  debug("Wait for pressure release...");
+  delay(3000);
+  update();
+
+  _lastPressure = _inputPressureSensor->readCMH2O();
+  if(_lastPressure > 5)
+  {
+    _hwStatus = hardwareUNCAL;
+    sendVentilatorStatus("CAL ERROR! too much pressure on start!");
+    debug("Calibration error, too much pressure on start!");
+    return false;
+  }
+
+
+  autotunePressurePID(calTarget);
+
+  _inputValve->close(true);
+  update();
+  _outputValve->open(true);
+  update();
+  debug("Wait for pressure release...");
+  delay(5000);
+
+  for(int i = 0; i < 10 ; i++)
   {
     _pressureTarget = calTarget;
     _constantPressurePIDTarget = _pressureTarget;
@@ -352,11 +508,10 @@ bool ApolloHal::calibratePressure()
     }
 
   }
-
+  _hwStatus = hardwareOK;
+  sendVentilatorStatus("CAL ERROR! too much pressure on start!");
   return true;
 }
-
-
 
 
 bool ApolloHal::setConstantFlow(float flow, float maxPressure)
@@ -370,12 +525,11 @@ bool ApolloHal::setConstantPressure(float pressure)
   if(!_hasPressureSensor) return false;
   _pressureMode = constantPressure;
 
+  _pressureTarget = pressure;
   _constantPressurePIDTarget  = pressure;
   _overPressurePIDTarget      = pressure+10;
   return true;
 }
-
-
 
 void ApolloHal::openInputValve(uint8_t percent,bool wait)
 {
@@ -493,7 +647,7 @@ void ApolloHal::update()
   if(now >= _lastCommunicationsUpdate + COMMUNICATIONS_INTERVAL)
   {
     _lastCommunicationsUpdate = now;
-//    com->serialRead();
+    readSerial();
   }
 }
 

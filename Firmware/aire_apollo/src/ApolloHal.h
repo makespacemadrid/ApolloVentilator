@@ -24,6 +24,24 @@ enum pressureMode
   lastItem
 };
 
+enum hardwareStatus
+{
+  hardwareUNKNOWN,
+  hardwareOK,
+  hardwareUNCAL,
+  hardwareERROR,
+  hardwareTESTING,
+  hardwareCALIBRATION
+};
+
+enum ventilatorStatus
+{
+  ventilatorSTOPPED,
+  ventilatorRUNNING,
+  ventilatorPAUSED,
+  ventilatorERROR
+};
+
 struct pidVARS
 {
   double target = 0.0;
@@ -99,14 +117,17 @@ public:
 
     void initPIDs();
     void computePIDs();
-    void autotunePressurePID();
+    void autotunePressurePID(float target);
     void highFrecuencyUpdate();
     void sensorUpdate();
     void sendMedicalData();
     void sendValveStatus();
+    void sendVentilatorStatus(String error = "");
     void sendPIDConfig();
     void sendMetrics();
     void sendConfig();
+    void readSerial();
+    bool readCalibrationData() {return false;}
 
     ApolloPressureSensor  *_inputPressureSensor;
     ApolloFlowSensor      *_inputFlowSensor;
@@ -116,6 +137,7 @@ public:
     ApolloAlarms          *_alarms;
 
 //
+    hardwareStatus _hwStatus;
     float  _lastInputValveStatus;
     float  _lastOutputValveStatus;
     float  _lastInputValveTarget;
@@ -130,7 +152,7 @@ public:
     uint16_t      _lastInspiratoryRiseTimeMS;
     unsigned long _lastInspiratoryRiseStart;
     float         _lastInspiratoryValveStatus;
-    bool   _pressureTargetArchived;
+    bool          _pressureTargetArchived;
 
     bool   _hasPressureSensor;
     bool   _hasFlowSensors;

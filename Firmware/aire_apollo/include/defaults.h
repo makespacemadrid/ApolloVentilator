@@ -1,6 +1,6 @@
 #ifndef DEFAULTS_H
 #define DEFAULTS_H
-
+#include "Arduino.h"
 
 
 //TIMERS
@@ -8,6 +8,7 @@
 #define TELEMETRY_INTERVAL      50 //milliseconds
 #define VENTILATOR_INTERVAL     100 //milliseconds
 #define COMMUNICATIONS_INTERVAL 500 //milliseconds
+
 //------HardWare---------
 #define NO_PIN -1
 #define ENTRY_EV_PIN    NO_PIN   //Valvula - Entrada
@@ -15,49 +16,110 @@
 #define ENTRY_FLOW_PIN  NO_PIN   //Sensor de Flujo - Entrada
 #define EXIT_FLOW_PIN   NO_PIN   //Sendor de Flujo - Salida
 
-#ifndef STEPPER1_ENABLE
+//STEPPER 1 CONFIG
+
+#ifndef STEPPER1_ENABLE //ENABLE pin
   #define STEPPER1_ENABLE -1
 #endif
+
+#ifndef STEPPER1_ENABLE_STATE
+  #define STEPPER1_ENABLE_STATE LOW
+#endif
+
 #ifndef STEPPER1_DIR
   #define STEPPER1_DIR    -1
 #endif
+
 #ifndef STEPPER1_STEP
   #define STEPPER1_STEP   -1
 #endif
+
 #ifndef STEPPER1_ENDSTOP
   #define STEPPER1_ENDSTOP -1
 #endif
 
-#ifndef STEPPER2_ENABLE
-  #define STEPPER2_ENABLE  -1
+#ifndef STEPPER1_ENDSTOP_PRESSED_STATE
+  #define STEPPER1_ENDSTOP_PRESSED_STATE HIGH
 #endif
+
+//comentar/descomentar segun se necesite
+#define STEPPER1_ENDSTOP_PULLUP
+
+#ifndef STEPPER1_MAX_RPM
+  #define STEPPER1_MAX_RPM 200
+#endif
+
+#ifndef STEPPER1_STEPS_PER_RPM
+  #define STEPPER1_STEPS_PER_RPM 160
+#endif
+
+#ifndef STEPPER1_MICROSTEPS
+  #define STEPPER1_MICROSTEPS 8
+#endif
+
+#ifndef STEPPER1_OPEN_POS
+  #define STEPPER1_OPEN_POS 200
+#endif
+
+#ifndef STEPPER1_CLOSED_POS
+  #define STEPPER1_CLOSED_POS 575
+#endif
+
+////////// STEPPER 2 CONFIG
+#ifndef STEPPER2_ENABLE //ENABLE pin
+  #define STEPPER2_ENABLE -1
+#endif
+
+#ifndef STEPPER2_ENABLE_STATE
+  #define STEPPER2_ENABLE_STATE LOW
+#endif
+
 #ifndef STEPPER2_DIR
-  #define STEPPER2_DIR     -1
+  #define STEPPER2_DIR    -1
 #endif
+
 #ifndef STEPPER2_STEP
-  #define STEPPER2_STEP    -1
+  #define STEPPER2_STEP   -1
 #endif
+
 #ifndef STEPPER2_ENDSTOP
   #define STEPPER2_ENDSTOP -1
 #endif
+
+#ifndef STEPPER2_ENDSTOP_PRESSED_STATE
+  #define STEPPER2_ENDSTOP_PRESSED_STATE HIGH
+#endif
+
+//comentar/descomentar segun se necesite
+#define STEPPER2_ENDSTOP_PULLUP
+
+#ifndef STEPPER2_MAX_RPM
+  #define STEPPER2_MAX_RPM 12
+#endif
+
+#ifndef STEPPER2_STEPS_PER_RPM
+  #define STEPPER2_STEPS_PER_RPM 5400
+#endif
+
+#ifndef STEPPER2_MICROSTEPS
+  #define STEPPER2_MICROSTEPS 2
+#endif
+
+#ifndef STEPPER2_OPEN_POS
+  #define STEPPER2_OPEN_POS 700
+#endif
+
+#ifndef STEPPER2_CLOSED_POS
+  #define STEPPER2_CLOSED_POS 1690
+#endif
+
+
 //#define PRESSURE_SENSOR_PIN      ??
 //-------I2C--------
 #define BME280_ADDR 0x76
 #define BME280_ADDR_OFFSET 0x77
 #define LCD_DIR     0x27 //I2C Address Display
-// ---- Encoders ----
-//RPM
-#define PIN_ENC_RPM_DT  47
-#define PIN_ENC_RPM_CLK 32
-#define PIN_ENC_RPM_SW  0
-// % insuflacion
-#define PIN_ENC_PCTINS_DT   43
-#define PIN_ENC_PCTINS_CLK  45
-#define PIN_ENC_PCTINS_SW   0
-// Vol Tidal
-#define PIN_ENC_TIDAL_DT  39
-#define PIN_ENC_TIDAL_CLK 41
-#define PIN_ENC_TIDAL_SW  0
+
 // Pause button
 #define PIN_PAUSE 99
 

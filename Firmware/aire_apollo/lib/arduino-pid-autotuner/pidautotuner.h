@@ -55,17 +55,17 @@ private:
   float loopInterval = 0;
   float minOutput, maxOutput;
   byte znMode = ZNModeBasicPID;
-  int cycles = 10;
+  int cycles = 50;
 
   // See startTuningLoop()
-  int i;
-  bool output;
-  float outputValue;
-  long microseconds, t1, t2, tHigh, tLow;
-  float _max, _min;
-  float pAverage, iAverage, dAverage;
+  int i=0;
+  bool output=0;
+  float outputValue=0;
+  long microseconds=0, t1=0, t2=0, tHigh=0, tLow=0;
+  float _max=0, _min=0;
+  float pAverage=0, iAverage=0, dAverage=0;
 
-  float kp, ki, kd;
+  float kp = 0, ki = 0, kd = 0;
 };
 
 #endif

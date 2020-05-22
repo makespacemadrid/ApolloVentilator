@@ -61,7 +61,7 @@ Params:
 
 --port="mqttPort"                     default: 1883
 
---topic="mqttMainTopic"               default: "ventilator/measurement/wilson"
+--topic="mqttMainTopic"               default: "ventilator/measurement/wilson/#"
 
 
 node mqttSubscribe.js  --host="mqttHost" --port="63636" --topic="ventilator/measurement/wilson"

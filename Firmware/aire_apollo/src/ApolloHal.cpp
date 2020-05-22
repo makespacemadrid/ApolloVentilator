@@ -633,7 +633,7 @@ void ApolloHal::update()
 
     if(!_pressureTargetArchived && _pressureMode == constantPressure)
     {
-        if(_lastPressure >= _pressureTarget*0.98)
+        if(_lastPressure >= _pressureTarget*0.90)
         {
           _pressureTargetArchived = true;
           _lastInspiratoryRiseTimeMS = millis() - _lastInspiratoryRiseStart;

@@ -29,7 +29,7 @@ def before_upload(source, target, env):
 
 def after_upload(source, target, env):
     print("after_upload")
-    env.Execute("node ../../gui-js/chartTestWebsocket/gui.js --serialPortName=/dev/ttyACM0 --host=makespacemadrid.synology.me --port=63636 --debug --mqtt --location=MakeSpace --topic=ventilator/measurement/wilson")
+    env.Execute("node ../../gui-js/chartTestWebsocket/gui.js --serialPortName=/dev/ttyACM0 --serialPortRate=921600 --host=makespacemadrid.synology.me --port=63636 --debuglog --mqtt --location=MakeSpace --topic=ventilator/measurement/wilson")
 
 print("Current build targets", map(str, BUILD_TARGETS))
 

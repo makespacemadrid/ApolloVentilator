@@ -1,3 +1,21 @@
 .chart-h{
   height: 180px;
 }
+
+#debugInfo{
+    width:100%;
+    padding:0 5px;
+}
+.input{
+  width: 95%;
+  text-align: center;
+  background-color: #f9f9f9;
+  border:0;
+  height: 100%;
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .card-columns {
+    column-count: 3; } 
+  
+  }

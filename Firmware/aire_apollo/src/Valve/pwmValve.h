@@ -3,7 +3,7 @@
 
 #include<Arduino.h>
 #include "ApolloValve.h"
-
+/* HACK!
 class pwmValve : public ApolloValve
 {
 
@@ -22,5 +22,5 @@ protected:
 
 };
 
-
+*/
 #endif

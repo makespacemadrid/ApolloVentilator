@@ -1,7 +1,7 @@
 #ifndef TRACE_H
 #define TRACE_H
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #define TRACE(cadena) Serial.println("DEBUG: "  cadena);Serial.flush()

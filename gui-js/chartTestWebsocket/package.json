@@ -4,6 +4,7 @@
     "mimic-response": "",
     "mqtt": "",
     "mri": "",
+    "nmi": "^1.0.3",
     "request": "",
     "serialport": "",
     "socket.io": ""

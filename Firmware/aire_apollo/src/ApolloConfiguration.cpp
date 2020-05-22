@@ -9,7 +9,8 @@ bool ApolloConfiguration::begin()
 {
     this->setTidalVolume(this->calcularVolumenTidal(this->height, this->sexo));
     unsigned long init = millis();
-    unsigned int waitTime = 10000; //10 segundos de espera a recibir la configuración
+    unsigned int waitTime = 0; //10 segundos de espera a recibir la configuración
+//    unsigned int waitTime = 10000; //10 segundos de espera a recibir la configuración
     //Leer configuración de la tablet o sacar del epprom
     while (!this->ready)
     {

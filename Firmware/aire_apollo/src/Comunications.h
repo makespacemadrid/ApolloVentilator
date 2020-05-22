@@ -20,7 +20,6 @@ protected:
 
 private:
     unsigned long lastLogTime = 0;
-    unsigned long logInterval = LOG_INTERVAL;
     ApolloConfiguration *config;
 };
 

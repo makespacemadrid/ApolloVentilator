@@ -6,8 +6,3 @@ ApolloFlowSensor::ApolloFlowSensor()
 
 ApolloFlowSensor::~ApolloFlowSensor()
 {}
-
-bool ApolloFlowSensor::begin()
-{
-    return false;
-}

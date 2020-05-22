@@ -106,9 +106,8 @@ class Device(Gtk.Grid):
         self.parent_window.show_all()
         canvas.show()
 
-        self.thread_serial_port = threading.Thread(target=self.loop_serial_read)
-        self.thread_serial_port.daemon = True
-        self.thread_serial_port.start()
+        self.serial_buffer = bytes()
+        self.serial_src = GLib.io_add_watch(self.serial, GLib.IO_IN | GLib.IO_ERR | GLib.IO_HUP, self.serial_read)
 
     def event_toggle_standby(self, ctrl):
         # TODO: self.serial_port.send("STANDBY_CMD")
@@ -137,18 +136,18 @@ class Device(Gtk.Grid):
             self.plot_ax_pressure.clear()
             self.plot_ax_volume.clear()
 
-    def loop_serial_read(self):
+    def serial_read(self, f, condition):
         def parse_serial_line(parse_str):
             command_and_data = parse_str.decode('utf-8').split(':')
             return command_and_data
 
-        while True:
-            # time.sleep(0.5)
-            serial_line =  self.serial.readline()
+        self.serial_buffer += self.serial.read()
+        while b'\n' in self.serial_buffer:
+            serial_line, self.serial_buffer = self.serial_buffer.split(b'\n', 1)
             print("======== ", serial_line)
-            if ("DATA" or "ALERT" or "DEBUG" or "CONFIG") in serial_line.decode('utf-8'): # TODO: revisar para resto de casos
-                serial_data = parse_serial_line(serial_line)  # TODO: Usar funciones de Parser
-                serial_command = serial_data[0]
+            serial_data = parse_serial_line(serial_line)  # TODO: Usar funciones de Parser
+            serial_command = serial_data[0]
+            if serial_command in ("DATA", "ALERT", "DEBUG", "CONFIG"): # TODO: revisar para resto de casos
                 if serial_command == "DATA":
                     print('>>>>> ',serial_line)
                     serial_code = serial_data[1].strip()
@@ -157,7 +156,7 @@ class Device(Gtk.Grid):
                     data = values[0:2]
                     args = [timestamp, data[0], data[1].strip()]
                     print(args)
-                    GLib.idle_add(self.loop_update_values, *args)
+                    self.loop_update_values(*args)
                 elif serial_command == "ALERT":
                     print('>>>>> ',serial_line)
                     serial_code = serial_data[1].strip()
@@ -173,7 +172,7 @@ class Device(Gtk.Grid):
                 logging.warning(f"Serial command not found:")
                 # Notify.Notification.new("Serial command not found").show()
 
-            # time.sleep(1)
+        return True
 
 
 class App:

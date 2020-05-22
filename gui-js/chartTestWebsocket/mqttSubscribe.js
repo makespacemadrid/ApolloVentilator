@@ -1,13 +1,13 @@
 "use strict";
 
-const mri         = require("mri");
-const mqtt        = require('mqtt')
-const argv        = process.argv.slice(2);
+const mri  = require("mri");
+const mqtt = require('mqtt')
+const argv = process.argv.slice(2);
 
 let options = mri( argv, { default: {
-    mqtthost:       'localhost',
-    mqttport:        1883,
-    topic:          'ventilator/measurement/wilson/#',
+    mqtthost: 'localhost',
+    mqttport: 1883,
+    topic:    'ventilator/measurement/wilson/#',
 }});
 
 let mqttOptions = { port: options.mqttport }
@@ -22,6 +22,7 @@ client.on('connect', function() {
     client.subscribe(options.topic, function (err) {
         if (err) {
             console.log('Mqtt client not connected');
+            process.exit(1);
         }
     });
 
@@ -32,6 +33,6 @@ client.on('message', function (topic, message) {
 });
 
 client.on('error', function(err) {
-    console.log('Mqtt error: '+ err,message);
+    console.log('Mqtt error: '+ err.message);
     process.exit(1);
 });

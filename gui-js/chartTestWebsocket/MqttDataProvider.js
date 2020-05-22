@@ -13,8 +13,8 @@ function MqttDataProvider(options, eventEmitter) {
     let topic    = options.topic;
 
     client.on('connect', function() {
-    
-        //eventEmitter.emit('infoLog', 'Mqtt client connected');
+
+        eventEmitter.emit('infoLog', 'Mqtt client connected');
         
         eventEmitter.addListener('eventFromVentilator', function(payload){
 
@@ -38,7 +38,6 @@ function MqttDataProvider(options, eventEmitter) {
             client.publish(mqttTopic, mqttPayload);
             
         });
-     
     });
 
     client.on('error', function(err) {

@@ -461,7 +461,7 @@ bool ApolloHal::calibratePressure()
   }
 
 
-  autotunePressurePID(calTarget);
+  //autotunePressurePID(calTarget);
 
   _inputValve->close(true);
   update();
@@ -470,17 +470,29 @@ bool ApolloHal::calibratePressure()
   debug("Wait for pressure release...");
   delay(5000);
 
-  for(int i = 0; i < 10 ; i++)
+  _lastPressure = _inputPressureSensor->readCMH2O();
+  _lastPressureRisePressure = _lastPressure;
+  _lastPressureBrakeTime = 250;
+  _pressureBraking = false;
+
+  _lastPressureRiseSample = millis();
+
+  for(int i = 0; i < 15 ; i++)
   {
+    debug("Cycle:"+String(i));
     _pressureTarget = calTarget;
     _constantPressurePIDTarget = _pressureTarget;
     _overPressurePIDTarget = calTarget+10;
     _pressureTargetArchived = false;
     _pressureMode = rampUpPressure;
+    _pressureBraking = false;
     update();
     _outputValve->close(true);
     update();
+    _lastPressure = _inputPressureSensor->readCMH2O();
+    _lastPressureRisePressure = _lastPressure;
     _lastInspiratoryRiseStart = millis();
+    _lastPressureRiseSample   = _lastInspiratoryRiseStart;
     unsigned long deadline = _lastInspiratoryRiseStart+5000;
     _inputValve->open(_lastInspiratoryValveStatus);
     while(millis() < deadline)
@@ -501,7 +513,7 @@ bool ApolloHal::calibratePressure()
     _pressureTarget = calPEEP;
     _constantPressurePIDTarget = _pressureTarget;
     _overPressurePIDTarget = calPEEP+5;
-    deadline = millis()+5000;
+    deadline = millis()+3000;
     while(millis() < deadline)
     {
         update();
@@ -509,7 +521,7 @@ bool ApolloHal::calibratePressure()
 
   }
   _hwStatus = hardwareOK;
-  sendVentilatorStatus("CAL ERROR! too much pressure on start!");
+  sendVentilatorStatus();
   return true;
 }
 
@@ -623,24 +635,52 @@ void ApolloHal::update()
     sensorUpdate();
     if(_pressureMode == rampUpPressure)
     {
-      if(_lastPressure > _pressureTarget * 0.85)
+      debug("ramp,pt:"+String(_pressureTarget) +"lp: "+String(_lastPressureRisePressure)+" p:"+String(_lastPressure));
+      unsigned long now = millis();
+      // m = y2-y1 / x2-x1
+      float pdiff = _lastPressure - _lastPressureRisePressure;
+      float tdiff = now - _lastPressureRiseSample;
+      float slope = pdiff / tdiff;
+      // ca = co / m
+      float timeToTarget = float(_pressureTarget - _lastPressure) / slope;
+      debug("ramp, pdiff:" +String(pdiff)+ " tdiff:"+ String(tdiff) + " slope:"+String(slope)+" timeto:"+String(timeToTarget));
+
+      _lastPressureRisePressure = _lastPressure;
+      _lastPressureRiseSample = now;
+      if(!_pressureBraking && timeToTarget < _lastPressureBrakeTime && _lastPressure > 5)
       {
-        _pressureMode = constantPressure;
-        _constantPressurePIDTarget = _pressureTarget;
-        _constantPressurePIDOutput = _lastInputValveStatus;
+        debug("BRAKING!");
+        now = millis();
+        _lastPressureBrakeStart = now;
+        _pressureBraking = true;
+        _inputValve->close();
       }
-    }
 
-    if(!_pressureTargetArchived && _pressureMode == constantPressure)
-    {
-        if(_lastPressure >= _pressureTarget*0.90)
-        {
-          _pressureTargetArchived = true;
-          _lastInspiratoryRiseTimeMS = millis() - _lastInspiratoryRiseStart;
-          debug("Pressure Achieved! - "+String(_lastInspiratoryRiseTimeMS));
-        }
-    }
+      if(_pressureBraking && slope < 0.05)
+      {
+        _lastPressureBrakeTime = millis() - _lastPressureBrakeStart;
+        debug("Brake time:"+String(_lastPressureBrakeTime));
+        _pressureMode = none;
+        _pressureBraking = false;
+      }
 
+
+
+      if(!_pressureTargetArchived && _lastPressure >= _pressureTarget*0.95)
+      {
+            _pressureTargetArchived = true;
+            _lastInspiratoryRiseTimeMS = millis() - _lastInspiratoryRiseStart;
+            debug("Pressure Achieved! - "+String(_lastInspiratoryRiseTimeMS));
+      }
+
+//      if(_lastPressure > _pressureTarget * 0.85)
+//      {
+//        _pressureMode = constantPressure;
+//        _constantPressurePIDTarget = _pressureTarget;
+//        _constantPressurePIDOutput = _lastInputValveStatus;
+//      }
+
+    }
     computePIDs();
   }
 

@@ -148,6 +148,11 @@ public:
     float  _lastInputInstantFlow;
     float  _lastOutputInstantFlow;
 
+    unsigned long _lastPressureRiseSample;
+    float         _lastPressureRisePressure;
+    unsigned int  _lastPressureBrakeTime;
+    unsigned long _lastPressureBrakeStart;
+    bool          _pressureBraking;
 
     uint16_t      _lastInspiratoryRiseTimeMS;
     unsigned long _lastInspiratoryRiseStart;

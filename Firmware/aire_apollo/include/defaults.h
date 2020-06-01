@@ -4,7 +4,7 @@
 
 
 //TIMERS
-#define SENSORS_INTERVAL        25 //milliseconds
+#define SENSORS_INTERVAL        10 //milliseconds
 #define TELEMETRY_INTERVAL      50 //milliseconds
 #define VENTILATOR_INTERVAL     100 //milliseconds
 #define COMMUNICATIONS_INTERVAL 500 //milliseconds

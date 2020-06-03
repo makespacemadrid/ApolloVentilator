@@ -637,7 +637,7 @@ void ApolloHal::update()
     sensorUpdate();
     if(_pressureMode == rampUpPressure || _pressureRising)
     {
-      debug("ramp,pt:"+String(_pressureTarget) +"lp: "+String(_lastPressureRisePressure)+" p:"+String(_lastPressure));
+//      debug("ramp,pt:"+String(_pressureTarget) +"lp: "+String(_lastPressureRisePressure)+" p:"+String(_lastPressure));
       unsigned long now = millis();
       // m = y2-y1 / x2-x1
       float pdiff = _lastPressure - _lastPressureRisePressure;
@@ -656,10 +656,10 @@ void ApolloHal::update()
         {
           // ca = co / m
           float timeToTarget = float(_pressureTarget - _lastPressure) / slope;
-          debug("ramp, pdiff:" +String(pdiff)+ " tdiff:"+ String(tdiff) + " slope:"+String(slope)+" timeto:"+String(timeToTarget));
+//          debug("ramp, pdiff:" +String(pdiff)+ " tdiff:"+ String(tdiff) + " slope:"+String(slope)+" timeto:"+String(timeToTarget));
           if(timeToTarget < _lastPressureBrakeTime)
           {
-            debug("BRAKING!");
+//            debug("BRAKING!");
             now = millis();
             _lastPressureBrakeStart = now;
             _pressureBraking = true;

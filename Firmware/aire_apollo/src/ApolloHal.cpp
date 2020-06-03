@@ -474,6 +474,7 @@ bool ApolloHal::calibratePressure()
   _lastPressureRisePressure = _lastPressure;
   _lastPressureBrakeTime = 250;
   _pressureBraking = false;
+  _pressureRising  = false;
 
   _lastPressureRiseSample = millis();
 
@@ -483,9 +484,10 @@ bool ApolloHal::calibratePressure()
     _pressureTarget = calTarget;
     _constantPressurePIDTarget = _pressureTarget;
     _overPressurePIDTarget = calTarget+10;
-    _pressureTargetArchived = false;
     _pressureMode = rampUpPressure;
+    _pressureTargetArchived = false;
     _pressureBraking = false;
+    _pressureRising  = false;
     update();
     _outputValve->close(true);
     update();
@@ -633,7 +635,7 @@ void ApolloHal::update()
   {
     _lastSensorsUpdate = now;
     sensorUpdate();
-    if(_pressureMode == rampUpPressure)
+    if(_pressureMode == rampUpPressure || _pressureRising)
     {
       debug("ramp,pt:"+String(_pressureTarget) +"lp: "+String(_lastPressureRisePressure)+" p:"+String(_lastPressure));
       unsigned long now = millis();
@@ -641,30 +643,38 @@ void ApolloHal::update()
       float pdiff = _lastPressure - _lastPressureRisePressure;
       float tdiff = now - _lastPressureRiseSample;
       float slope = pdiff / tdiff;
-      // ca = co / m
-      float timeToTarget = float(_pressureTarget - _lastPressure) / slope;
-      debug("ramp, pdiff:" +String(pdiff)+ " tdiff:"+ String(tdiff) + " slope:"+String(slope)+" timeto:"+String(timeToTarget));
-
       _lastPressureRisePressure = _lastPressure;
       _lastPressureRiseSample = now;
-      if(!_pressureBraking && timeToTarget < _lastPressureBrakeTime && _lastPressure > 5)
+
+      if(!_pressureRising)
       {
-        debug("BRAKING!");
-        now = millis();
-        _lastPressureBrakeStart = now;
-        _pressureBraking = true;
-        _inputValve->close();
+          if(slope > 0.1) _pressureRising = true;
       }
-
-      if(_pressureBraking && slope < 0.05)
+      else
       {
-        _lastPressureBrakeTime = millis() - _lastPressureBrakeStart;
-        debug("Brake time:"+String(_lastPressureBrakeTime));
-        _pressureMode = none;
-        _pressureBraking = false;
+        if(!_pressureBraking)
+        {
+          // ca = co / m
+          float timeToTarget = float(_pressureTarget - _lastPressure) / slope;
+          debug("ramp, pdiff:" +String(pdiff)+ " tdiff:"+ String(tdiff) + " slope:"+String(slope)+" timeto:"+String(timeToTarget));
+          if(timeToTarget < _lastPressureBrakeTime)
+          {
+            debug("BRAKING!");
+            now = millis();
+            _lastPressureBrakeStart = now;
+            _pressureBraking = true;
+            _inputValve->close();
+          }
+        }
+        else if(_pressureBraking && slope < 0.05)
+        {
+          _lastPressureBrakeTime = millis() - _lastPressureBrakeStart;
+          debug("Brake time:"+String(_lastPressureBrakeTime));
+          _pressureMode = none;
+          _pressureBraking = false;
+          _pressureRising  = false;
+        }
       }
-
-
 
       if(!_pressureTargetArchived && _lastPressure >= _pressureTarget*0.95)
       {

@@ -152,6 +152,7 @@ public:
     float         _lastPressureRisePressure;
     unsigned int  _lastPressureBrakeTime;
     unsigned long _lastPressureBrakeStart;
+    bool          _pressureRising;
     bool          _pressureBraking;
 
     uint16_t      _lastInspiratoryRiseTimeMS;

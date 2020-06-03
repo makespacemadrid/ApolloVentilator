@@ -7,7 +7,7 @@
 #include "Sensor/FlowSensor/ApolloFlowSensor.h"
 #include "Sensor/Pressure/ApolloPressureSensor.h"
 #include "Valve/ApolloValve.h"
-#include "ApolloAlarms.h"
+//#include "ApolloAlarms.h"
 #include <PID_v1.h>
 #include <ArduinoJson.h>
 
@@ -134,7 +134,7 @@ public:
     ApolloFlowSensor      *_outputFlowSensor;
     ApolloValve           *_inputValve;
     ApolloValve           *_outputValve;
-    ApolloAlarms          *_alarms;
+//    ApolloAlarms          *_alarms;
 
 //
     hardwareStatus _hwStatus;

@@ -648,7 +648,7 @@ void ApolloHal::update()
 
       if(!_pressureRising)
       {
-          if(slope > 0.1) _pressureRising = true;
+          if(slope > 0.05) _pressureRising = true;
       }
       else
       {
@@ -666,7 +666,7 @@ void ApolloHal::update()
             _inputValve->close();
           }
         }
-        else if(_pressureBraking && slope < 0.05)
+        else if(_pressureBraking && slope < 0.025)
         {
           _lastPressureBrakeTime = millis() - _lastPressureBrakeStart;
           debug("Brake time:"+String(_lastPressureBrakeTime));

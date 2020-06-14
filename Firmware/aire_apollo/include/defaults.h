@@ -123,6 +123,18 @@
 // Pause button
 #define PIN_PAUSE 99
 
+// CONFIG POR DEFECTO
+#define DEFAULT_RPM        15
+#define DEFAULT_PMAX       50
+#define DEFAULT_PPEAK      25
+#define DEFAULT_PPEEP       5
+#define DEFAULT_VTIDAL    450
+#define DEFAULT_IERATIO     0.33
+#define DEFAULT_IPAUSERATIO 0.50
+
+
+//CALIBRACION POR DEFECTO:
+
 // Valores por defecto
 #define DEFAULT_ESTATURA 170 // cm
 #define DEFAULT_SEXO       0 // 0: varón, 1: mujer

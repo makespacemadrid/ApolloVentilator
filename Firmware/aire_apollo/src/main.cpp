@@ -41,9 +41,11 @@ Apollo firmware
 
 //Apollo clases
 #include "ApolloHal.h"
-#include "Comunications.h"
-#include "MechVentilation.h"
-#include "ApolloConfiguration.h"
+#include "ApolloStorage.h"
+//#include "Comunications.h"
+//#include "MechVentilation.h"
+//#include "ApolloConfiguration.h"
+
 //Interfaces
 
 //Sensors

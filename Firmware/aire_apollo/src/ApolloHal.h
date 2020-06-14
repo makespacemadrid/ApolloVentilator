@@ -7,7 +7,7 @@
 #include "Sensor/FlowSensor/ApolloFlowSensor.h"
 #include "Sensor/Pressure/ApolloPressureSensor.h"
 #include "Valve/ApolloValve.h"
-#include "ApolloAlarms.h"
+//#include "ApolloAlarms.h"
 #include <PID_v1.h>
 #include <ArduinoJson.h>
 
@@ -42,15 +42,7 @@ enum ventilatorStatus
   ventilatorERROR
 };
 
-struct pidVARS
-{
-  double target = 0.0;
-  double input  = 0.0;
-  double output = 0.0;
-  double kp = 0.0;
-  double ki = 0.0;
-  double kd = 0.0;
-};
+
 
 public:
 //    ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms);
@@ -134,7 +126,7 @@ public:
     ApolloFlowSensor      *_outputFlowSensor;
     ApolloValve           *_inputValve;
     ApolloValve           *_outputValve;
-    ApolloAlarms          *_alarms;
+//    ApolloAlarms          *_alarms;
 
 //
     hardwareStatus _hwStatus;

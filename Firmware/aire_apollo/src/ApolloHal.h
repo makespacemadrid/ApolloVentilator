@@ -42,15 +42,7 @@ enum ventilatorStatus
   ventilatorERROR
 };
 
-struct pidVARS
-{
-  double target = 0.0;
-  double input  = 0.0;
-  double output = 0.0;
-  double kp = 0.0;
-  double ki = 0.0;
-  double kd = 0.0;
-};
+
 
 public:
 //    ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms);

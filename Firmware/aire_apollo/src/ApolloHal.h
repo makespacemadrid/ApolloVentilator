@@ -7,46 +7,29 @@
 #include "Sensor/FlowSensor/ApolloFlowSensor.h"
 #include "Sensor/Pressure/ApolloPressureSensor.h"
 #include "Valve/ApolloValve.h"
-//#include "ApolloAlarms.h"
-#include <PID_v1.h>
-#include <ArduinoJson.h>
+#include "ApolloStorage.h"
+#include "ApolloPID.h"
+#include "ApolloProtocol.h"
+
+enum controlMode
+{
+  idleMode,
+  inpiratoryRiseSpontaneousMode,
+  inspiratoryRisePressureMode,
+  inspiratoryRiseFlowMode,
+  expiratoryReleaseMode,
+  expiratoryPEEPMode,
+  pressureReleaseMode
+};
 
 
 
 class ApolloHal
 {
 
-enum pressureMode
-{
-  none,
-  rampUpPressure,
-  constantPressure,
-  lastItem
-};
-
-enum hardwareStatus
-{
-  hardwareUNKNOWN,
-  hardwareOK,
-  hardwareUNCAL,
-  hardwareERROR,
-  hardwareTESTING,
-  hardwareCALIBRATION
-};
-
-enum ventilatorStatus
-{
-  ventilatorSTOPPED,
-  ventilatorRUNNING,
-  ventilatorPAUSED,
-  ventilatorERROR
-};
-
-
-
 public:
 //    ApolloHal(ApolloPressureSensor *preSensor, ApolloFlowSensor *entryFlowSensor, ApolloFlowSensor *exitFlowSensor, ApolloValve *entryEV, ApolloValve *exitEV, ApolloAlarms *alarms);
-    ApolloHal();
+    ApolloHal(ApolloStorage* storage);
     ~ApolloHal();
 
     void addValves        (ApolloValve* inputValve,ApolloValve* outputValve);
@@ -54,27 +37,26 @@ public:
     void addFlowSensors   (ApolloFlowSensor* inputFlow, ApolloFlowSensor* outputFlow);
 
     void debug(String debugmsg);
-    void sendData();
 
-
-    bool  begin();
+    hardwareStatus  begin();
     bool  test();
     bool  calibrate();
     bool  calibratePressure();
+    bool  checkOverPressure();
 
+    bool  inspiratoryRisePressure (float pressure, uint16_t targetTime);
+    bool  inspiratoryRiseFlow     (float flow, uint16_t targetTime, float maxPressure);
+    bool  expiratoryRelease       (float peep,bool wait = false,uint16_t timeout = 5000);
+    bool  releasePressure         (bool wait = false,uint16_t timeout = 10000);
 
-    void  risePressure(float pressure, uint16_t targetTime);
-    bool  setConstantFlow     (float flow, float maxPressure);
-    bool  setConstantPressure (float pressure);
+    void openInputValve     (uint8_t percent = 100, bool wait = false)  {_inputValve->open(percent, wait);}
+    void closeInputValve    (bool wait = false)                         {_inputValve->close(wait);}
+    void openOutputValve    (uint8_t percent = 100, bool wait = false)  {_outputValve->open(percent, wait);}
+    void closeOutputValve   (bool wait = false)                         {_outputValve->close(wait);}
 
-
-    void openInputValve     (uint8_t percent = 100, bool wait = false);
-    void closeInputValve    (bool wait = false);
-    void openOutputValve    (uint8_t percent = 100, bool wait = false);
-    void closeOutputValve   (bool wait = false);
-
-
+    hardwareStatus getHWstatus()  { return _hwStatus;}
     double getPressure()          { return _lastPressure;}
+    double getPressureTarget()    { return _pressureTarget;}
     double getInputValveStatus()  { return _lastInputValveStatus;}
     double getOutputValveStatus() { return _lastOutputValveStatus;}
     double getInputValveTarget()  { return _lastInputValveTarget;}
@@ -87,6 +69,16 @@ public:
     double getOutputFlow()        { return _lastOutputFlow;}
     double getOutputInstantFlow() { return _lastOutputInstantFlow;}
     void   resetOutputFlow()      { _outputFlowSensor->resetFlow();}
+
+    void sendHWInfo()             {ApolloProtocol::sendHWInfo(_lastPressure,_pressureTarget,_lastInputInstantFlow,_lastOutputInstantFlow,_lastInputValveStatus, _lastInputValveTarget,_lastOutputValveStatus,_lastOutputValveTarget) ;}
+
+
+    void      resetLoopCounters()     { _sensorLoops = 0,_hfLoops=0;}
+    uint16_t  getSensorLoops()        { return _sensorLoops;}
+    uint16_t  getHfLoops()            { return _hfLoops;}
+    float     getAvgSensorLoopMicros(){ return _avgSensorLoopMicros;}
+    float     getAvgHfLoopMicros()    { return _avgHighFreqUpdateMicros;}
+    String    getLastErrorString()    { return _lastError;}
 
 
     void update();
@@ -112,15 +104,18 @@ public:
     void autotunePressurePID(float target);
     void highFrecuencyUpdate();
     void sensorUpdate();
-    void sendMedicalData();
-    void sendValveStatus();
-    void sendVentilatorStatus(String error = "");
-    void sendPIDConfig();
-    void sendMetrics();
-    void sendConfig();
-    void readSerial();
-    bool readCalibrationData() {return false;}
+    void updateControl();
+    bool loadCalibration();
 
+    void handleIdleMode();
+    void handleInpiratoryRiseSpontaneousMode();
+    void handleInspiratoryRisePressureMode();
+    void handleInspiratoryRiseFlowMode();
+    void handleExpiratoryReleaseMode();
+    void handleExpiratoryPEEPMode();
+    void handlePressureReleaseMode();
+
+    ApolloStorage         *_storage;
     ApolloPressureSensor  *_inputPressureSensor;
     ApolloFlowSensor      *_inputFlowSensor;
     ApolloFlowSensor      *_outputFlowSensor;
@@ -129,6 +124,7 @@ public:
 //    ApolloAlarms          *_alarms;
 
 //
+    controlMode    _mode;
     hardwareStatus _hwStatus;
     float  _lastInputValveStatus;
     float  _lastOutputValveStatus;
@@ -139,7 +135,7 @@ public:
     float  _lastOutputFlow;
     float  _lastInputInstantFlow;
     float  _lastOutputInstantFlow;
-
+/*
     unsigned long _lastPressureRiseSample;
     float         _lastPressureRisePressure;
     unsigned int  _lastPressureBrakeTime;
@@ -149,64 +145,35 @@ public:
 
     uint16_t      _lastInspiratoryRiseTimeMS;
     unsigned long _lastInspiratoryRiseStart;
-    float         _lastInspiratoryValveStatus;
     bool          _pressureTargetArchived;
+*/
 
-    bool   _hasPressureSensor;
-    bool   _hasFlowSensors;
+///Parametros del ultimo ciclo(fallback)
+    float         _lastInspiratoryValveStatus;
+    uint16_t      _lastInspiratoryValveTime;
 
-    pressureMode _pressureMode = none;
+    bool          _hasPressureSensor;
+    bool          _hasFlowSensors;
+
     float        _pressureTarget;
 
 //CONTROL PID
-    bool    _constantPressureEnabled;
-    PID     _constantPressurePID;
-    double  _constantPressurePIDInput;
-    double  _constantPressurePIDTarget;
-    double  _constantPressurePIDOutput;
-    double  _constantPressurePIDKp;
-    double  _constantPressurePIDKd;
-    double  _constantPressurePIDKi;
-
-    bool   _constantFlowEnabled;
-    PID    _constantFlowPID;
-    double _constantFlowPIDInput;
-    double _constantFlowPIDTarget;
-    double _constantFlowPIDOutput;
-    double _constantFlowPIDKp;
-    double _constantFlowPIDKd;
-    double _constantFlowPIDKi;
-
-    bool    _overPressureTriggered;
-    PID     _overPressurePID;
-    double  _overPressurePIDInput;
-    double  _overPressurePIDTarget;
-    double  _overPressurePIDOutput;
-    double  _overPressurePIDKp;
-    double  _overPressurePIDKd;
-    double  _overPressurePIDKi;
+    pidv1lib _constantPressurePID;
+    pidv1lib _constantFlowPID;
+    pidv1lib _overPressurePID;
+    pidv1lib _inspiratoryRisePID;
+    pidv1lib _expiratoryPID;
+    bool     _overPressureTriggered;
 
 
-    PID     _inspiratoryRisePID;
-    double  _inspiratoryRisePIDInput;
-    double  _inspiratoryRisePIDTarget;
-    double  _inspiratoryRisePIDOutput;
-    double  _inspiratoryRisePIDKp;
-    double  _inspiratoryRisePIDKd;
-    double  _inspiratoryRisePIDKi;
 
+    float    _avgSensorLoopMicros      = 0;
+    float    _avgHighFreqUpdateMicros  = 0;
+    uint32_t _sensorLoops             = 0;
+    uint32_t _hfLoops                 = 0;
+    unsigned long _lastSensorsUpdate  = 0;
 
-    float _avgSensorLoopMicros      = 0;
-    float _avgHighFreqUpdateMicros  = 0;
-    float _avgTelemetryUpdateMicros = 0;
-    uint32_t _sensorLoops           = 0;
-    uint32_t _hfLoops               = 0;
-    uint32_t _telemetryLoops        = 0;
-
-    unsigned long _lastTelemetryUpdate      = 0;
-    unsigned long _lastSensorsUpdate        = 0;
-    unsigned long _lastCommunicationsUpdate = 0;
-    unsigned long _lastMetricsUpdate        = 0;
+    String   _lastError;
 };
 
 #endif

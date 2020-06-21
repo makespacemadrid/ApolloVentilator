@@ -42,7 +42,7 @@ public:
     }
     else
     {
-      _outputSUM = constrain(_outputSUM+_output,_minLimit,_maxLimit);
+      _outputSUM = constrain(_outputSUM+_output,_minLimit,_maxLimit); //Poner a 0 el output cuando se llege a los limites??
     }
   }
 

@@ -133,7 +133,20 @@
 #define DEFAULT_IPAUSERATIO 0.50
 
 
-//CALIBRACION POR DEFECTO:
+//VALORES PARA LA CALIBRACION
+  //Presion baja y alta
+  #define CALIBRATION_LOW_PRESSURE   5
+  #define CALIBRATION_HIGH_PRESSURE  35
+  //Valores minimos y maximos de volumen para la tabla de calibracion
+  #define CALIBRATION_TABLE_RESOLUTION     10
+  #define CALIBRATION_TABLE_MIN_VOLUME    1.0
+  #define CALIBRATION_TABLE_MAX_VOLUME  100.0
+  //Volumen maquina+tubos
+  #define CALIBRATION_TUBES_VOLUME_LOW   1.5
+  #define CALIBRATION_TUBES_VOLUME_HIGH  1.6
+  //Volumen dispositivo de calibracion
+  #define CALIBRATION_BALLON_VOLUME_LOW  0.1
+  #define CALIBRATION_BALLON_VOLUME_HIGH 0.6
 
 // Valores por defecto
 #define DEFAULT_ESTATURA 170 // cm

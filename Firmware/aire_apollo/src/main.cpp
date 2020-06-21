@@ -42,6 +42,7 @@ Apollo firmware
 //Apollo clases
 #include "ApolloHal.h"
 #include "ApolloStorage.h"
+#include "ApolloVentilator.h"
 //#include "Comunications.h"
 //#include "MechVentilation.h"
 //#include "ApolloConfiguration.h"
@@ -63,19 +64,16 @@ Apollo firmware
 
 
 
-int rpm     = DEFAULT_RPM;
-int vTidal  = DEFAULT_MIN_VOLUMEN_TIDAL;
-int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
+ApolloStorage    storage;
+ApolloHal        hal(&storage);
+ApolloVentilator ventilator(&hal,&storage);
 
-
-ApolloHal hal;
 //MechVentilation     *ventilation;
 //ApolloConfiguration *configuration = new ApolloConfiguration();
 //Comunications       *com           = new Comunications(configuration);
 //ApolloAlarms        *alarms        = new ApolloAlarms(com, PIN_BUZZER, true);
 
 
-unsigned long lastVentilatorUpdate;
 
 
 //implementar en el ventilador ??
@@ -138,7 +136,9 @@ void setup()
 {
   Serial.begin(SERIAL_BAUDS);
   Serial.setTimeout(10);
-  hal.debug("\nINIT");
+  hal.debug("INIT!");
+  storage.begin();
+
 //  alarms->begin();
 
 /*
@@ -191,36 +191,6 @@ void setup()
 
 //  hal.addFlowSensors(fInSensor, fOutSensor);
 
-  hal.debug("BEGIN HAL!");
-  while (!hal.begin())
-  {
-    hal.debug("HAL BEGIN ERR!"); // No arrancamos si falla algun componente o podemos arrancar con algunos en fallo?
-    delay(5000);
-    //alarma!!
-  }
-
-//  while (!hal.test())
-//  {
-//    hal.debug("HAL TEST ERR!"); // No arrancamos si falla algun componente o podemos arrancar con algunos en fallo?
-//    delay(1000);
-    //alarma!!
-//  }
-
-//  while (!hal.calibrate())
-//  {
-//    hal.debug("HAL CALIBRATION ERR!"); // No arrancamos si falla algun componente o podemos arrancar con algunos en fallo?
-//    delay(1000);
-    //alarma!!
-//  }
-
-
-  hal.debug("HAL READY!");
-
-//  ventilation = new MechVentilation(hal, configuration, alarms);
-
-
-  unsigned long now = millis();
-  lastVentilatorUpdate = now;
 
 
   #ifdef INTFLOWSENSOR
@@ -228,16 +198,18 @@ void setup()
     attachInterrupt(digitalPinToInterrupt(EXIT_FLOW_PIN), flowOut, RISING);
   #endif
 
-  hal.debug("SETUP COMPLETED!: " +String(now)+" ms");
-
+  while(!ventilator.begin())
+  {
+      delay(1000);
+  }
+  hal.debug("SETUP COMPLETED!: " +String(millis())+" ms");
 }
 
-uint16_t loops;
-unsigned long lastLoopTimer = 0;
+
 
 void loop()
 {
-
+  ventilator.update();
 
   //Serial.println("loop!"+String(tim)); Serial.flush();delay(10);
 
@@ -258,17 +230,4 @@ void loop()
   //  float volExit = hal->getMetricVolumeExit();
   //  checkLeak(volc, volExit);
   //  calculateCompliance(pplat, peep);
-
-
-  hal.update();
-
-  unsigned long now = millis();
-
-  if(now >= lastVentilatorUpdate + VENTILATOR_INTERVAL)
-  {
-    lastVentilatorUpdate = now;
-//    ventilation->update();
-//    alarms->check();
-  }
-
 }

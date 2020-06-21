@@ -14,12 +14,33 @@ enum ventilatorMode
     modeFlow
 };
 
+enum ventilationStatus
+{
+  ventilationIdle,
+  ventilationTriggerInspiration,
+  ventilationInspiration,
+  ventilationInspirationPause,
+  ventilationExpiration
+};
+
 enum ventilatorStatus
 {
   ventilatorStopped,
   ventilatorRunning,
-  ventilatorPaused
+  ventilatorPaused,
+  ventilatorError
 };
+
+enum hardwareStatus
+{
+  hardwareUNKNOWN,
+  hardwareOK,
+  hardwareUNCAL,
+  hardwareERROR,
+  hardwareTESTING,
+  hardwareCALIBRATION
+};
+
 
 struct ApolloConfiguration
 {
@@ -38,10 +59,15 @@ struct ApolloConfiguration
 struct ApolloCalibration
 {
   bool         calibrated = false;
+  float        maxSupplyFlow;
   pidConstants overPressurePID;
   pidConstants constantPressurePID;
-  float        flowToValvePercent[10];
-  uint8_t      valveCloseTime[10];
+  pidConstants constantFlowPID;
+  pidConstants inspiratoryRisePID;
+  pidConstants expiratoryPID;
+
+  float        flowCalibrationTable[CALIBRATION_TABLE_RESOLUTION];
+  uint16_t     valveCloseTimeTable [CALIBRATION_TABLE_RESOLUTION];
 };
 
 
@@ -49,7 +75,10 @@ struct ApolloCalibration
 class ApolloStorage
 {
   public:
-    ApolloStorage();
+    ApolloStorage()
+    {
+
+    }
 
     void begin()
     {
@@ -61,9 +90,11 @@ class ApolloStorage
 
     ApolloConfiguration getConfig()                    {return _config;}
     void  setConfig(const ApolloConfiguration& config) {_config = config;}
+    ApolloConfiguration* setConfig()                   {return &_config;}
 
     ApolloCalibration getCalibration()                 {return _calibration;}
     void  setCalibration(const ApolloCalibration& cal) {_calibration = cal;}
+    ApolloCalibration* setCalibration()                {return &_calibration;}
 
     ApolloConfiguration defaultConfig()
     {

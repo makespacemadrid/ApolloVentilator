@@ -50,8 +50,10 @@ struct ApolloConfiguration
   float             pMax;
   float             pPeak;
   float             pPeep;
+  float             pTrigger;
+  float             vTidal;
   float             ieRatio;
-  float             iPauseRatio;
+  float             iPause;
 
 };
 
@@ -106,7 +108,7 @@ class ApolloStorage
       result.pPeak       = DEFAULT_PPEAK;
       result.pPeep       = DEFAULT_PPEEP;
       result.ieRatio     = DEFAULT_IERATIO;
-      result.iPauseRatio = DEFAULT_IPAUSERATIO;
+      result.iPause      = DEFAULT_IPAUSERATIO;
       return result;
     }
 

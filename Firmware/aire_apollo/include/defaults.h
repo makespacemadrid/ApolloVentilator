@@ -148,6 +148,7 @@
   #define CALIBRATION_BALLON_VOLUME_LOW  0.1
   #define CALIBRATION_BALLON_VOLUME_HIGH 0.6
 
+/*
 // Valores por defecto
 #define DEFAULT_ESTATURA 170 // cm
 #define DEFAULT_SEXO       0 // 0: varón, 1: mujer
@@ -160,17 +161,18 @@
 #define DEFAULT_MIN_RPM 10
 #define DEFAULT_POR_INSPIRATORIO 33 // %
 #define DEFAULT_CMH2O_FLUX_TRIGGER_VALUE -10
-
+*/
 #define DEFAULT_CMH20_MAX     50  //Presión máxima de seguridad
 #define DEFAULT_CMH20_PICO    45  //Presión máxima regular
 #define DEFAULT_CMH20_MESETA  32  //Presión mínima al insuflar
 #define DEFAULT_CMH20_PEEP    14  //Presión mínima en el vaciado
 
-
+/*
 #define DEFAULT_WEIGHT 80
 #define DEFAULT_HEIGHT 170
 #define DEFAULT_GENDER 0
 #define DEFAULT_POR_FIO2 90
+*/
 
 #define MAX_STEPPER_ERROR 0.05 //Error percent alowed when testing sttepers
 #define PIN_BUZZER 53

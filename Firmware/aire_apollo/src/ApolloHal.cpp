@@ -245,7 +245,7 @@ return false;
   const float totalVolumeHigh    = CALIBRATION_TUBES_VOLUME_HIGH + CALIBRATION_BALLON_VOLUME_HIGH;
   const float lowPressureTarget  = CALIBRATION_LOW_PRESSURE;
   const float highPressureTarget = CALIBRATION_HIGH_PRESSURE;
-  const float calibrationVolume = totalVolumeHigh-totalVolumeLow;
+  const float calibrationVolume  = totalVolumeHigh-totalVolumeLow;
   _lastInspiratoryValveStatus    = 30;
 
 

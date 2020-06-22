@@ -44,13 +44,16 @@
 #define STR_PRESSURE_PID_KD        "pKd"
 
 #define STR_VENTILATOR_CONFIG     "vConfig"
+#define STR_VENTILATOR_MODE       "mode"
+#define STR_VENTILATOR_STATUS     "status"
 #define STR_RESPIRATIONS_PER_MIN  "rpm"
 #define STR_MAX_PRESSURE          "pMax"
 #define STR_PEAK_PRESSURE         "pPeak"
 #define STR_PEEP_PRESSURE         "pPeep"
+#define STR_TRIGGER_PRESSURE      "vTrigger"
 #define STR_TIDAL_VOLUME          "vTidal"
 #define STR_IE_RATIO              "ieRatio"
-#define STR_INSPIRATORY_RISE_TIME "iRiseTime"
+#define STR_INSPIRATORY_PAUSE     "iPause"
 
 
 #define STR_COMMAND            "command"

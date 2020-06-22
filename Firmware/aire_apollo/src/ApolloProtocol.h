@@ -118,9 +118,51 @@ public:
     Serial.println();
   }
 
-  static void sendConfig(ApolloConfiguration conf)
+  static void sendConfig(const ApolloConfiguration conf)
   {//TODO
-    //_hal->debug("SEND CONFIG no implementado todavia!!!!");
+    StaticJsonDocument<MAX_JSON_SIZE> jsonOutput;
+    jsonOutput[STR_JSON_TYPE] = STR_VENTILATOR_CONFIG;
+
+
+    jsonOutput[STR_JSON_TYPE] = STR_VENTILATOR_CONFIG;
+
+    jsonOutput[STR_VENTILATOR_MODE]      = conf.mode;
+    jsonOutput[STR_VENTILATOR_STATUS]    = conf.status;
+    jsonOutput[STR_RESPIRATIONS_PER_MIN] = conf.rpm;
+    jsonOutput[STR_MAX_PRESSURE]         = conf.pMax;
+    jsonOutput[STR_PEAK_PRESSURE]        = conf.pPeak;
+    jsonOutput[STR_PEEP_PRESSURE]        = conf.pPeep;
+    jsonOutput[STR_TRIGGER_PRESSURE]     = conf.pTrigger;
+    jsonOutput[STR_TIDAL_VOLUME]         = conf.vTidal;
+    jsonOutput[STR_IE_RATIO]             = conf.ieRatio;
+    jsonOutput[STR_INSPIRATORY_PAUSE]    = conf.iPause;
+
+    serializeJson(jsonOutput, Serial);
+    Serial.println();
+  }
+
+  static bool parseConfig(String* jsonStr,ApolloConfiguration* result)
+  {
+    StaticJsonDocument<MAX_JSON_SIZE> jsonInput;
+    DeserializationError error = deserializeJson(jsonInput,*jsonStr);
+    if (error) {
+      return false;
+    }
+
+    if(jsonInput[STR_JSON_TYPE]==STR_VENTILATOR_CONFIG)
+    {
+      if(jsonInput[STR_VENTILATOR_MODE]      != NULL) result->mode      = jsonInput[STR_VENTILATOR_MODE];
+      if(jsonInput[STR_RESPIRATIONS_PER_MIN] != NULL) result->rpm       = jsonInput[STR_RESPIRATIONS_PER_MIN];
+      if(jsonInput[STR_MAX_PRESSURE]         != NULL) result->pMax      = jsonInput[STR_MAX_PRESSURE];
+      if(jsonInput[STR_PEAK_PRESSURE]        != NULL) result->pPeak     = jsonInput[STR_PEAK_PRESSURE];
+      if(jsonInput[STR_PEEP_PRESSURE]        != NULL) result->pPeep     = jsonInput[STR_PEEP_PRESSURE];
+      if(jsonInput[STR_TRIGGER_PRESSURE]     != NULL) result->pTrigger  = jsonInput[STR_TRIGGER_PRESSURE];
+      if(jsonInput[STR_TIDAL_VOLUME]         != NULL) result->vTidal    = jsonInput[STR_TIDAL_VOLUME];
+      if(jsonInput[STR_IE_RATIO]             != NULL) result->ieRatio   = jsonInput[STR_IE_RATIO];
+      if(jsonInput[STR_INSPIRATORY_PAUSE]    != NULL) result->iPause    = jsonInput[STR_INSPIRATORY_PAUSE];
+      return true;
+    }
+    else return false;
   }
 
   static void sendCalibration(ApolloCalibration cal)
@@ -128,18 +170,9 @@ public:
     //_hal->debug("SEND CAL no implementado todavia!!!!");
   }
 
-  static ApolloConfiguration parseConfig(StaticJsonDocument<MAX_JSON_SIZE>* json)
+  static bool parseCalibration(String* jsonStr,ApolloCalibration* result)
   {
-    ApolloConfiguration result;
-
-    return result;
-  }
-
-  static ApolloCalibration parseCalibration(StaticJsonDocument<MAX_JSON_SIZE>* json)
-  {
-    ApolloCalibration result;
-
-    return result;
+    return false;
   }
 
 };

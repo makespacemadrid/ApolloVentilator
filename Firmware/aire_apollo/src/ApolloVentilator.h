@@ -98,9 +98,6 @@ protected:
   }
 
 
-
-
-
   void sendTelemetry()
   {
     unsigned long start = micros();
@@ -157,6 +154,10 @@ protected:
       {
         ApolloProtocol::sendConfig(_storage->getConfig());
       }
+    }
+    else if(type == STR_VENTILATOR_CONFIG)
+    {
+
     }
 
   }

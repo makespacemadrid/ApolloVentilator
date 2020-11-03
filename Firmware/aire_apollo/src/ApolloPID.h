@@ -62,7 +62,7 @@ public:
   void   setTarget(double t){_target = t;}
   void   setInput(double i) {_input = i; }
   void   setOutput(double o){if(_directMode) _output = o; else _outputSUM = o;}
-
+ 
 protected:
   virtual void pidCompute()      {;}
   virtual void initLib()         {;}
@@ -89,12 +89,12 @@ protected:
     _PID->Compute();
   }
 
-  virtual void setConstantsLib()
+  virtual void setConstantsLib() override
   {
     _PID->SetTunings(_pidConstants.kp,_pidConstants.ki,_pidConstants.kd);
   }
 
-  virtual void initlib()
+  virtual void initLib() override
   {
     _PID = new PID(&_input,&_output,&_target, _pidConstants.kp,_pidConstants.ki, _pidConstants.kd, DIRECT);
     _PID->SetMode(AUTOMATIC);

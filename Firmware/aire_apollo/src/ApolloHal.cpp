@@ -1,14 +1,12 @@
 #include "ApolloHal.h"
 #include <Arduino.h>
+#include <pidautotuner.h>
+#include "globalFunctions.h"
 
 
-ApolloHal::ApolloHal() :
-    _constantPressurePID(&_constantPressurePIDInput , &_constantPressurePIDOutput , &_constantPressurePIDTarget , _constantPressurePIDKp , _constantPressurePIDKi , _constantPressurePIDKd , DIRECT),
-    _constantFlowPID    (&_constantFlowPIDInput     , &_constantFlowPIDOutput     , &_constantFlowPIDTarget     , _constantFlowPIDKp     , _constantFlowPIDKi     , _constantFlowPIDKd     , DIRECT),
-    _overPressurePID    (&_overPressurePIDInput     , &_overPressurePIDOutput     , &_overPressurePIDTarget     , _overPressurePIDKp     , _overPressurePIDKi     , _overPressurePIDKd     , REVERSE),
-    _inspiratoryRisePID (&_inspiratoryRisePIDInput  , &_inspiratoryRisePIDOutput  , &_inspiratoryRisePIDTarget  , _inspiratoryRisePIDKp  , _inspiratoryRisePIDKi  , _inspiratoryRisePIDKd  , REVERSE)
-
+ApolloHal::ApolloHal(ApolloStorage* storage)
 {
+  _storage = storage;
   _inputPressureSensor  = NULL;
   _inputFlowSensor      = NULL;
   _outputFlowSensor     = NULL;
@@ -16,8 +14,9 @@ ApolloHal::ApolloHal() :
   _outputValve          = NULL;
 
   _lastSensorsUpdate         =0;
-  _lastTelemetryUpdate       =0;
-  _lastCommunicationsUpdate  =0;
+  _hwStatus                  = hardwareUNKNOWN;
+  _mode                      = idleMode;
+  _lastInspiratoryValveStatus = 0;
 }
 
 ApolloHal::~ApolloHal()
@@ -48,65 +47,6 @@ void ApolloHal::debug(String debugmsg)
   Serial.flush();
 }
 
-void ApolloHal::sendData()
-{
-  unsigned long start = micros();
-  sendMedicalData();
-  sendHardwareInfo();
-  _lastTelemetryUpdateMicros = micros() - start;
-}
-
-void ApolloHal::sendMedicalData()
-{
-  StaticJsonDocument<MAX_JSON_SIZE> jsonOutput;
-  jsonOutput[STR_JSON_TYPE] = STR_MEDICAL_DATA;
-
-  if(_hasPressureSensor)
-  {
-    jsonOutput[STR_PRESSURE] = getPressure();
-    jsonOutput[STR_TARGET_PRESSURE] = _pressureTarget;
-  }
-
-  if(_hasFlowSensors)
-  {
-    float  in  = getInputFlow();
-    float  out = getOutputFlow();
-    float  vol = in + out;
-
-    jsonOutput[STR_INPUT_FLOW]  = in;
-    jsonOutput[STR_OUTPUT_FLOW] = out;
-    jsonOutput[STR_INPUT_FLOW_INSTANT]  = getInputInstantFlow();
-    jsonOutput[STR_OUTPUT_FLOW_INSTANT] = getOutputFlow();
-    jsonOutput[STR_VOLUME]     = vol;
-  }
-
-  serializeJson(jsonOutput, Serial);
-  Serial.println();
-}
-
-void ApolloHal::sendHardwareInfo()
-{
-  StaticJsonDocument<MAX_JSON_SIZE> jsonOutput;
-  jsonOutput[STR_JSON_TYPE] = STR_HARDWARE_INFO;
-
-  jsonOutput[STR_INPUT_STATUS] = getInputValveStatus();
-  jsonOutput[STR_INPUT_TARGET] = getInputValveTarget();
-
-  jsonOutput[STR_OUTPUT_STATUS] = getOutputValveStatus();
-  jsonOutput[STR_OUTPUT_TARGET] = getOutputValveTarget();
-  jsonOutput[STR_LAST_SENSOR_LOOP_MICROS] = _lastSensorLoopMicros;
-  jsonOutput[STR_LAST_HF_LOOP_MICROS]     = _lastHighFreqUpdateMicros;
-  jsonOutput[STR_LAST_TELEMETRY_MICROS]   = _lastTelemetryUpdateMicros;
-
-
-  serializeJson(jsonOutput, Serial);
-  Serial.println();
-}
-
-void ApolloHal::sendConfig()
-{//TODO
-
-}
 
 /**
  * @brief Initialize and check all sensor
@@ -114,27 +54,30 @@ void ApolloHal::sendConfig()
  * @return true if all sensor are present a initilized
  * @return false if something goes wrong
  */
-bool ApolloHal::begin()
+hardwareStatus ApolloHal::begin()
 {
 
   if(!_inputValve || !_outputValve)
   {
-    debug("ERROR! NO VALVES!");
-    return false;
+    _hwStatus = hardwareERROR;
+    _lastError = "ERROR! NO VALVES!";
+    return _hwStatus;
   }
 
   if (!_outputValve->begin())
   {
-    debug("ERROR! VALVE-OUT");
-    return false;
+    _hwStatus = hardwareERROR;
+    _lastError = "ERROR! VALVE-OUT";
+    return _hwStatus;
   }
 
   _outputValve->open(100,true);
 
   if (!this->_inputValve->begin())
   {
-    debug("ERROR! VALVE-IN");
-    return false;
+    _hwStatus = hardwareERROR;
+    _lastError = "ERROR! VALVE-IN";
+    return _hwStatus;
   }
 
   _inputValve->close(true);
@@ -142,11 +85,13 @@ bool ApolloHal::begin()
 
   if(_inputPressureSensor)
   {
+    debug("wait for pressure release!");
     delay(5000);
     if (!_inputPressureSensor->begin())
     {
-      debug("ERROR PRESSURE SENSOR!");
-      return false;
+      _hwStatus = hardwareERROR;
+      _lastError = "ERROR! PRESSSURE SENSOR!";
+      return _hwStatus;
     }
     _hasPressureSensor = true;
   }
@@ -156,28 +101,37 @@ bool ApolloHal::begin()
   {
     if (!this->_inputFlowSensor->begin())
     {
-      debug("ERROR FLOW-IN!");
-      return false;
+      _hwStatus = hardwareERROR;
+      _lastError = "ERROR! FLOW-IN!";
+      return _hwStatus;
     }
 
     if (!this->_outputFlowSensor->begin())
     {
-      debug("ERROR FLOW-OUT");
-      return false;
+      _hwStatus = hardwareERROR;
+      _lastError = "ERROR! FLOW-OUT!";
+      return _hwStatus;
     }
     _hasFlowSensors = true;
   }
   else {_hasFlowSensors = false;}
 
+
+  loadCalibration();
   initPIDs();
-  return true;
+  _lastError = "BEGIN OK!";
+  return _hwStatus;
 }
 
 bool ApolloHal::test()
 {
+  _hwStatus = hardwareTESTING;
+//  sendVentilatorStatus();
   debug("TESTING HARDWARE");
   if(!_inputValve || !_outputValve)
   {
+    _hwStatus = hardwareERROR;
+    _lastError = "ERROR! NO VALVES!";
     debug("ERROR! NO VALVES!");
     return false;
   }
@@ -186,6 +140,8 @@ bool ApolloHal::test()
 
   if (!_outputValve->test())
   {
+    _hwStatus = hardwareERROR;
+    _lastError = "TEST ERROR! VALVE-OUT";
     debug("TEST ERROR! VALVE-OUT");
     _outputValve->begin();
     return false;
@@ -195,47 +151,220 @@ bool ApolloHal::test()
 
   if (!this->_inputValve->test())
   {
-    _inputValve->begin();
+    _hwStatus = hardwareERROR;
+    _lastError = "TEST ERROR! VALVE-IN";
     debug("TEST ERROR! VALVE-IN");
     return false;
   }
   _inputValve->close(true);
+  _lastError = "TEST OK!";
+  if(_storage->getCalibration().calibrated)
+    _hwStatus = hardwareOK;
+  else
+    _hwStatus = hardwareUNCAL;
   return true;
 }
 
 bool ApolloHal::calibrate()
 {
-
-  if(_hasPressureSensor)
-    return calibratePressure();
-  else
+  if(_hasPressureSensor && calibratePressure())
+  {
+    loadCalibration();
     return true;
+  }
+  else
+    return false;
 }
+
+void ApolloHal::autotunePressurePID(float target)
+{
+/*
+  debug("Autotune START!");
+  _pressureTarget  = target;
+  _overPressurePIDTarget = DEFAULT_CMH20_MAX;
+  _pressureMode = none;
+  PIDAutotuner tuner = PIDAutotuner();
+  tuner.setTargetInputValue(_pressureTarget);
+  tuner.setLoopInterval(SENSORS_INTERVAL);
+  tuner.setOutputRange(0,100);
+  tuner.setZNMode(PIDAutotuner::ZNModeBasicPID);
+  tuner.startTuningLoop();
+
+  while (!tuner.isFinished()) {
+
+      // This loop must run at the same speed as the PID control loop being tuned
+      unsigned long startTime = millis();
+
+      // Get input value here (temperature, encoder position, velocity, etc)
+      double input =_inputPressureSensor->readCMH2O();
+
+      // Call tunePID() with the input value
+      double output = tuner.tunePID(input);
+      _constantPressurePIDKp = tuner.getKp();
+      _constantPressurePIDKi = tuner.getKi();
+      _constantPressurePIDKd = tuner.getKd();
+      sendPIDConfig();
+      // Set the output - tunePid() will return values within the range configured
+      // by setOutputRange(). Don't change the value or the tuning results will be
+      // incorrect.
+      //double result = _lastInputValveStatus + output;
+      //double inputValvePercent  = constrain(result , 0, 100);
+      if(output != _lastInputValveTarget)
+        _inputValve->open(output);
+      // This loop must run at the same speed as the PID control loop being tuned
+      while (millis() - startTime < SENSORS_INTERVAL)
+      {
+        update();
+      }
+  }
+  _constantPressurePIDKp = tuner.getKp();
+  _constantPressurePIDKi = 0;
+  _constantPressurePIDKd = 0;
+  _constantPressurePID.SetTunings(_constantPressurePIDKp , _constantPressurePIDKi , _constantPressurePIDKd);
+  debug("AutoTune result: Kp:"+String(tuner.getKp())+" Ki:"+String(tuner.getKi())+" Kd:"+String(tuner.getKd()));
+//  sendPIDConfig();
+  ///////////// FIN AUTOCALIBRADOR
+*/
+}
+
 
 bool ApolloHal::calibratePressure()
 {
+return false;
+  if(!releasePressure(true,6000))
+  {
+    _hwStatus = hardwareUNCAL;
+    _lastError = "[CAL]Too much pressure on start!";
+    return false;
+  }
+
+  ApolloCalibration cal = _storage->getCalibration();
+  _hwStatus = hardwareCALIBRATION;
+
+  const float totalVolumeLow     = CALIBRATION_TUBES_VOLUME_LOW  + CALIBRATION_BALLON_VOLUME_LOW;
+  const float totalVolumeHigh    = CALIBRATION_TUBES_VOLUME_HIGH + CALIBRATION_BALLON_VOLUME_HIGH;
+  const float lowPressureTarget  = CALIBRATION_LOW_PRESSURE;
+  const float highPressureTarget = CALIBRATION_HIGH_PRESSURE;
+  const float calibrationVolume  = totalVolumeHigh-totalVolumeLow;
+  _lastInspiratoryValveStatus    = 30;
+
+
+  for(uint8_t c = 0 ; c < CALIBRATION_TABLE_RESOLUTION ; c ++)
+  {//una iteracion para cada entrada de la tabla de calibracion
+    const float    targetFlow     = map(c,0,CALIBRATION_TABLE_RESOLUTION,CALIBRATION_TABLE_MIN_VOLUME,CALIBRATION_TABLE_MAX_VOLUME);
+    const uint16_t targetRiseTime = calibrationVolume/targetFlow*60.0*1000.0;
+    debug("CAL: Ciclo:" + String(c)+ " Meter " + String(calibrationVolume) + "L en " + String(targetRiseTime) + "msec  - " +String(targetFlow)+"L/m" );
+
+    //Primero encontramos el porcentaje de valvula adecuado para conseguir el tiempo.
+    uint8_t errorCount = 0;
+    _inspiratoryRisePID.setTarget(targetFlow);
+    _inspiratoryRisePID.setOutput(_lastInspiratoryValveStatus);
+    while(errorCount<20)
+    {
+      //cebamos el circuito a la presion inicial
+      expiratoryRelease(lowPressureTarget,true);
+      _mode = idleMode;
+      unsigned long start = millis();
+      _inputValve->open(_lastInspiratoryValveStatus);
+      while(_lastPressure < CALIBRATION_HIGH_PRESSURE && getMilisecondsFrom(start) < 5000)
+      {
+        update();
+      }
+      uint16_t elapsed = getMilisecondsFrom(start);
+      expiratoryRelease(lowPressureTarget,true);
+
+      float    flow    = calibrationVolume*60.0/(elapsed/1000.0);
+      float    error   = 1-(targetFlow/flow); error = abs(error);
+      debug("Valvula: "+String(_lastInspiratoryValveStatus)+"  Tiempo: "+String(elapsed) + " Flujo: " + String(flow)+ " error:"+String(error));
+      if(error < 0.025)
+      {
+        cal.flowCalibrationTable[c] = _lastInspiratoryValveStatus;
+        cal.maxSupplyFlow           = flow;
+        _storage->setCalibration(cal);
+        debug("OK! Pos:"+String(c)+" valvePercent:"+String(_lastInspiratoryValveStatus)+" flow:"+String(flow));
+        break;
+      }
+      else
+      {
+        _inspiratoryRisePID.setInput(flow);
+        _inspiratoryRisePID.update();
+        _lastInspiratoryValveStatus = _inspiratoryRisePID.getOutput();
+        errorCount++;
+      }
+    }
+    //Ahora hallamos el tiempo de frenada de la valvula para ese flujo
+    errorCount=0;
+    while(errorCount<20)
+    {
+      errorCount++;
+    }
+
+  }
+
+  cal.calibrated = true;
+  _storage->setCalibration(cal);
+  return true;
+/*
+  _hwStatus = hardwareCALIBRATION;
+  _inspiratoryRisePIDTarget = 1000;
+  if(_lastInspiratoryValveStatus == 0) _lastInspiratoryValveStatus = 20;
+
+  double calTarget = 30;
+  double calPEEP   = 5;
+
+  sendVentilatorStatus();
   _inputValve->close(true);
-  _outputValve->close(true);
-  delay(1000);
+  update();
+  _outputValve->open(true);
+  update();
+  debug("Wait for pressure release...");
+  delay(3000);
+  update();
+
   _lastPressure = _inputPressureSensor->readCMH2O();
   if(_lastPressure > 5)
   {
+    _hwStatus = hardwareUNCAL;
+//    sendVentilatorStatus("CAL ERROR! too much pressure on start!");
     debug("Calibration error, too much pressure on start!");
     return false;
   }
 
-  _lastInspiratoryValveStatus = 15;
-  _pressureTarget  = 30;
-  _inspiratoryRisePIDTarget = 1500;
 
-  for(int i = 0; i < 10 ; i++)
+  //autotunePressurePID(calTarget);
+
+  _inputValve->close(true);
+  update();
+  _outputValve->open(true);
+  update();
+  debug("Wait for pressure release...");
+  delay(5000);
+
+  _lastPressure = _inputPressureSensor->readCMH2O();
+  _lastPressureRisePressure = _lastPressure;
+  _lastPressureBrakeTime = 250;
+  _pressureBraking = false;
+  _pressureRising  = false;
+
+  _lastPressureRiseSample = millis();
+
+  for(int i = 0; i < 15 ; i++)
   {
-    update();
-    _pressureTargetArchived = false;
+    debug("Cycle:"+String(i));
+    _pressureTarget = calTarget;
+    _constantPressurePIDTarget = _pressureTarget;
+    _overPressurePIDTarget = calTarget+10;
     _pressureMode = rampUpPressure;
+    _pressureTargetArchived = false;
+    _pressureBraking = false;
+    _pressureRising  = false;
+    update();
     _outputValve->close(true);
     update();
+    _lastPressure = _inputPressureSensor->readCMH2O();
+    _lastPressureRisePressure = _lastPressure;
     _lastInspiratoryRiseStart = millis();
+    _lastPressureRiseSample   = _lastInspiratoryRiseStart;
     unsigned long deadline = _lastInspiratoryRiseStart+5000;
     _inputValve->open(_lastInspiratoryValveStatus);
     while(millis() < deadline)
@@ -244,66 +373,126 @@ bool ApolloHal::calibratePressure()
     }
     _pressureMode = none;
     if(!_pressureTargetArchived)
-      _lastInspiratoryRiseTimeMS = 5000;
+      _lastInspiratoryRiseTimeMS = 3000;
     _inspiratoryRisePIDInput = _lastInspiratoryRiseTimeMS;
     _inspiratoryRisePID.Compute();
     _lastInspiratoryValveStatus += _inspiratoryRisePIDOutput;
     _lastInspiratoryValveStatus = constrain(_lastInspiratoryValveStatus,0,100);
-    deadline = millis()+5000;
 
-    _inputValve->close();
+    _inputValve->close(true);
     _outputValve->open(100);
+    _pressureMode = constantPressure;
+    _pressureTarget = calPEEP;
+    _constantPressurePIDTarget = _pressureTarget;
+    _overPressurePIDTarget = calPEEP+5;
+    deadline = millis()+3000;
     while(millis() < deadline)
     {
         update();
     }
 
   }
+  _hwStatus = hardwareOK;
+//  sendVentilatorStatus();
+  return true;
+*/
+}
+
+bool ApolloHal::loadCalibration()
+{
+  _constantPressurePID.setConstants(_storage->getCalibration().constantPressurePID);
+  _constantFlowPID.setConstants(_storage->getCalibration().constantFlowPID);
+  _overPressurePID.setConstants(_storage->getCalibration().overPressurePID);
+  _inspiratoryRisePID.setConstants(_storage->getCalibration().inspiratoryRisePID);
+  _expiratoryPID.setConstants(_storage->getCalibration().expiratoryPID);
+
+  if(_storage->getCalibration().calibrated)
+  {
+    _hwStatus = hardwareOK;
+    return true;
+  }
+  else
+  {
+    _hwStatus = hardwareUNCAL;
+    return false;
+  }
+}
+
+
+////////
+bool  ApolloHal::inspiratoryRisePressure(float pressure, uint16_t targetTime)
+{
+  _mode = inspiratoryRisePressureMode;
+  return true;
+}
+
+bool  ApolloHal::inspiratoryRiseFlow(float flow, uint16_t targetTime, float maxPressure)
+{
+  _mode = inspiratoryRiseFlowMode;
+  return true;
+}
+
+bool  ApolloHal::expiratoryRelease(float peep,bool wait,uint16_t timeout)
+{
+  _mode = expiratoryReleaseMode;
+  _inputValve->close();
+  _outputValve->open();
+  if(!wait)return true;
+
 
   return true;
 }
 
-
-
-
-bool ApolloHal::setConstantFlow(float flow, float maxPressure)
+bool  ApolloHal::releasePressure(bool wait,uint16_t timeout)
 {
-  if(!_hasFlowSensors) return false;
-  return false;
-}
-
-bool ApolloHal::setConstantPressure(float pressure)
-{
-  if(!_hasPressureSensor) return false;
-  _pressureMode = constantPressure;
-
-  _constantPressurePIDTarget  = pressure;
-  _overPressurePIDTarget      = pressure+10;
-  return true;
+  _mode = pressureReleaseMode;
+  _inputValve->close();
+  _outputValve->open();
+  if(!wait) return true;
+  unsigned long start = millis();
+  while( wait && (_mode != idleMode) && (getMilisecondsFrom(start) < timeout) )
+      update();
+  return _mode != pressureReleaseMode;
 }
 
 
 
-void ApolloHal::openInputValve(uint8_t percent,bool wait)
+////////Gestion de los modos de operacion:
+void ApolloHal::handleIdleMode()
 {
-  _inputValve->open(percent, wait);
+
+}
+void ApolloHal::handleInpiratoryRiseSpontaneousMode()
+{
+
 }
 
-void ApolloHal::closeInputValve(bool wait)
+void ApolloHal::handleInspiratoryRisePressureMode()
 {
-  _inputValve->close(wait);
+
 }
 
-void ApolloHal::openOutputValve(uint8_t percent, bool wait)
+void ApolloHal::handleInspiratoryRiseFlowMode()
 {
-  _outputValve->open(percent, wait);
+
 }
 
-void ApolloHal::closeOutputValve(bool wait)
+void ApolloHal::handleExpiratoryReleaseMode()
 {
-  _outputValve->close(wait);
+
 }
 
+void ApolloHal::handleExpiratoryPEEPMode()
+{
+
+}
+
+void ApolloHal::handlePressureReleaseMode()
+{
+  if(_lastPressure < 0.5)
+    _mode = idleMode;
+}
+////////////
 void ApolloHal::highFrecuencyUpdate()
 {
   unsigned long startTime = micros();
@@ -319,8 +508,8 @@ void ApolloHal::highFrecuencyUpdate()
     _inputFlowSensor->highFreqUpdate();
     _outputFlowSensor->highFreqUpdate();
   }
-
-  _lastHighFreqUpdateMicros = micros() - startTime;
+  _hfLoops++;
+  _avgHighFreqUpdateMicros = ( (_avgHighFreqUpdateMicros*5) + getMicrosecondsFrom(startTime)) /6;
 }
 
 void ApolloHal::sensorUpdate()
@@ -350,107 +539,124 @@ void ApolloHal::sensorUpdate()
     _lastOutputInstantFlow = _outputFlowSensor->getInstantFlow();
   }
 
-  _lastSensorLoopMicros = micros() - startTime;
+  _sensorLoops++;
+  _avgSensorLoopMicros = ( (_avgSensorLoopMicros*5) + getMicrosecondsFrom(startTime)) /6;
 }
+
+void ApolloHal::updateControl()
+{
+  switch(_mode)
+  {
+      case idleMode                       : handleIdleMode()                      ;break;
+      case inpiratoryRiseSpontaneousMode  : handleInpiratoryRiseSpontaneousMode() ;break;
+      case inspiratoryRisePressureMode    : handleInspiratoryRisePressureMode()   ;break;
+      case inspiratoryRiseFlowMode        : handleInspiratoryRiseFlowMode()       ;break;
+      case expiratoryReleaseMode          : handleExpiratoryReleaseMode()         ;break;
+      case expiratoryPEEPMode             : handleExpiratoryPEEPMode()            ;break;
+      case pressureReleaseMode            : handlePressureReleaseMode()           ;break;
+  }
+  checkOverPressure();
+/*
+if(_pressureMode == rampUpPressure || _pressureRising)
+{
+//      debug("ramp,pt:"+String(_pressureTarget) +"lp: "+String(_lastPressureRisePressure)+" p:"+String(_lastPressure));
+  unsigned long now = millis();
+  // m = y2-y1 / x2-x1
+  float pdiff = _lastPressure - _lastPressureRisePressure;
+  float tdiff = now - _lastPressureRiseSample;
+  float slope = pdiff / tdiff;
+  _lastPressureRisePressure = _lastPressure;
+  _lastPressureRiseSample = now;
+
+  if(!_pressureRising)
+  {
+      if(slope > 0.05) _pressureRising = true;
+  }
+  else
+  {
+    if(!_pressureBraking)
+    {
+      // ca = co / m
+      float timeToTarget = float(_pressureTarget - _lastPressure) / slope;
+//          debug("ramp, pdiff:" +String(pdiff)+ " tdiff:"+ String(tdiff) + " slope:"+String(slope)+" timeto:"+String(timeToTarget));
+      if(timeToTarget < _lastPressureBrakeTime)
+      {
+//            debug("BRAKING!");
+        now = millis();
+        _lastPressureBrakeStart = now;
+        _pressureBraking = true;
+        _inputValve->close();
+      }
+    }
+    else if(_pressureBraking && slope < 0.025)
+    {
+      _lastPressureBrakeTime = millis() - _lastPressureBrakeStart;
+      debug("Brake time:"+String(_lastPressureBrakeTime));
+      _pressureMode = none;
+      _pressureBraking = false;
+      _pressureRising  = false;
+    }
+  }
+
+  if(!_pressureTargetArchived && _lastPressure >= _pressureTarget*0.95)
+  {
+        _pressureTargetArchived = true;
+        _lastInspiratoryRiseTimeMS = millis() - _lastInspiratoryRiseStart;
+        debug("Pressure Achieved! - "+String(_lastInspiratoryRiseTimeMS));
+  }
+
+//      if(_lastPressure > _pressureTarget * 0.85)
+//      {
+//        _pressureMode = constantPressure;
+//        _constantPressurePIDTarget = _pressureTarget;
+//        _constantPressurePIDOutput = _lastInputValveStatus;
+//      }
+
+}
+
+*/
+}
+
 
 void ApolloHal::update()
 {
   highFrecuencyUpdate();
-  unsigned long now = millis();
 
-  if(now >= _lastTelemetryUpdate + TELEMETRY_INTERVAL)
+  if(getMilisecondsFrom(_lastSensorsUpdate) >= SENSORS_INTERVAL)
   {
-    _lastTelemetryUpdate = now;
-    sendData();
-  }
-
-  if(now >= _lastSensorsUpdate + SENSORS_INTERVAL)
-  {
-    _lastSensorsUpdate = now;
+    _lastSensorsUpdate = millis();
     sensorUpdate();
-    if(_pressureMode == rampUpPressure)
-    {
-      if(_lastPressure > _pressureTarget * 0.75)
-      {
-        _pressureMode = constantPressure;
-        _constantPressurePIDTarget = _pressureTarget;
-      }
-    }
-
-    if(!_pressureTargetArchived && _pressureMode == constantPressure)
-    {
-        if(_lastPressure >= _pressureTarget*0.98)
-        {
-          _pressureTargetArchived = true;
-          _lastInspiratoryRiseTimeMS = millis() - _lastInspiratoryRiseStart;
-          debug("Pressure Achieved! - "+String(_lastInspiratoryRiseTimeMS));
-        }
-    }
-
-    computePIDs();
-  }
-
-  if(now >= _lastCommunicationsUpdate + COMMUNICATIONS_INTERVAL)
-  {
-    _lastCommunicationsUpdate = now;
-//    com->serialRead();
+    updateControl();
   }
 }
+
 
 void ApolloHal::initPIDs()
 {
-  _overPressurePIDTarget = DEFAULT_CMH20_MAX;
-  _constantPressurePIDKp = 2.5  ,  _constantPressurePIDKi = 1.10 ,_constantPressurePIDKd = 0.10;
-  _overPressurePIDKp     = 5.00  , _overPressurePIDKi     = 0.00 ,_overPressurePIDKd     = 0.00;
-  _constantFlowPIDKp     = 1.00  , _constantFlowPIDKi     = 0.00 ,_constantFlowPIDKd     = 0.00;
-  _inspiratoryRisePIDKp  = 0.01  , _inspiratoryRisePIDKi  = 0.00 ,_inspiratoryRisePIDKd  = 0.00;
+  _overPressurePID.setTarget(DEFAULT_CMH20_MAX);
+//
 
+//float minLimit = 0,float maxLimit = 100,bool direct = true,float minOutput = -20,float maxOutput=20
+  _constantPressurePID.begin(0,100);
+  _constantFlowPID.begin(0,100);
+  _overPressurePID.begin(0,100);
+  _inspiratoryRisePID.begin(0,100,false,-10,+10);
+  _expiratoryPID.begin(0,100);
 
-  _constantPressurePID.SetTunings (_constantPressurePIDKp , _constantPressurePIDKi , _constantPressurePIDKd);
-  _overPressurePID.SetTunings     (_overPressurePIDKp     , _overPressurePIDKi     , _overPressurePIDKd);
-  _constantFlowPID.SetTunings     (_constantFlowPIDKp     , _constantFlowPIDKi     , _constantFlowPIDKd);
-  _inspiratoryRisePID.SetTunings  (_inspiratoryRisePIDKp  , _inspiratoryRisePIDKi  , _inspiratoryRisePIDKd);
-
-  _constantPressurePID.SetOutputLimits (-25,25);
-  _overPressurePID.SetOutputLimits     (-50,50);
-  _constantFlowPID.SetOutputLimits     (0,100);
-  _inspiratoryRisePID.SetOutputLimits  (-15,15);
-
-  _constantPressurePID.SetSampleTime(50);
-  _overPressurePID.SetSampleTime    (50);
-  _constantFlowPID.SetSampleTime    (50);
-  //_inspiratoryRisePID.SetSampleTime (50);
-
-  _constantPressurePID.SetMode(AUTOMATIC);
-  _overPressurePID.SetMode    (AUTOMATIC);
-  _constantFlowPID.SetMode    (AUTOMATIC);
-  _inspiratoryRisePID.SetMode (AUTOMATIC);
+//  sendPIDConfig();
 }
 
-void ApolloHal::computePIDs()
-{//TODO!
-  if(_pressureMode == constantPressure)
+bool ApolloHal::checkOverPressure()
+{
+  if( (_overPressureTriggered) || (_lastPressure > _overPressurePID.getTarget()) )
   {
-      double result;
-      _constantPressurePIDInput = _lastPressure;
-      _constantPressurePID.Compute();
-      result = _lastInputValveStatus + _constantPressurePIDOutput;
-      double inputValvePercent  = constrain(result , 0, 100);
-      if(inputValvePercent != _lastInputValveTarget)
-        _inputValve->open(inputValvePercent);
-
-    //Serial.println("PID-Pressure-Input , target: "+String(_constantPressurePIDTarget)+" input: "+String(_constantPressurePIDInput)+" Output: "+String(_constantPressurePIDOutput));
-    //Serial.println("PID-Pressure-Output, target: "+String(_overPressurePIDTarget)+" input: "+String(_overPressurePIDInput)+" Output: "+String(_overPressurePIDOutput));
+    _overPressureTriggered = true;
+    _overPressurePID.setInput(_lastPressure);
+    _overPressurePID.update();
+    if(_outputValve->target() != _overPressurePID.getOutput())
+      _outputValve->open(_overPressurePID.getOutput());
+    if(_outputValve->target() == 0)
+      _overPressureTriggered = false;
   }
-
-  if(_lastPressure > _overPressurePIDTarget)
-  {
-    double result;
-    _overPressurePIDInput   = _lastPressure;
-    _overPressurePID.Compute();
-    result = _lastOutputValveStatus + _overPressurePIDOutput;
-    double outputValvePercent  = constrain(result , 0, 100);
-    if(outputValvePercent != _lastOutputValveTarget)
-      _outputValve->open(outputValvePercent);
-  }
+  return _overPressureTriggered;
 }

@@ -40,8 +40,10 @@ void PIDAutotuner::startTuningLoop() {
   outputValue = maxOutput;
   t1 = t2 = micros(); // Times used for calculating period
   microseconds = tHigh = tLow = 0; // More time variables
-  _max = -1000000; // Max input
-  _min = 1000000; // Min input
+  //_max = -1000000; // Max input
+  //_min = 1000000; // Min input
+  _max =  80;// Max input
+  _min =  0; // Min input
   pAverage = iAverage = dAverage = 0;
 
   //sei();
@@ -119,7 +121,7 @@ float PIDAutotuner::tunePID(float input) {
     // Constants
     // https://en.wikipedia.org/wiki/Ziegler%E2%80%93Nichols_method
 
-    float kpConstant, tiConstant, tdConstant;
+    float kpConstant=0, tiConstant=0, tdConstant=0;
     if (znMode == ZNModeBasicPID) {
       kpConstant = 0.6;
       tiConstant = 0.5;

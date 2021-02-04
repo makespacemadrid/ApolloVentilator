@@ -4,7 +4,7 @@ StepperNema::StepperNema(uint8_t pinStep_,uint8_t pinDir_, int8_t pinMinEndstop_
   stepMotor(stepsPerRevolution_, pinDir_, pinStep_, pin_Enable,-1,-1,-1) ,pinMinEndstop(pinMinEndstop_),maxRPM(RPM),microSteps(MICROSTEPS)
 {
   stepMotor.setEnableActiveState(enabledState);
-  Serial.println("Nema- step:" +String(pinStep_) + " dir:" + String(pinDir_) + " endstop:" + String(pinMinEndstop));
+  Serial.println("Nema- step:" +String(pinStep_) + " dir:" + String(pinDir_) + " endstop:" + String(pinMinEndstop) + " enabled:" + String(pin_Enable) + " enabledState:" + String(enabledState) + " stepsPerRPM:" + String(stepsPerRevolution_));
 }
 
 
@@ -29,7 +29,7 @@ bool StepperNema::moveAwayMinEndStop()
 
 bool StepperNema::moveTowardsMinEndStop()
 {
-  int counter = 0;
+  uint32_t counter = 0;
   while(!isMinEndStopPressed() && counter < stepsMax)
   {
     stepMotor.move(-1);
@@ -69,6 +69,7 @@ bool StepperNema::home()
   int endStopHit = 0;
   if(isMinEndStopPressed()) // Si Ya estamos pisando el final de carrera nos retiramos un poco
   {
+
     Serial.print("RETRACT...");
     endStopHit++;
     if(!moveAwayMinEndStop())
@@ -139,42 +140,26 @@ bool StepperNema::test()
 //  uint32_t minPos;
 
 
-
-
-for(int t = 0 ; t < 5 ; t++)
-{
-  open(100,true);
-  delay(100);
-  close(true);
-  delay(100);
-}
-if(openPos > closePos)
-{
-  maxPos = openPos;
-//    minPos = maxPos;
-  open(100,true);
-}
-else
-{
-  maxPos = closePos;
-//    minPos = openPos;
+  for(int t = 0 ; t < 5 ; t++)
+  {
+    open(100,true);
+    delay(100);
     close(true);
-}
+    delay(100);
+  }
 
-//  stepMotor.move(maxPos);
-//  stepMotor.move(-maxPos);
-//  stepMotor.move(maxPos);
-//  stepMotor.move(-maxPos);
-//  stepMotor.move(maxPos);
-//  stepMotor.move(-maxPos);
-//  stepMotor.move(maxPos);
-//  stepMotor.move(-maxPos);
-//  stepMotor.move(maxPos);
-//  stepMotor.move(-maxPos);
-//  stepMotor.move(maxPos);
-//  stepMotor.move(-maxPos);
-//  stepMotor.move(maxPos);
-
+  if(openPos > closePos)
+  {
+    maxPos = openPos;
+  //    minPos = maxPos;
+    open(100,true);
+  }
+  else
+  {
+    maxPos = closePos;
+  //    minPos = openPos;
+      close(true);
+  }
 
   if(pinMinEndstop < 0)
   {
@@ -187,7 +172,7 @@ else
   int32_t d = maxPos-stepsBackToHome;
   uint32_t difference = abs(d);
   uint32_t maxError = stepsMax * MAX_STEPPER_ERROR;
-  Serial.println("diff: "+String(difference) + " max: " + String(maxError));
+  Serial.println("DIFF:" + String(difference) + " MAX:" + String(maxError));
 
   if(difference > maxError)
   {
@@ -199,7 +184,7 @@ else
     lastPos = 0;
     return true;
   }
-
+  close(true);
 }
 
 bool StepperNema::begin()
@@ -320,12 +305,17 @@ void StepperNema::highFreqUpdate()
   }
   else
   {
-    if(nextActionTime - micros() < 5)
+    unsigned long mic = micros();
+    long t = nextActionTime - mic;
+    if(t > 5)
     {
       blockUpdate = false;
       return;
     }
-    nextActionTime = micros()+stepMotor.nextAction();
+    nextActionTime = stepMotor.nextAction();
+    mic = micros();
+    nextActionTime += mic;
+
     if(this->lastDir){
       this->lastPos++;
     }else{
@@ -333,5 +323,7 @@ void StepperNema::highFreqUpdate()
     }
   }
   blockUpdate = false;
+
+
 //  Serial.println("stepper->"+String(this->stepDestination)+","+String(this->lastDir)+","+String(this->lastStep));
 }

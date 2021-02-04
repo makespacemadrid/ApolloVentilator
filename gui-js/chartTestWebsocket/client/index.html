@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <title>Respirator - Test GUI</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="css/all.css">
+  <link rel="stylesheet" href="css/bootstrap.css">
+  <link rel="stylesheet" href="css/charts.css">
+
+  <script src="js/jquery.js"></script>
+  <script src="js/fontawesome.min.js"></script>
+
+  <script src="js/plotly-latest.min.js" charset="utf-8"></script>
+  <script src="socket.io/socket.io.js" charset="utf-8"></script>
+  <script src="js/chartsWesocket.js" charset="utf-8"></script>
+
+</head>
+
+<body class="bg-gray-100">
+  <div class="container">
+    <!-- header s -->
+    <div class="row">
+      <div class="col-xl-12 mt-3">
+        <h1 class="display-5 mb-4">Ventilator controller</h1>
+      </div>
+    </div>
+    <!-- header e -->
+    
+    <div class="row">
+
+      <!-- info card s -->
+      <div class="col-xl-12 col-md-12">
+        <div class="card mb-3 bl-status bl-2">
+          <div class="card-body">
+            <div class="d-flex">
+              <h5>Status</h5>
+            </div>
+            <div class="card-text">
+                <input type="text" id="debugInfo" readonly/>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- info card e -->
+
+      <!-- pressure card s -->
+      <div class="col-xl-12 col-md-12">
+        <div class="card mb-3 bl-pressure bl-2">
+          <div class="card-body">
+            <div class="d-flex">
+              <h5>Pressure</h5>
+              <div class="pr-0 pt-0 ml-auto">
+                <span class="badge badge-primary">cmH2O</span>
+              </div>
+            </div>
+            <div class="card-text">
+              <div id="pressureChartC" class="chart-h"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- pressure card e -->
+      <!-- flow card s -->
+      <div class="col-xl-12 col-md-12">
+        <div class="card mb-3 bl-flow bl-2 ">
+          <div class="card-body">
+            <div class="d-flex">
+              <h5>Flow</h5>
+              <div class="pr-0 pt-0 ml-auto">
+                <span class="badge badge-primary">L/min</span>
+              </div>
+            </div>
+            <div class="card-text">
+              <div id="flowChartC" class="chart-h"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- flow card e -->
+    </div>
+    <!-- extra info s -->
+    <div class="card-columns">
+
+      <div class="card mb-3">
+        <div class="list-group-item list-group-item-action bx-0 d-flex flex-column">
+          <div class="d-flex justify-content-between">
+            <div class="text-center">
+              <h5 class="mb-1">Rpm</h5>
+              <span class="badge badge-primary"></span>
+            </div>
+            <div class="text-center display-4">
+              <input id='rpm' class='input inputConfig' type="text" maxlength="2" placeholder="-" value='15' />
+            </div>
+            <div class="text-center">
+              <h5 class="mb-1">--</h5>
+              <span>--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="card mb-3">
+        <div class="list-group-item list-group-item-action bx-0 d-flex flex-column">
+          <div class="d-flex justify-content-between">
+            <div class="text-center">
+              <h5 class="mb-1">pMax</h5>
+              <span class="badge badge-primary">cmH2O</span>
+            </div>
+            <div class="text-center display-4">
+              <input id='pMax' class='input inputConfig' type="text" maxlength="3" placeholder="-" value='45' />
+            </div>
+            <div class="text-center">
+              <h5 class="mb-1">--</h5>
+              <span>--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <div class="list-group-item list-group-item-action bx-0 d-flex flex-column">
+          <div class="d-flex justify-content-between">
+            <div class="text-center">
+              <h5 class="mb-1">pPeak</h5>
+              <span class="badge badge-primary">cmH2O</span>
+            </div>
+            <div class="text-center display-4">
+              <input id='pPeak' class='input inputConfig' type="text" maxlength="3" placeholder="-" value='30' />
+            </div>
+            <div class="text-center">
+              <h5 class="mb-1">--</h5>
+              <span>--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-columns">
+
+      <div class="card mb-3">
+        <div class="list-group-item list-group-item-action bx-0 d-flex flex-column">
+          <div class="d-flex justify-content-between">
+            <div class="text-center">
+              <h5 class="mb-1">vTidal</h5>
+              <span class="badge badge-primary">L</span>
+            </div>
+            <div class="text-center display-4">
+              <input id='vTidal' class='input inputConfig' type="text" maxlength="3" placeholder="-" value='450' />
+            </div>
+            <div class="text-center">
+              <h5 class="mb-1">--</h5>
+              <span>--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <div class="list-group-item list-group-item-action bx-0 d-flex flex-column">
+          <div class="d-flex justify-content-between">
+            <div class="text-center">
+              <h5 class="mb-1">ieRatio</h5>
+              <span class="badge badge-primary">bpm</span>
+            </div>
+            <div class="text-center display-4">
+              <input id='ieRatio' class='input inputConfig' type="text" maxlength="3" placeholder="-" value='0.5' />
+            </div>
+            <div class="text-center">
+              <h5 class="mb-1">--</h5>
+              <span>--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <div class="list-group-item list-group-item-action bx-0 d-flex flex-column">
+          <div class="d-flex justify-content-between">
+            <div class="text-center">
+              <h5 class="mb-1">iRiseT</h5>
+              <span class="badge badge-primary"></span>
+            </div>
+            <div class="text-center display-4">
+              <input id='iRiseTime' class='input inputConfig' type="text" maxlength="4" placeholder="-" value='0.5' />
+            </div>
+            <div class="text-center">
+              <h5 class="mb-1">--</h5>
+              <span>--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-columns">
+      <div class="card mb-3">
+        <div class="list-group-item list-group-item-action bx-0 d-flex flex-column">
+          <div class="d-flex justify-content-between">
+            <div class="text-center">
+              <h5 class="mb-1">pPEEP</h5>
+              <span class="badge badge-primary"></span>
+            </div>
+            <div class="text-center display-4">
+              <input id='pPeep' class='input inputConfig' type="text" maxlength="4" placeholder="-" value='5' />
+            </div>
+            <div class="text-center">
+              <h5 class="mb-1">--</h5>
+              <span>--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-columns">
+      <div class="card mb-3">
+        <button id='startB' type="button" class="btn btn-success btn-lg btn-block">Start</button>
+      </div>
+      <div class="card mb-3">
+        <button id='pauseB' type="button" class="btn btn-warning btn-lg btn-block">Pause</button>
+      </div>
+      <div class="card mb-3">
+        <button id='stopB' type="button" class="btn btn-danger btn-lg btn-block">Stop</button>
+      </div>
+    </div>
+
+    <div class="card-columns">
+      <div class="card mb-3">
+        <div class="row">
+          <div class="col">
+            <button id='getConfigB' style='' type="button" class="btn btn-primary btn-lg btn-block">GetConfig</button>
+          </div>
+          <div class="col">
+            <button id='setConfigB' type="button" class="btn btn-primary btn-lg btn-block">SetConfig</button>
+
+          </div>
+        </div>
+      </div>
+      <div class="card mb-3">
+        <button id='testB' type="button" class="btn btn-primary btn-lg btn-block">Test</button>
+      </div>
+      <div class="card mb-3">
+        <button id='calibrateB' type="button" class="btn btn-primary btn-lg btn-block">Calibrate</button>
+      </div>
+    </div>
+  </div>
+  <!-- extra info s -->
+  </div>
+</body>
+
+</html>

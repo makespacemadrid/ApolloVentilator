@@ -41,9 +41,12 @@ Apollo firmware
 
 //Apollo clases
 #include "ApolloHal.h"
-#include "Comunications.h"
-#include "MechVentilation.h"
-#include "ApolloConfiguration.h"
+#include "ApolloStorage.h"
+#include "ApolloVentilator.h"
+//#include "Comunications.h"
+//#include "MechVentilation.h"
+//#include "ApolloConfiguration.h"
+
 //Interfaces
 
 //Sensors
@@ -61,19 +64,16 @@ Apollo firmware
 
 
 
-int rpm     = DEFAULT_RPM;
-int vTidal  = DEFAULT_MIN_VOLUMEN_TIDAL;
-int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
+ApolloStorage    storage;
+ApolloHal        hal(&storage);
+ApolloVentilator ventilator(&hal,&storage);
 
-
-ApolloHal hal;
 //MechVentilation     *ventilation;
 //ApolloConfiguration *configuration = new ApolloConfiguration();
 //Comunications       *com           = new Comunications(configuration);
 //ApolloAlarms        *alarms        = new ApolloAlarms(com, PIN_BUZZER, true);
 
 
-unsigned long lastVentilatorUpdate;
 
 
 //implementar en el ventilador ??
@@ -135,7 +135,10 @@ void setRampsPWMFreq()
 void setup()
 {
   Serial.begin(SERIAL_BAUDS);
-  hal.debug("\nINIT");
+  Serial.setTimeout(10);
+  hal.debug("INIT!");
+  storage.begin();
+
 //  alarms->begin();
 
 /*
@@ -152,21 +155,25 @@ void setup()
 
 //  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,0,80);
 //  ApolloValve* outValve = new servoValve(EXIT_EV_PIN,2,75);
-  StepperNema *inStepper  = new StepperNema(STEPPER1_STEP,STEPPER1_DIR,STEPPER1_ENDSTOP, STEPPER1_ENABLE , LOW ,5400);
-  inStepper->setMinEndStopPressedState(HIGH);
-  inStepper->enableMinEndstopPullup();
-  inStepper->setMaxRPM(12);
-  inStepper->setMicrosteps(2);
-  inStepper->setOpenPos(700);
-  inStepper->setClosedPos(1650);
+  StepperNema *inStepper  = new StepperNema(STEPPER1_STEP,STEPPER1_DIR,STEPPER1_ENDSTOP, STEPPER1_ENABLE , STEPPER1_ENABLE_STATE ,STEPPER1_STEPS_PER_RPM);
+  inStepper->setMinEndStopPressedState(STEPPER1_ENDSTOP_PRESSED_STATE);
+  #ifdef STEPPER1_ENDSTOP_PULLUP
+    inStepper->enableMinEndstopPullup();
+  #endif
+  inStepper->setMaxRPM(STEPPER1_MAX_RPM);
+  inStepper->setMicrosteps(STEPPER1_MICROSTEPS);
+  inStepper->setOpenPos(STEPPER1_OPEN_POS);
+  inStepper->setClosedPos(STEPPER1_CLOSED_POS);
 
-  StepperNema *outStepper = new StepperNema(STEPPER2_STEP,STEPPER2_DIR,STEPPER2_ENDSTOP, STEPPER2_ENABLE);
-  outStepper->setMinEndStopPressedState(HIGH);
-  outStepper->enableMinEndstopPullup();
-  outStepper->setMaxRPM(300);
-  outStepper->setMicrosteps(8);
-  outStepper->setOpenPos(100);
-  outStepper->setClosedPos(400);
+  StepperNema *outStepper = new StepperNema(STEPPER2_STEP,STEPPER2_DIR,STEPPER2_ENDSTOP, STEPPER2_ENABLE, STEPPER2_ENABLE_STATE, STEPPER2_STEPS_PER_RPM);
+  outStepper->setMinEndStopPressedState(STEPPER2_ENDSTOP_PRESSED_STATE);
+  #ifdef STEPPER2_ENDSTOP_PULLUP
+    outStepper->enableMinEndstopPullup();
+  #endif
+  outStepper->setMaxRPM(STEPPER2_MAX_RPM);
+  outStepper->setMicrosteps(STEPPER2_MICROSTEPS);
+  outStepper->setOpenPos(STEPPER2_OPEN_POS);
+  outStepper->setClosedPos(STEPPER2_CLOSED_POS);
 
   ApolloValve *inValve  = inStepper;
   ApolloValve *outValve = outStepper;
@@ -179,41 +186,11 @@ void setup()
   hal.addPressureSensor(pSensor);
 
 //Sensores de FLOW
-  ApolloFlowSensor     *fInSensor   = new Sfm3000FlowSensor(100,0x40);
-  ApolloFlowSensor     *fOutSensor  = new Sfm3000FlowSensor(100,0x40);
+//  ApolloFlowSensor     *fInSensor   = new Sfm3000FlowSensor(100,0x40);
+//  ApolloFlowSensor     *fOutSensor  = new Sfm3000FlowSensor(100,0x40);
 
-  hal.addFlowSensors(fInSensor, fOutSensor);
+//  hal.addFlowSensors(fInSensor, fOutSensor);
 
-  hal.debug("BEGIN HAL!");
-  while (!hal.begin())
-  {
-    hal.debug("HAL BEGIN ERR!"); // No arrancamos si falla algun componente o podemos arrancar con algunos en fallo?
-    delay(1000);
-    //alarma!!
-  }
-
-  while (!hal.test())
-  {
-    hal.debug("HAL TEST ERR!"); // No arrancamos si falla algun componente o podemos arrancar con algunos en fallo?
-    delay(1000);
-    //alarma!!
-  }
-
-  while (!hal.calibrate())
-  {
-    hal.debug("HAL CALIBRATION ERR!"); // No arrancamos si falla algun componente o podemos arrancar con algunos en fallo?
-    delay(1000);
-    //alarma!!
-  }
-
-
-  hal.debug("HAL READY!");
-
-//  ventilation = new MechVentilation(hal, configuration, alarms);
-
-
-  unsigned long now = millis();
-  lastVentilatorUpdate = now;
 
 
   #ifdef INTFLOWSENSOR
@@ -221,18 +198,18 @@ void setup()
     attachInterrupt(digitalPinToInterrupt(EXIT_FLOW_PIN), flowOut, RISING);
   #endif
 
-  hal.debug("SETUP COMPLETED!: " +String(now)+" ms");
-
-//TESTING!
-//  hal.setConstantPressure(30.0);
+  while(!ventilator.begin())
+  {
+      delay(1000);
+  }
+  hal.debug("SETUP COMPLETED!: " +String(millis())+" ms");
 }
 
-uint16_t loops;
-unsigned long lastLoopTimer = 0;
+
 
 void loop()
 {
-
+  ventilator.update();
 
   //Serial.println("loop!"+String(tim)); Serial.flush();delay(10);
 
@@ -253,17 +230,4 @@ void loop()
   //  float volExit = hal->getMetricVolumeExit();
   //  checkLeak(volc, volExit);
   //  calculateCompliance(pplat, peep);
-
-
-  hal.update();
-
-  unsigned long now = millis();
-
-  if(now >= lastVentilatorUpdate + VENTILATOR_INTERVAL)
-  {
-    lastVentilatorUpdate = now;
-//    ventilation->update();
-//    alarms->check();
-  }
-
 }

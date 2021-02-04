@@ -11,8 +11,8 @@ class ApolloValve
         ~ApolloValve();
         virtual void    open(double percent = 100, bool wait = false) {;}
         virtual void    close(bool wait = false)                      {open(0,wait);}
-        virtual bool    begin()     {Serial.println("METODO VIRTUAL SIN IMPLEMENTAR!") ; return false;}
-        virtual bool    test()      {Serial.println("METODO VIRTUAL SIN IMPLEMENTAR!") ; return false;}
+        virtual bool    begin()     {Serial.println("METODO VIRTUAL SIN IMPLEMENTAR!") ; return true;}
+        virtual bool    test()      {Serial.println("METODO VIRTUAL SIN IMPLEMENTAR!") ; return true;}
         virtual double  status()    {Serial.println("METODO VIRTUAL SIN IMPLEMENTAR!") ; return 0;}
         virtual double  target()    {return status();}
         virtual void    update()         {;}

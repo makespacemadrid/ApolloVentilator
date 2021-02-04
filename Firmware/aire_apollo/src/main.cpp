@@ -57,6 +57,7 @@ Apollo firmware
 #include "Sensor/Pressure/mksBME280diff.h"
 #include "Sensor/Pressure/AnalogLinearPressure.h"
 #include "Sensor/Pressure/DummyPressure.h"
+#include "Sensor/Pressure/MPXV7002DP.h"
 
 
 
@@ -153,6 +154,7 @@ void setup()
 
 //  ApolloValve* inValve  = new servoValve(ENTRY_EV_PIN,0,80);
 //  ApolloValve* outValve = new servoValve(EXIT_EV_PIN,2,75);
+
   StepperNema *inStepper  = new StepperNema(STEPPER1_STEP,STEPPER1_DIR,STEPPER1_ENDSTOP, STEPPER1_ENABLE , STEPPER1_ENABLE_STATE ,STEPPER1_STEPS_PER_RPM);
   inStepper->setMinEndStopPressedState(STEPPER1_ENDSTOP_PRESSED_STATE);
   #ifdef STEPPER1_ENDSTOP_PULLUP
@@ -179,8 +181,8 @@ void setup()
   hal.addValves(inValve,outValve);
 
 //Sensor Presion
-  ApolloPressureSensor *pSensor = new mksBME280();
-
+  //ApolloPressureSensor *pSensor = new mksBME280();
+  ApolloPressureSensor *pSensor = new MPXV7002DP(15);
   hal.addPressureSensor(pSensor);
 
 //Sensores de FLOW

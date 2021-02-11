@@ -1,0 +1,95 @@
+#include <Arduino.h>
+#include "Sensor/Pressure/mksBME280.h"
+
+void tcaselect(uint8_t i) {
+  if (i > 7) return;
+ 
+  Wire.beginTransmission(TCAADDR);
+  if(Wire.write(1 << i)==0)
+    Serial.println("Wire write ERROR");
+  switch(Wire.endTransmission())
+  {
+    case 0 :
+      Serial.println("\ntcaselect ok.");
+      break;
+    case 1 :
+      Serial.println("\ntcaselect error: length to long for buffer;");
+      break;
+    case 2 :
+      Serial.println("\ntcaselect error: address send, NACK received.");
+      break;
+    case 3 :
+      Serial.println("\n tac select error: data send, NACK received.");
+      break;
+    case 4 :
+      Serial.println("\ntcaselect error: other twi error (lost bus arbitration, bus error, ..).");
+      break;
+  }
+}
+
+mksBME280 BME_1( 0x76, 0);
+mksBME280 BME_2( 0x77, 0);
+
+
+void setup() {
+  Serial.begin(115200); 
+  SPI.begin(); 
+  Wire.begin();
+  Serial.println();
+  Serial.println("Start =============================");
+
+
+
+  /* Serial.print("Start Honeywell...");
+  Honeywell.begin(); 
+  Serial.println("done.");
+ */
+
+
+  Serial.print("Start BPS...");
+  tcaselect(4);
+  BPS.begin();
+  Serial.println("done.");
+  
+
+/* 
+  Serial.print("Start SFM_I...");
+  tcaselect(6);
+  SFM_I.begin();
+  Serial.print("done.");
+ */
+
+/* 
+  Serial.print("Start SFM_E...");
+  tcaselect(5);
+  SFM_E.begin();
+  Serial.println("done.");
+ */
+
+
+  Serial.print("Start BME_1  (0, 0x76)...");
+  BME_1.begin();
+  Serial.println("done.");
+
+  Serial.print("Start BME_2  (0, 0x77)...");
+  BME_2.begin();
+  Serial.println("done.");
+ 
+
+ 
+}
+
+void loop() {
+  Serial.println("\n=====\n");
+
+  Serial.print("Read BME_1 [");
+  Serial.print(BME_1.readPascal());
+  Serial.println("]");
+  delay(500);
+  
+  Serial.print("Read BME_2 [");
+  Serial.print(BME_2.readPascal());
+  Serial.println("]");
+  delay(10000);
+ 
+}

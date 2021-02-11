@@ -64,6 +64,8 @@ hardwareStatus ApolloHal::begin()
     return _hwStatus;
   }
 
+  Serial.println("\nOUT VALVE");
+
   if (!_outputValve->begin())
   {
     _hwStatus = hardwareERROR;
@@ -73,6 +75,7 @@ hardwareStatus ApolloHal::begin()
 
   _outputValve->open(100,true);
 
+  Serial.println("\nIN VALVE");
   if (!this->_inputValve->begin())
   {
     _hwStatus = hardwareERROR;
@@ -93,12 +96,15 @@ hardwareStatus ApolloHal::begin()
       _lastError = "ERROR! PRESSSURE SENSOR!";
       return _hwStatus;
     }
+    debug("pressure sensor present.");
     _hasPressureSensor = true;
   }
   else {_hasPressureSensor = false;}
 
+  debug("_inputFlowSensor && _outputFlowSensor");
   if(_inputFlowSensor && _outputFlowSensor)
   {
+    debug("this->_inputFlowSensor->begin()");
     if (!this->_inputFlowSensor->begin())
     {
       _hwStatus = hardwareERROR;
@@ -106,6 +112,7 @@ hardwareStatus ApolloHal::begin()
       return _hwStatus;
     }
 
+    debug("this->_inputFlowSensor->begin()");
     if (!this->_outputFlowSensor->begin())
     {
       _hwStatus = hardwareERROR;
@@ -115,9 +122,20 @@ hardwareStatus ApolloHal::begin()
     _hasFlowSensors = true;
   }
   else {_hasFlowSensors = false;}
+ 
 
 
-  loadCalibration();
+  debug("initPIDs()");
+  initPIDs();
+
+  debug("loadCalibration()");
+  bool calibrated = loadCalibration();
+  if(calibrated)
+    debug("Calibrated");
+  else
+    debug("Un calibrated");
+  
+  debug("initPIDs()");
   initPIDs();
   _lastError = "BEGIN OK!";
   return _hwStatus;
@@ -400,19 +418,29 @@ return false;
 
 bool ApolloHal::loadCalibration()
 {
+  debug("_constantPressurePID.setConstants(_storage->getCalibration().constantPressurePID);");
   _constantPressurePID.setConstants(_storage->getCalibration().constantPressurePID);
+  debug(" _constantFlowPID.setConstants(_storage->getCalibration().constantFlowPID);");
   _constantFlowPID.setConstants(_storage->getCalibration().constantFlowPID);
+  debug(" _overPressurePID.setConstants(_storage->getCalibration().overPressurePID);");
   _overPressurePID.setConstants(_storage->getCalibration().overPressurePID);
+  debug(" _inspiratoryRisePID.setConstants(_storage->getCalibration().inspiratoryRisePID);");
   _inspiratoryRisePID.setConstants(_storage->getCalibration().inspiratoryRisePID);
+  debug(" _expiratoryPID.setConstants(_storage->getCalibration().expiratoryPID);");
   _expiratoryPID.setConstants(_storage->getCalibration().expiratoryPID);
+ 
+  debug("6");
 
+  
   if(_storage->getCalibration().calibrated)
   {
+    debug("loadCalibration(OK)");
     _hwStatus = hardwareOK;
     return true;
   }
   else
   {
+    debug("loadCalibration(UNCAL)");
     _hwStatus = hardwareUNCAL;
     return false;
   }

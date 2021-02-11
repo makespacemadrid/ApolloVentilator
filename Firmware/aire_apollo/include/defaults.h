@@ -7,6 +7,7 @@
 #define SENSORS_INTERVAL        10 //milliseconds
 #define TELEMETRY_INTERVAL      50 //milliseconds
 #define VENTILATOR_INTERVAL     100 //milliseconds
+#define METRICS_INTERVAL        5000 //milliseconds
 #define COMMUNICATIONS_INTERVAL 500 //milliseconds
 
 //------HardWare---------
@@ -177,6 +178,8 @@
 #define MAX_STEPPER_ERROR 0.05 //Error percent alowed when testing sttepers
 #define PIN_BUZZER 53
 
-#define SERIAL_BAUDS 921600
+#define SERIAL_BAUDS 115200
+
+#define DISPLAY_SERIAL Serial2
 
 #endif

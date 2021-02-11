@@ -9,8 +9,10 @@
 /**
  * @brief Construct a new Apollo B M E:: Apollo B M E object
  *
+ * @param addr sensor I2C address
  */
-mksBME280::mksBME280(uint8_t addr) : _addr(addr)
+
+mksBME280::mksBME280(uint8_t addr, uint8_t i2cBus) : _addr(addr), _i2cBus(i2cBus)
 {
      //    _bme = new Adafruit_BME280();
 }
@@ -21,15 +23,27 @@ mksBME280::~mksBME280()
      //        delete _bme;
 }
 
+void mksBME280::i2cBusSelect(uint8_t busNumber) {
+  
+  if (busNumber > 7) return;
+ 
+  Wire.beginTransmission(TCAADDR);
+  Wire.write(1 << busNumber);
+  Wire.endTransmission();  
+}
+
+
 /**
  * @brief Check if the sensor is detected and configure sampling
  *
- * @param addr sensor I2C address
  * @return true if the sensor is detected
  * @return false if the sensor is not detected
  */
 bool mksBME280::begin()
 {
+     Serial.println("Debug: i2cBus "+String(this->_i2cBus));
+
+     i2cBusSelect(this->_i2cBus);
 
      if (!_bme.begin(_addr))
      {
@@ -66,5 +80,7 @@ bool mksBME280::begin()
  */
 float mksBME280::readPascal()
 {
+     i2cBusSelect(this->_i2cBus);
+
      return _bme.readPressure() - this->zero;
 }

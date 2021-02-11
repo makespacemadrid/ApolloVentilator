@@ -11,7 +11,7 @@ class ApolloProtocol
 {
 public:
   static void sendMedicalData(float pressure, float inputFlow = 0,float outputFlow = 0, float instantInputFlow = 0, float instantOutputFlow = 0)
-  {// VTE RPM pPeak pPlat
+  {// VTE RPM pPeak pPlat   
     StaticJsonDocument<MAX_JSON_SIZE> jsonOutput;
     jsonOutput[STR_JSON_TYPE] = STR_MEDICAL_DATA;
     jsonOutput[STR_PRESSURE] = pressure;
@@ -25,8 +25,8 @@ public:
     jsonOutput[STR_INPUT_FLOW_INSTANT]  = instantInputFlow;
     jsonOutput[STR_OUTPUT_FLOW_INSTANT] = instantOutputFlow;
     jsonOutput[STR_VOLUME]     = vol;
-    serializeJson(jsonOutput, Serial);
-    Serial.println();
+    serializeJson(jsonOutput, DISPLAY_SERIAL);
+    DISPLAY_SERIAL.println();
   }
 
   static void sendHWInfo(float pressure,float targetPressure,float instantInputFlow,float instantOutputFlow,float inputStatus, float inputTarget = 0, float outputStatus = 0, float outputTarget = 0)
@@ -46,8 +46,8 @@ public:
     jsonOutput[STR_OUTPUT_STATUS] = outputStatus;
     jsonOutput[STR_OUTPUT_TARGET] = outputTarget;
 
-    serializeJson(jsonOutput, Serial);
-    Serial.println();
+    serializeJson(jsonOutput, DISPLAY_SERIAL);
+    Serial2.println();
   }
 
   static void sendHWMetrics(float avgSensor, float avgHF, float avfT, uint16_t sLoops, uint16_t hfLoops, uint16_t tLoops)
@@ -66,8 +66,8 @@ public:
 //    _hal->resetLoopCounters();
 //    _telemetryLoops = 0;
 
-    serializeJson(jsonOutput, Serial);
-    Serial.println();
+    serializeJson(jsonOutput, DISPLAY_SERIAL);
+    DISPLAY_SERIAL.println();
 //    _lastMetricsUpdate = millis();
   }
 
@@ -80,8 +80,8 @@ public:
     jsonOutput[STR_PRESSURE_PID_KP] = constantPressurePID.kp;
     jsonOutput[STR_PRESSURE_PID_KI] = constantPressurePID.ki;
     jsonOutput[STR_PRESSURE_PID_KD] = constantPressurePID.kd;
-    serializeJson(jsonOutput, Serial);
-    Serial.println();
+    serializeJson(jsonOutput, DISPLAY_SERIAL);
+    DISPLAY_SERIAL.println();
   }
 
   static void sendVentilatorStatus(hardwareStatus hw, ventilatorStatus v, String errorMSG = "none")
@@ -114,8 +114,8 @@ public:
     jsonOutput[STR_VENT_STATUS]     = ventS;
     jsonOutput[STR_ERROR_MSG]       = errorMSG;
 
-    serializeJson(jsonOutput, Serial);
-    Serial.println();
+    serializeJson(jsonOutput, DISPLAY_SERIAL);
+    DISPLAY_SERIAL.println();
   }
 
   static void sendConfig(const ApolloConfiguration conf)
@@ -138,7 +138,9 @@ public:
     jsonOutput[STR_INSPIRATORY_PAUSE]    = conf.iPause;
 
     serializeJson(jsonOutput, Serial);
-    Serial.println();
+    serializeJson(jsonOutput, DISPLAY_SERIAL);
+    DISPLAY_SERIAL.println();
+    DISPLAY_SERIAL.flush();
   }
 
   static bool parseConfig(String* jsonStr,ApolloConfiguration* result)

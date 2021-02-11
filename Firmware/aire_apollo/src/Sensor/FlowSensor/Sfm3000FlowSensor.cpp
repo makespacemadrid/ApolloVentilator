@@ -97,11 +97,14 @@ Sfm3000FlowSensor::Sfm3000FlowSensor(uint8_t sampling_ms, uint8_t addr) : _addr(
  */
   uint16_t  Sfm3000FlowSensor::readOffset()
   {
-      sendCommand(SFM3000_READ_OFFSET);
-      readBytes();
-      _flowOffset = (_data[0]<<8) | _data[1];
+     
+    if(sendCommand(SFM3000_READ_OFFSET) !=0)
+      return -1;
+      
+    readBytes();
+    _flowOffset = (_data[0]<<8) | _data[1];
 
-      return _flowOffset;
+    return _flowOffset;
   }
 
 /**
@@ -111,7 +114,9 @@ Sfm3000FlowSensor::Sfm3000FlowSensor(uint8_t sampling_ms, uint8_t addr) : _addr(
  */
   uint16_t Sfm3000FlowSensor::readScale()
   {
-      sendCommand(SFM3000_READ_SCALE);
+      if (!sendCommand(SFM3000_READ_SCALE))
+        return -1;
+
       readBytes();
       _scaleFactor = (_data[0]<<8) | _data[1];
 
@@ -122,20 +127,26 @@ Sfm3000FlowSensor::Sfm3000FlowSensor(uint8_t sampling_ms, uint8_t addr) : _addr(
  * @brief Soft reset the sensor
  *
  */
-void Sfm3000FlowSensor::softReset()
+bool Sfm3000FlowSensor::softReset()
 {
-  sendCommand(SFM3000_RESET);
+  if(sendCommand(SFM3000_RESET) != 0)
+    return false;
+
   delay(100);
+  return true;
 }
 
 /**
  * @brief Start continuous measurement until another command is sent
  *
  */
-void Sfm3000FlowSensor::startFlowMeasurement()
+bool Sfm3000FlowSensor::startFlowMeasurement()
 {
-  sendCommand(SFM3000_START_FLOW);
+  if(sendCommand(SFM3000_START_FLOW) !=0)
+    return false;
+
   delay(100);
+  return true;
 }
 
 
@@ -179,8 +190,8 @@ void Sfm3000FlowSensor::startFlowMeasurement()
       return -1;
 
     uint8_t crc = 0;
-    crc = CRC(_data[0], crc);
-    crc = CRC(_data[1], crc);
+    crc = calcCRC(_data[0], crc);
+    crc = calcCRC(_data[1], crc);
 
     if (crc != _data[2])
       return -1;             // TODO find the best value to incate error, flow may be negative
@@ -196,7 +207,7 @@ void Sfm3000FlowSensor::startFlowMeasurement()
  * @param crc
  * @return uint8_t
  */
-uint8_t Sfm3000FlowSensor::CRC(uint8_t x, uint8_t crc) {
+uint8_t Sfm3000FlowSensor::calcCRC(uint8_t x, uint8_t crc) {
   crc ^= x;
   for (uint8_t bit = 8; bit > 0; --bit) {
     if (crc & 0x80) crc = (crc << 1) ^ POLYNOMIAL;

@@ -38,12 +38,12 @@ class Sfm3000FlowSensor : public ApolloFlowSensor
         float         _lastInstantFlow;
 
         uint8_t     sendCommand(uint16_t command);
-        void        softReset();
+        bool        softReset();
         virtual int readBytes();
         uint16_t    readOffset();
         uint16_t    readScale();
-        void        startFlowMeasurement();
-        uint8_t     CRC(uint8_t x, uint8_t crc);
+        bool        startFlowMeasurement();
+        uint8_t     calcCRC(uint8_t x, uint8_t crc);
 
 };
 

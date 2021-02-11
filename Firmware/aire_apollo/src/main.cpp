@@ -136,6 +136,10 @@ void setup()
 {
   Serial.begin(SERIAL_BAUDS);
   Serial.setTimeout(10);
+
+  DISPLAY_SERIAL.begin(115200);
+  delay(500);
+
   hal.debug("INIT!");
   storage.begin();
 
@@ -181,15 +185,16 @@ void setup()
   hal.addValves(inValve,outValve);
 
 //Sensor Presion
-  ApolloPressureSensor *pSensor = new mksBME280();
+
+  ApolloPressureSensor *pSensor = new mksBME280(0x76, 0x00);
 
   hal.addPressureSensor(pSensor);
 
 //Sensores de FLOW
-//  ApolloFlowSensor     *fInSensor   = new Sfm3000FlowSensor(100,0x40);
-//  ApolloFlowSensor     *fOutSensor  = new Sfm3000FlowSensor(100,0x40);
+ ApolloFlowSensor     *fInSensor   = new Sfm3000FlowSensor(100,0x40);
+ ApolloFlowSensor     *fOutSensor  = new Sfm3000FlowSensor(100,0x40);
 
-//  hal.addFlowSensors(fInSensor, fOutSensor);
+ hal.addFlowSensors(fInSensor, fOutSensor);
 
 
 
@@ -203,6 +208,7 @@ void setup()
       delay(1000);
   }
   hal.debug("SETUP COMPLETED!: " +String(millis())+" ms");
+  
 }
 
 

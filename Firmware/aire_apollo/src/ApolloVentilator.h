@@ -23,13 +23,19 @@ public:
 
   bool begin()
   {
-    if(_hal->begin() != hardwareOK || hardwareUNCAL)
+    Wire.begin();
+
+    hardwareStatus hwStatus = _hal->begin();
+
+    if(hwStatus != hardwareOK && hwStatus != hardwareUNCAL)
     {
+      _hal->debug("hardware NOT OK");
       ApolloProtocol::sendVentilatorStatus(_hal->getHWstatus(),_ventilatorStatus,  _hal->getLastErrorString());
       return false;
     }
     else
     {
+      _hal->debug("hardware OK or UNCAL");
       ApolloProtocol::sendVentilatorStatus(_hal->getHWstatus(),_ventilatorStatus, _hal->getLastErrorString());
       return true;
     }
@@ -54,7 +60,7 @@ public:
       return;
     }
 
-    if(getMilisecondsFrom(_lastMetricsUpdate) >= 1000)
+    if(getMilisecondsFrom(_lastMetricsUpdate) >= METRICS_INTERVAL)
     {
       _lastMetricsUpdate = now;
       ApolloProtocol::sendHWMetrics(_hal->getAvgSensorLoopMicros(),_hal->getAvgHfLoopMicros(),_avgTelemetryUpdateMicros,_hal->getSensorLoops(),_hal->getHfLoops(),_telemetryLoops);
@@ -98,9 +104,6 @@ protected:
   }
 
 
-
-
-
   void sendTelemetry()
   {
     unsigned long start = micros();
@@ -114,13 +117,13 @@ protected:
 
   void readSerial()
   {
-    if(!Serial.available()) return;
-    String payload = Serial.readStringUntil('\n');
+    if(!DISPLAY_SERIAL.available()) return;
+    String payload = DISPLAY_SERIAL.readStringUntil('\n');    
     StaticJsonDocument<MAX_JSON_SIZE> jsonInput;
     DeserializationError error = deserializeJson(jsonInput, payload);
     if (error) {
       _hal->debug("deserializeJson() failed: " + String(error.c_str()));
-      _hal->debug(payload);
+      _hal->debug("=======payload=======\n"+payload+"\n==============");
       return;
     }
 
@@ -147,14 +150,17 @@ protected:
       }
       else if(cmd == STR_COMMAND_TEST)
       {
+        _hal->debug("Received test from display.");
         _hal->test();
       }
       else if(cmd == STR_COMMAND_CALIBRATE)
       {
+        _hal->debug("Received calibrate from display.");
         _hal->calibrate();
       }
       else if(cmd == STR_COMMAND_GET_CONFIG)
       {
+        _hal->debug("Received getConfig from display.");
         ApolloProtocol::sendConfig(_storage->getConfig());
       }
     }

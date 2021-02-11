@@ -44,16 +44,16 @@ enum hardwareStatus
 
 struct ApolloConfiguration
 {
-  ventilatorMode    mode;
-  ventilatorStatus  status;
-  float             rpm;
-  float             pMax;
-  float             pPeak;
-  float             pPeep;
-  float             pTrigger;
-  float             vTidal;
+  ventilatorMode    mode;       // Working mode
+  ventilatorStatus  status;     // Stop, Running....
+  float             rpm;        // Respirations per minute
+  float             pMax;       // Max pressure
+  float             pPeak;      // Peak pressure
+  float             pPeep;      // Peep pressure
+  float             pTrigger;   // Trigger pressure
+  float             vTidal;     // Tidal volume
   float             ieRatio;
-  float             iPause;
+  float             iPause;     // Inspiratory pause
 
 };
 
@@ -92,11 +92,11 @@ class ApolloStorage
 
     ApolloConfiguration getConfig()                    {return _config;}
     void  setConfig(const ApolloConfiguration& config) {_config = config;}
-    ApolloConfiguration* setConfig()                   {return &_config;}
+    ApolloConfiguration setConfig()                   {return _config;}
 
     ApolloCalibration getCalibration()                 {return _calibration;}
     void  setCalibration(const ApolloCalibration& cal) {_calibration = cal;}
-    ApolloCalibration* setCalibration()                {return &_calibration;}
+    ApolloCalibration setCalibration()                {return _calibration;}
 
     ApolloConfiguration defaultConfig()
     {

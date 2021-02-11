@@ -1,5 +1,5 @@
 //#include <ESP8266WiFi.h>
-#include "HardwareSerial.h"
+//#include "HardwareSerial.h"
 #include <ArduinoJson.h>
 #include <EasyNextionLibrary.h>
 //#include <SoftwareSerial.h>

@@ -70,7 +70,7 @@ public:
     }
 
     if(getMilisecondsFrom(_lastCommunicationsUpdate) >= COMMUNICATIONS_INTERVAL)
-    {
+    {      
       _lastCommunicationsUpdate = now;
       readSerial();
       return;
@@ -116,9 +116,11 @@ protected:
 
 
   void readSerial()
-  {
-    if(!DISPLAY_SERIAL.available()) return;
-    String payload = DISPLAY_SERIAL.readStringUntil('\n');    
+  {       
+    if(DISPLAY_SERIAL.available()==0) 
+      return;    
+
+    String payload = DISPLAY_SERIAL.readStringUntil('\n');      
     StaticJsonDocument<MAX_JSON_SIZE> jsonInput;
     DeserializationError error = deserializeJson(jsonInput, payload);
     if (error) {

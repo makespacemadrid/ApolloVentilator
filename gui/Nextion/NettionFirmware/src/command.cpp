@@ -82,16 +82,19 @@ void trigger1(){
 void trigger2(){  
     DebugSerial.println("E->A: {\"type\":\"command\",\"command\":\"stop\"}");
     VentilatorSerial.println(F("{\"type\":\"command\",\"command\":\"stop\"}"));
+    VentilatorSerial.flush();
 }
 
 void trigger3(){  
     DebugSerial.println("E->A: {\"type\":\"command\",\"command\":\"test\"}");
     VentilatorSerial.println(F("{\"type\":\"command\",\"command\":\"test\"}"));
+    VentilatorSerial.flush();
 }
 
 void trigger4(){
     DebugSerial.println("E->A: {\"type\":\"command\",\"command\":\"calibrate\"}");
     VentilatorSerial.println(F("{\"type\":\"command\",\"command\":\"calibrate\"}"));
+    VentilatorSerial.flush();
 }
 
 void setup() {
@@ -129,7 +132,7 @@ void readData(){
     
       String payload = VentilatorSerial.readStringUntil('\n');      
 
-     // DebugSerial.println("A->E: data: "+payload);
+      DebugSerial.println("A->E: data: "+payload);
       
       DeserializationError error = deserializeJson(json, payload);
       

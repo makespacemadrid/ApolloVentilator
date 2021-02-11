@@ -5,10 +5,10 @@
 
 //TIMERS
 #define SENSORS_INTERVAL        10 //milliseconds
-#define TELEMETRY_INTERVAL      50 //milliseconds
-#define VENTILATOR_INTERVAL     100 //milliseconds
-#define METRICS_INTERVAL        5000 //milliseconds
-#define COMMUNICATIONS_INTERVAL 500 //milliseconds
+#define TELEMETRY_INTERVAL      500 //milliseconds
+#define VENTILATOR_INTERVAL     500 //milliseconds
+#define METRICS_INTERVAL        500 //milliseconds
+#define COMMUNICATIONS_INTERVAL 50 //milliseconds
 
 //------HardWare---------
 #define NO_PIN -1

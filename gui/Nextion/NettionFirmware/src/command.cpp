@@ -73,34 +73,34 @@ void sendVentilatorData(){
 void trigger1(){
     DebugSerial.println("E->A: {type:'command',command:'getConfig'}");
     VentilatorSerial.println(F("{type:'command',command:'getConfig'}"));
-    VentilatorSerial.flush();
+    
     DebugSerial.println("E->A: {\"type\":\"command\",\"command\":\"start\"}");
     VentilatorSerial.println(F("{\"type\":\"command\",\"command\":\"start\"}"));
-    VentilatorSerial.flush();
+    
 }
 
 void trigger2(){  
     DebugSerial.println("E->A: {\"type\":\"command\",\"command\":\"stop\"}");
     VentilatorSerial.println(F("{\"type\":\"command\",\"command\":\"stop\"}"));
-    VentilatorSerial.flush();
+    
 }
 
 void trigger3(){  
     DebugSerial.println("E->A: {\"type\":\"command\",\"command\":\"test\"}");
     VentilatorSerial.println(F("{\"type\":\"command\",\"command\":\"test\"}"));
-    VentilatorSerial.flush();
+    
 }
 
 void trigger4(){
     DebugSerial.println("E->A: {\"type\":\"command\",\"command\":\"calibrate\"}");
     VentilatorSerial.println(F("{\"type\":\"command\",\"command\":\"calibrate\"}"));
-    VentilatorSerial.flush();
+   
 }
 
 void setup() {
   delay(1000);
   //Initialize serial and wait for port to open:
-  VentilatorSerial.begin(lcdBaudRate, SERIAL_8N1, 33, 34, false, 2000); 
+  VentilatorSerial.begin(lcdBaudRate, SERIAL_8N1, 22, 21, false); 
   VentilatorSerial.setRxBufferSize(1024);  
   VentilatorSerial.flush();
   DisplaySerial.begin(lcdBaudRate);
@@ -123,7 +123,7 @@ void setup() {
 
   VentilatorSerial.println("");
   VentilatorSerial.println(F("{type:'command',command:'getConfig'}"));
-  VentilatorSerial.flush();                            
+                     
 }
 
 void readData(){
